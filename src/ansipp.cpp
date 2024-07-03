@@ -1,4 +1,5 @@
 #include <iostream>
+#include <optional>
 #include <ansipp.hpp>
 
 #ifdef _WIN32
@@ -20,6 +21,14 @@ bool is_terminal() {
 #endif
 }
 
+static std::optional<
+#ifdef _WIN32 // windows
+    DWORD
+#else
+    tcflag_t
+#endif
+> __ansipp_restore;
+
 bool init(const config& cfg) {
 #ifdef _WIN32 // windows
     HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -29,6 +38,7 @@ bool init(const config& cfg) {
         return false;
     }
 
+    __ansipp_restore = dwModes;
     if (cfg.no_echo) {
         dwModes &= ~(
             ENABLE_ECHO_INPUT | 
@@ -40,9 +50,9 @@ bool init(const config& cfg) {
     
     dwModes |= (
         ENABLE_VIRTUAL_TERMINAL_PROCESSING | 
+        ENABLE_VIRTUAL_TERMINAL_INPUT |
         ENABLE_PROCESSED_OUTPUT | 
-        ENABLE_PROCESSED_INPUT | 
-        ENABLE_VIRTUAL_TERMINAL_INPUT
+        ENABLE_PROCESSED_INPUT
     );
 
     return SetConsoleMode(out, dwModes);
@@ -52,12 +62,28 @@ bool init(const config& cfg) {
         if (tcgetattr(STDOUT_FILENO, &p) != 0) {
             return false;
         }
+        __ansipp_restore = p.c_lflag;
         p.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL); 
         if (tcsetattr(STDOUT_FILENO, TCSANOW, &p) != 0) {
             return false;
         }
     }
     return true;
+#endif
+}
+
+void restore() {
+    if (!__ansipp_restore.has_value()) {
+        return;
+    }
+#ifdef _WIN32 // windows
+    SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), __ansipp_restore.value());
+#else
+    termios p;
+    if (tcgetattr(STDOUT_FILENO, &p) == 0) {
+        p.c_lflag = __ansipp_restore.value();
+        tcsetattr(STDOUT_FILENO, TCSANOW, &p);
+    }
 #endif
 }
 
@@ -89,8 +115,5 @@ cursor_position get_cursor_position() {
     }
     return cursor_position { static_cast<unsigned short>(row), static_cast<unsigned short>(col) };
 }
-
-
-
 
 }
