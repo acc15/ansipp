@@ -108,12 +108,33 @@ terminal_dimension get_terminal_dimension() {
 }
 
 cursor_position get_cursor_position() {
-    std::cout << request_cursor_pos() << std::flush;
-    unsigned int row, col;
-    if (scanf("\33[%u;%uR", &row, &col) != 2) {
+    std::cout << request_position() << std::flush;
+
+    cursor_position p;
+    // (ignore '\033' '[')(row)(ignore ';')(col)(ignore 'R')
+    if (!((std::cin.ignore(2) >> p.row).ignore() >> p.col).ignore()) {
         throw std::runtime_error("can't parse cursor position escape sequence");
     }
-    return cursor_position { static_cast<unsigned short>(row), static_cast<unsigned short>(col) };
+    return p;
+}
+
+attrs& attrs::a(unsigned int param) {
+    if (value.size() > 2) {
+        value.append(1, ';');
+    }
+    value.append(std::to_string(param));
+    return *this;
+}
+
+attrs& attrs::c(bool bg, color v, bool bright) { 
+    return a(cb(bg, 30) + (bright ? 90 : 0) + static_cast<unsigned int>(v)); 
+}
+attrs& attrs::c(bool bg, const rgb& v) { return a(cb(bg)).a(2).a(v.r).a(v.g).a(v.b); }
+attrs& attrs::c(bool bg, unsigned char v) { return a(cb(bg)).a(5).a(v); }
+attrs& attrs::c(bool bg) { return a(cb(bg, 39)); }
+
+std::ostream& operator<<(std::ostream& s, attrs& a) {
+    return s << a.str();
 }
 
 }
