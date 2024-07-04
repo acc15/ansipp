@@ -22,7 +22,9 @@ struct terminal_dimension {
     unsigned short rows;
     unsigned short cols;
 };
-std::ostream& operator<<(std::ostream& o, const terminal_dimension& d);
+inline std::ostream& operator<<(std::ostream& o, const terminal_dimension& d) {
+    return o << d.cols << "x" << d.rows;
+}
 
 terminal_dimension get_terminal_dimension();
 
@@ -30,7 +32,9 @@ struct cursor_position {
     unsigned short row;
     unsigned short col;
 };
-std::ostream& operator<<(std::ostream& o, const cursor_position& p);
+inline std::ostream& operator<<(std::ostream& o, const cursor_position& p) {
+    return o << p.col << "," << p.row;
+}
 
 cursor_position get_cursor_position();
 
@@ -49,8 +53,16 @@ enum move_mode: char {
     SCROLL_DOWN = 'T'
 };
 
-std::string move(move_mode mode, unsigned int value = 1);
-std::string move(unsigned short row, unsigned short col);
+inline std::string move(move_mode mode, unsigned int value = 1) {
+    return std::string("\33[").append(std::to_string(value)).append(1, static_cast<char>(mode));
+}
+
+inline std::string move(unsigned short row, unsigned short col) {
+    return std::string("\33[")
+        .append(std::to_string(row)).append(1, ';')
+        .append(std::to_string(col)).append(1, 'H');
+}
+
 inline std::string move(const cursor_position& p) { return move(p.row, p.col); }
 
 constexpr std::string save_position() { return "\0337"; }
@@ -162,10 +174,10 @@ class attrs {
     inline unsigned int cb(bool bg, unsigned int base = 38) { return base + (bg ? 10 : 0); }
 
 public:
-    attrs& c(bool bg, color v, bool bright = false);
-    attrs& c(bool bg, const rgb& v);
-    attrs& c(bool bg, unsigned char v);
-    attrs& c(bool bg);
+    inline attrs& c(bool bg, color v, bool bright) { return a(cb(bg, 30) + (bright ? 90 : 0) + v); }
+    inline attrs& c(bool bg, const rgb& v) { return a(cb(bg)).a(2).a(v.r).a(v.g).a(v.b); }
+    inline attrs& c(bool bg, unsigned char v) { return a(cb(bg)).a(5).a(v); }
+    inline attrs& c(bool bg) { return a(cb(bg, 39)); }
 
     inline attrs& fg(color v, bool bright = false) { return c(false, v, bright); }
     inline attrs& fg(const rgb& v) { return c(false, v); }
@@ -185,7 +197,6 @@ public:
     inline operator const std::string&() { return str(); }
 
 };
-
 inline std::ostream& operator<<(std::ostream& s, attrs&& a) { return s << a.str(); }
 inline std::ostream& operator<<(std::ostream& s, attrs& a) { return s << a.str(); }
 

@@ -1,5 +1,8 @@
 {
     "cSpell.words": [
         "ansipp"
-    ]
+    ],
+    "cmake.debugConfig": {
+        "args": ["[!benchmark]"]
+    }
 }

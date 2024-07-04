@@ -7,8 +7,14 @@
 
 using namespace ansipp;
 
-TEST_CASE("format vs append", "[escape][!benchmark]") {
+TEST_CASE("escape format", "[!benchmark]") {
     const cursor_position p = { 5, 10 };
+
+    std::string shared_str;
+    shared_str.reserve(20);
+
+    char printf_buf[20];
+
     BENCHMARK("format") {
         return std::format("\33[{};{}H", p.row, p.col);
     };
@@ -16,6 +22,27 @@ TEST_CASE("format vs append", "[escape][!benchmark]") {
         return std::string("\33[")
             .append(std::to_string(p.row)).append(1, ';')
             .append(std::to_string(p.col)).append(1, 'H');
+    };
+    BENCHMARK("append_shared") {
+        return shared_str.assign("\33[")
+            .append(std::to_string(p.row)).append(1, ';')
+            .append(std::to_string(p.col)).append(1, 'H');
+    };
+    BENCHMARK("sprintf") {
+        return sprintf(printf_buf, "\33[%u;%uH", static_cast<unsigned int>(p.row), static_cast<unsigned int>(p.col));
+    };
+    BENCHMARK("impl") {
+        return move(p);
+    };
+}
+
+TEST_CASE("attrs format", "[!benchmark]") {
+    rgb c = { 127, 0, 127 };
+    BENCHMARK("impl") {
+        return attrs().fg(c).str();
+    };
+    BENCHMARK("format") {
+        return std::format("\33[38;5;{};{};{}m", c.r, c.g, c.b);
     };
 }
 

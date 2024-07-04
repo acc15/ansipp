@@ -90,14 +90,6 @@ void restore() {
     __ansipp_restore.reset();
 }
 
-std::ostream& operator<<(std::ostream& o, const terminal_dimension& d) {
-    return o << d.cols << "x" << d.rows;
-}
-
-std::ostream& operator<<(std::ostream& o, const cursor_position& p) {
-    return o << p.col << "," << p.row;
-}
-
 terminal_dimension get_terminal_dimension() {
 #ifdef _WIN32
     CONSOLE_SCREEN_BUFFER_INFO ws;
@@ -121,16 +113,6 @@ cursor_position get_cursor_position() {
     return p;
 }
 
-std::string move(move_mode mode, unsigned int value) {
-    return std::string("\33[").append(std::to_string(value)).append(1, static_cast<char>(mode));
-}
-
-std::string move(unsigned short row, unsigned short col) {
-    return std::string("\33[")
-        .append(std::to_string(row)).append(1, ';')
-        .append(std::to_string(col)).append(1, 'H');
-}
-
 rgb rgb::lerp(const rgb& a, const rgb& b, float factor) {
     return rgb { 
         static_cast<unsigned char>(std::lerp(a.r, b.r, factor)),
@@ -146,10 +128,5 @@ attrs& attrs::a(unsigned int param) {
     value.append(std::to_string(param));
     return *this;
 }
-
-attrs& attrs::c(bool bg, color v, bool bright) { return a(cb(bg, 30) + (bright ? 90 : 0) + v); }
-attrs& attrs::c(bool bg, const rgb& v) { return a(cb(bg)).a(2).a(v.r).a(v.g).a(v.b); }
-attrs& attrs::c(bool bg, unsigned char v) { return a(cb(bg)).a(5).a(v); }
-attrs& attrs::c(bool bg) { return a(cb(bg, 39)); }
 
 }
