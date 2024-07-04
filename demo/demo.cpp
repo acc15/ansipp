@@ -13,7 +13,7 @@ int main() {
 
     init();
     std::cout << hide_cursor();
-    std::cout << attrs().on(style::UNDERLINE).fg(WHITE) << "hello" << attrs() << std::endl;
+    std::cout << attrs().on(UNDERLINE).fg(WHITE) << "hello" << attrs() << std::endl;
     std::cout << attrs().fg(RED) << "i'm red" << attrs() << std::endl;
     std::cout << attrs().fg(WHITE).bg(GREEN) << "i'm white on green bg" << attrs() << std::endl;
 
@@ -26,22 +26,16 @@ int main() {
     gradient({ 0, 255, 0 }, { 0, 0, 255 }, 40);
     std::cout << attrs() << std::endl;
 
-    std::cout << "press " << attrs().on(style::BOLD).fg(GREEN) << "y" << attrs() << " to exit" << std::endl;
+    std::cout << "press " << attrs().on(BOLD).fg(GREEN) << "y" << attrs() << " to exit" << std::endl;
     std::cout << "type something" << std::endl;
-
 
     std::size_t pos = 0;
     char ch;
-    while ((ch = std::cin.get()) != 'y') {
-        if (!(ch > 0x20 && ch < 0x7f)) {
-            continue;
-        }
-        if (++pos >= 20) {
-            pos = 0;
-        }
-        std::cout << move(TO_COLUMN, pos) << erase(LINE, ALL) << ch << move(DOWN) << std::flush;
-    }
 
+    while ((ch = std::cin.get()) != 'y') {
+        std::cout << save_position() << move(UP) << move(TO_COLUMN, pos) << erase(LINE, ALL) << ch << restore_position() << std::flush;
+    }
+ 
     restore();
     return 0;
 }

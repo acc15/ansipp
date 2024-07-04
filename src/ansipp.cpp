@@ -1,5 +1,6 @@
 #include <iostream>
 #include <optional>
+#include <cmath>
 #include <ansipp.hpp>
 
 #ifdef _WIN32
