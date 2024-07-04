@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <ansipp.hpp>
 
 using namespace ansipp;
@@ -11,7 +12,11 @@ void gradient(const rgb& a, const rgb& b, size_t width) {
 
 int main() {
 
+    std::cin.sync_with_stdio(false);
+    std::cout.sync_with_stdio(false);
+
     init();
+
     std::cout << hide_cursor();
     std::cout << attrs().on(UNDERLINE).fg(WHITE) << "hello" << attrs() << std::endl;
     std::cout << attrs().fg(RED) << "i'm red" << attrs() << std::endl;
@@ -26,16 +31,24 @@ int main() {
     gradient({ 0, 255, 0 }, { 0, 0, 255 }, 40);
     std::cout << attrs() << std::endl;
 
-    std::cout << "press " << attrs().on(BOLD).fg(GREEN) << "y" << attrs() << " to exit" << std::endl;
+    std::cout << "press " << attrs().on(BOLD).fg(GREEN) << "q" << attrs() << " to exit" << std::endl;
     std::cout << "type something" << std::endl;
 
-    std::size_t pos = 0;
-    char ch;
+    std::string seq_buf;
+    seq_buf.resize(16);
+    do {
+        std::cin.peek();
+        seq_buf.resize(std::cin.readsome(seq_buf.data(), seq_buf.capacity()));
+        std::cout << save_position() 
+            << move(UP) << move(TO_COLUMN, 0) << erase(LINE, ALL) << std::dec << seq_buf.size() << " chars received:";
+        for (const char& c: seq_buf) {
+            std::cout << " 0x" 
+                << std::hex << std::setw(2) << std::setfill('0') << std::uppercase 
+                << static_cast<unsigned int>(static_cast<unsigned char>(c));
+        }
+        std::cout << restore_position() << std::flush;
+    } while (std::cin && seq_buf != "q");
 
-    while ((ch = std::cin.get()) != 'y') {
-        std::cout << save_position() << move(UP) << move(TO_COLUMN, pos) << erase(LINE, ALL) << ch << restore_position() << std::flush;
-    }
- 
     restore();
     return 0;
 }
