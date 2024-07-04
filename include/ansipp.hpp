@@ -9,10 +9,19 @@ namespace ansipp {
 bool is_terminal();
 
 struct config {
+    
     /**
      * @brief enables/disables terminal input echo
      */
-    bool no_echo = true;
+    bool input_echo = false;
+
+    /**
+     * @brief enables/disables sync with stdio for `std::cout` and `std::cin`.
+     * 
+     * This allows to use `std::cin.readsome()`, `std::cin.rdbuf()->in_avail()`, etc
+     */
+    bool sync_with_stdio = false;
+
 };
 
 bool init(const config& cfg = {});
@@ -124,7 +133,7 @@ struct rgb {
 /**
  * @brief class for building style and color escape codes
  * 
- * ## Styles
+ * Styles
  *
  * | Enable | Disable | Description                         |
  * |--------|---------|-------------------------------------|

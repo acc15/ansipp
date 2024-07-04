@@ -22,13 +22,15 @@ bool is_terminal() {
 #endif
 }
 
-static std::optional<
+struct ansipp_restore {
+
 #ifdef _WIN32 // windows
-    DWORD
+    std::optional<DWORD> modes;
 #else // posix
-    tcflag_t
+    std::optional<tcflag_t> c_lflag;
 #endif
-> __ansipp_restore;
+
+} __ansipp_restore;
 
 bool init(const config& cfg) {
 #ifdef _WIN32 // windows
@@ -39,16 +41,18 @@ bool init(const config& cfg) {
         return false;
     }
 
-    __ansipp_restore = dwModes;
-    if (cfg.no_echo) {
+    __ansipp_restore.modes = dwModes;
+    if (!cfg.input_echo) {
         dwModes &= ~(
             ENABLE_ECHO_INPUT | 
             ENABLE_INSERT_MODE | 
             ENABLE_LINE_INPUT | 
             ENABLE_QUICK_EDIT_MODE
         );
+        dwModes |= DISABLE_NEWLINE_AUTO_RETURN;
     }
     
+    // forcibly enable virtual terminal processing
     dwModes |= (
         ENABLE_VIRTUAL_TERMINAL_PROCESSING | 
         ENABLE_VIRTUAL_TERMINAL_INPUT |
@@ -58,12 +62,12 @@ bool init(const config& cfg) {
 
     return SetConsoleMode(out, dwModes);
 #else // posix
-    if (cfg.no_echo) {
+    if (!cfg.input_echo) {
         termios p;
         if (tcgetattr(STDOUT_FILENO, &p) != 0) {
             return false;
         }
-        __ansipp_restore = p.c_lflag;
+        __ansipp_restore.c_lflag = p.c_lflag;
         p.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL); 
         if (tcsetattr(STDOUT_FILENO, TCSANOW, &p) != 0) {
             return false;
@@ -75,19 +79,22 @@ bool init(const config& cfg) {
 
 void restore() {
     std::cout << attrs() << show_cursor() << std::flush;
-    if (!__ansipp_restore.has_value()) {
-        return;
-    }
+    
 #ifdef _WIN32 // windows
-    SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), __ansipp_restore.value());
+    if (__ansipp_restore.modes.has_value()) {
+        SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), __ansipp_restore.modes.value());
+        __ansipp_restore.modes.reset();
+    }
 #else
-    termios p;
-    if (tcgetattr(STDOUT_FILENO, &p) == 0) {
-        p.c_lflag = __ansipp_restore.value();
-        tcsetattr(STDOUT_FILENO, TCSANOW, &p);
+    if (__ansipp_restore.c_lflag.has_value()) {
+        termios p;
+        if (tcgetattr(STDOUT_FILENO, &p) == 0) {
+            p.c_lflag = __ansipp_restore.c_lflag.value();
+            tcsetattr(STDOUT_FILENO, TCSANOW, &p);
+        }
+        __ansipp_restore.c_lflag.reset();
     }
 #endif
-    __ansipp_restore.reset();
 }
 
 terminal_dimension get_terminal_dimension() {

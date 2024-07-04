@@ -7,7 +7,7 @@
 
 using namespace ansipp;
 
-TEST_CASE("escape format", "[!benchmark]") {
+TEST_CASE("move format", "[!benchmark]") {
     const cursor_position p = { 5, 10 };
 
     std::string shared_str;
@@ -28,8 +28,9 @@ TEST_CASE("escape format", "[!benchmark]") {
             .append(std::to_string(p.row)).append(1, ';')
             .append(std::to_string(p.col)).append(1, 'H');
     };
-    BENCHMARK("sprintf") {
-        return sprintf(printf_buf, "\33[%u;%uH", static_cast<unsigned int>(p.row), static_cast<unsigned int>(p.col));
+    BENCHMARK("snprintf") {
+        return snprintf(printf_buf, sizeof(printf_buf), "\33[%u;%uH", 
+            static_cast<unsigned int>(p.row), static_cast<unsigned int>(p.col));
     };
     BENCHMARK("impl") {
         return move(p);
@@ -42,7 +43,7 @@ TEST_CASE("attrs format", "[!benchmark]") {
         return attrs().fg(c).str();
     };
     BENCHMARK("format") {
-        return std::format("\33[38;5;{};{};{}m", c.r, c.g, c.b);
+        return std::format("\33[{};{};{};{};{}m", 38, 5, c.r, c.g, c.b);
     };
 }
 
@@ -56,6 +57,7 @@ TEST_CASE("position escapes") {
 }
 
 TEST_CASE("colors") {
+    REQUIRE( attrs().str() == "\033[m" );
     REQUIRE( attrs().fg(RED).bg(BLUE).on(BOLD).str() == "\033[31;44;1m" );
     REQUIRE( attrs().off().str() == "\033[0m" );
     REQUIRE( attrs().off(BOLD).str() == "\033[22m" );

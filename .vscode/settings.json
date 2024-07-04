@@ -3,6 +3,6 @@
         "ansipp"
     ],
     "cmake.debugConfig": {
-        "args": ["[!benchmark]"]
+        "args": ["[\\!benchmark]"]
     }
 }
