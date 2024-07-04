@@ -24,7 +24,7 @@ bool is_terminal() {
 static std::optional<
 #ifdef _WIN32 // windows
     DWORD
-#else
+#else // posix
     tcflag_t
 #endif
 > __ansipp_restore;
@@ -56,7 +56,7 @@ bool init(const config& cfg) {
     );
 
     return SetConsoleMode(out, dwModes);
-#else // posix (linux, macos)
+#else // posix
     if (cfg.no_echo) {
         termios p;
         if (tcgetattr(STDOUT_FILENO, &p) != 0) {
@@ -73,6 +73,7 @@ bool init(const config& cfg) {
 }
 
 void restore() {
+    std::cout << attrs() << show_cursor() << std::flush;
     if (!__ansipp_restore.has_value()) {
         return;
     }
@@ -85,6 +86,7 @@ void restore() {
         tcsetattr(STDOUT_FILENO, TCSANOW, &p);
     }
 #endif
+    __ansipp_restore.reset();
 }
 
 std::ostream& operator<<(std::ostream& o, const terminal_dimension& d) {
@@ -118,6 +120,24 @@ cursor_position get_cursor_position() {
     return p;
 }
 
+std::string move(move_mode mode, unsigned int value) {
+    return std::string("\33[").append(std::to_string(value)).append(1, static_cast<char>(mode));
+}
+
+std::string move(unsigned short row, unsigned short col) {
+    return std::string("\33[")
+        .append(std::to_string(row)).append(1, ';')
+        .append(std::to_string(col)).append(1, 'H');
+}
+
+rgb rgb::lerp(const rgb& a, const rgb& b, float factor) {
+    return rgb { 
+        static_cast<unsigned char>(std::lerp(a.r, b.r, factor)),
+        static_cast<unsigned char>(std::lerp(a.g, b.g, factor)),
+        static_cast<unsigned char>(std::lerp(a.b, b.b, factor))
+    };
+}
+
 attrs& attrs::a(unsigned int param) {
     if (value.size() > 2) {
         value.append(1, ';');
@@ -126,15 +146,9 @@ attrs& attrs::a(unsigned int param) {
     return *this;
 }
 
-attrs& attrs::c(bool bg, color v, bool bright) { 
-    return a(cb(bg, 30) + (bright ? 90 : 0) + static_cast<unsigned int>(v)); 
-}
+attrs& attrs::c(bool bg, color v, bool bright) { return a(cb(bg, 30) + (bright ? 90 : 0) + v); }
 attrs& attrs::c(bool bg, const rgb& v) { return a(cb(bg)).a(2).a(v.r).a(v.g).a(v.b); }
 attrs& attrs::c(bool bg, unsigned char v) { return a(cb(bg)).a(5).a(v); }
 attrs& attrs::c(bool bg) { return a(cb(bg, 39)); }
-
-std::ostream& operator<<(std::ostream& s, attrs& a) {
-    return s << a.str();
-}
 
 }

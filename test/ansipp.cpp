@@ -21,7 +21,7 @@ TEST_CASE("format vs append", "[escape][!benchmark]") {
 
 TEST_CASE("position escapes") {
     REQUIRE( move(UP, 5) == "\33[5A" );
-    REQUIRE( move({ 5, 10 }) == "\33[5;10H" );
+    REQUIRE( move(5, 10) == "\33[5;10H" );
     REQUIRE( show_cursor() == "\33[?25h" );
     REQUIRE( hide_cursor() == "\33[?25l" );
     REQUIRE( save_position() == "\0337" );
@@ -33,4 +33,13 @@ TEST_CASE("colors") {
     REQUIRE( attrs().off().str() == "\033[0m" );
     REQUIRE( attrs().off(BOLD).str() == "\033[22m" );
     std::cout << attrs().off();
+}
+
+bool operator==(const rgb& a, const rgb& b) { return a.r == b.r && a.g == b.g && a.b == b.b; } 
+
+TEST_CASE("rgb::lerp") {
+    const rgb a = { 0, 0, 0 }, b = { 255, 255, 255 };
+    REQUIRE((rgb::lerp(a, b, 0.f) == a));
+    REQUIRE((rgb::lerp(a, b, 1.f) == b));
+    REQUIRE((rgb::lerp(a, b, 0.5f) == rgb { 127, 127, 127 }));
 }

@@ -15,3 +15,9 @@ target_sources(ansipp PUBLIC FILE_SET HEADERS BASE_DIRS ${INC} FILES
 testing(TARGETS ansipp SOURCES 
     ${TEST}/ansipp.cpp
 )
+
+option(BUILD_DEMO "Build demo program" ${PROJECT_IS_TOP_LEVEL})
+if(BUILD_DEMO)
+    add_executable(ansipp_demo demo/demo.cpp)
+    target_link_libraries(ansipp_demo ansipp)
+endif()

@@ -15,14 +15,13 @@ struct config {
     bool no_echo = true;
 };
 
-bool init(const config& cfg);
+bool init(const config& cfg = {});
 void restore();
 
 struct terminal_dimension {
     unsigned short rows;
     unsigned short cols;
 };
-
 std::ostream& operator<<(std::ostream& o, const terminal_dimension& d);
 
 terminal_dimension get_terminal_dimension();
@@ -31,18 +30,12 @@ struct cursor_position {
     unsigned short row;
     unsigned short col;
 };
-
 std::ostream& operator<<(std::ostream& o, const cursor_position& p);
 
 cursor_position get_cursor_position();
 
-constexpr std::string show_cursor() {
-    return "\33[?25h";
-}
-
-constexpr std::string hide_cursor() {
-    return "\33[?25l";
-}
+constexpr std::string show_cursor() { return "\033[?25h"; }
+constexpr std::string hide_cursor() { return "\033[?25l"; }
 
 enum move_mode: char {
     UP = 'A', 
@@ -56,47 +49,23 @@ enum move_mode: char {
     SCROLL_DOWN = 'T'
 };
 
-inline std::string move(move_mode mode, unsigned int amount) {
-    return std::string("\33[").append(std::to_string(amount)).append(1, static_cast<char>(mode));
-}
+std::string move(move_mode mode, unsigned int value = 1);
+std::string move(unsigned short row, unsigned short col);
+inline std::string move(const cursor_position& p) { return move(p.row, p.col); }
 
-inline std::string move(const cursor_position& p) {
-    return std::string("\33[")
-        .append(std::to_string(p.row)).append(1, ';')
-        .append(std::to_string(p.col)).append(1, 'H');
-}
+constexpr std::string save_position() { return "\0337"; }
+constexpr std::string restore_position() { return "\0338"; }
+constexpr std::string request_position() { return "\033[6n"; }
 
-constexpr std::string save_position() {
-    return "\0337";
-}
+constexpr std::string save_screen() { return "\033?47l"; }
+constexpr std::string restore_screen() { return "\033?47h"; }
 
-constexpr std::string restore_position() {
-    return "\0338";
-}
-
-constexpr std::string save_screen() {
-    return "\033?47l";
-}
-
-constexpr std::string restore_screen() {
-    return "\033?47h";
-}
-
-constexpr std::string enable_alternative_buffer() {
-    return "\033[?1049h";
-}
-
-constexpr std::string disable_alternative_buffer() {
-    return "\033[?1049l";
-}
-
-constexpr std::string request_position() {
-    return "\33[6n";
-}
+constexpr std::string enable_alternative_buffer() { return "\033[?1049h"; }
+constexpr std::string disable_alternative_buffer() { return "\033[?1049l"; }
 
 enum erase_target: char {
-    LINE = 'J',
-    SCREEN = 'K'
+    SCREEN = 'J',
+    LINE = 'K'
 };
 
 enum erase_mode: char {
@@ -135,6 +104,9 @@ struct rgb {
     unsigned char r;
     unsigned char g;
     unsigned char b;
+
+    static rgb lerp(const rgb& a, const rgb& b, float factor);
+
 };
 
 /**
@@ -213,6 +185,8 @@ public:
     inline operator const std::string&() { return str(); }
 
 };
-std::ostream& operator<<(std::ostream& s, attrs& a);
+
+inline std::ostream& operator<<(std::ostream& s, attrs&& a) { return s << a.str(); }
+inline std::ostream& operator<<(std::ostream& s, attrs& a) { return s << a.str(); }
 
 }
