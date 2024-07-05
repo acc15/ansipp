@@ -1,9 +1,7 @@
 #include <iostream>
 #include <optional>
-#include <atomic>
-
 #include <cmath>
-#include <ansipp.hpp>
+#include <cassert>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -13,6 +11,9 @@
     #include <unistd.h>
     #include <signal.h>
 #endif
+
+#include <ansipp.hpp>
+#include "ts_opt.hpp"
 
 namespace ansipp {
 
@@ -26,59 +27,46 @@ bool is_terminal() {
 }
 
 struct ansipp_restore {
-
 #ifdef _WIN32 // windows
-    std::optional<DWORD> in_modes;
-    std::optional<DWORD> out_modes;
-    std::atomic<UINT> in_cp = 0;
-    std::atomic<UINT> out_cp = 0;
+    tc_opt<DWORD> in_modes;
+    tc_opt<DWORD> out_modes;
+    tc_opt<UINT> in_cp = 0;
+    tc_opt<UINT> out_cp = 0;
 #else // posix
-    std::optional<tcflag_t> lflag;
+    ts_opt<tcflag_t> lflag;
 #endif
-
 } __ansipp_restore;
 
-const char __ansipp_reset[] = "\033[m\033[?25h";
+const std::string __ansipp_reset = attrs().str() + show_cursor();
 
 void restore_utf8() {
 #ifdef _WIN32 // windows
-    UINT in_cp = __ansipp_restore.in_cp.exchange(0);
-    if (in_cp != 0) {
-        SetConsoleCP(in_cp);
-    }
-    
-    UINT out_cp = __ansipp_restore.out_cp.exchange(0);
-    if (out_cp != 0) {
-        SetConsoleOutputCP(out_cp);
-    }
+    __ansipp_restore.in_cp.restore([](UINT in_cp) { SetConsoleCP(in_cp); });
+    __ansipp_restore.out_cp.restore([](UINT out_cp) { SetConsoleOutputCP(out_cp); });
 #endif
 }
 
 void restore_mode() {
 #ifdef _WIN32 // windows
-    if (__ansipp_restore.in_modes.has_value()) {
-        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), __ansipp_restore.in_modes.value());
-        __ansipp_restore.in_modes.reset();
-    }
-    if (__ansipp_restore.out_modes.has_value()) {
+    __ansipp_restore.in_modes.restore([](DWORD in_modes) {
+        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), in_modes);
+    });
+    __ansipp_restore.out_modes.restore([](DWORD out_modes) {
         SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), __ansipp_restore.out_modes.value());
-        __ansipp_restore.out_modes.reset();
-    }
+    });
 #else
-    if (__ansipp_restore.lflag.has_value()) {
+    __ansipp_restore.lflag.restore([](tcflag_t lflag) {
         termios p;
         if (tcgetattr(STDOUT_FILENO, &p) == 0) {
-            p.c_lflag = __ansipp_restore.lflag.value();
+            p.c_lflag = lflag;
             tcsetattr(STDOUT_FILENO, TCSANOW, &p);
         }
-        __ansipp_restore.lflag.reset();
-    }
+    });
 #endif
 }
 
-
 void restore() {
-    terminal_write(__ansipp_reset, sizeof(__ansipp_reset));
+    terminal_write(__ansipp_reset.data(), __ansipp_reset.size());
     restore_mode();
     restore_utf8();
 }
@@ -128,22 +116,22 @@ bool enable_utf8() {
 #ifdef _WIN32
 
     UINT in_cp = GetConsoleCP();
-    if (in_cp != 0 && in_cp != CP_UTF8) {
-        if (__ansipp_restore.in_cp.exchange(in_cp) != 0) {
-            // init was called twice?
-            return false;
-        }
+    if (in_cp == 0) {
+        return false;
+    }
+    if (in_cp != CP_UTF8) {
+        __ansipp_restore.in_cp.store(in_cp);
         if (!SetConsoleCP(CP_UTF8)) {
             return false;
         }
     }
 
     UINT out_cp = GetConsoleOutputCP();
-    if (out_cp != 0 && out_cp != CP_UTF8) {
-        if (__ansipp_restore.out_cp.exchange(out_cp) != 0) {
-            // init was called twice?
-            return false;
-        }
+    if (out_cp == 0) {
+        return false;
+    }
+    if (out_cp != CP_UTF8) {
+        __ansipp_restore.out_cp.store(out_cp);
         if (!SetConsoleOutputCP(CP_UTF8)) {
             return false;
         }
@@ -158,16 +146,12 @@ bool enable_sigint_restore() {
     return SetConsoleCtrlHandler(&sigint_control_handler, true);
 #else
     struct sigaction sa;
-    sa.sa_handler = &sigint_reset;
+    sa.sa_handler = &sigint_restore;
     return sigaction(SIGINT, &sa, nullptr) == 0;
 #endif
 }
 
-bool init(const config& cfg) {
-    if (cfg.enable_utf8 && !enable_utf8()) {
-        return false;
-    }
-
+bool configure_mode(const config& cfg) {
 #ifdef _WIN32 // windows
 
     HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
@@ -177,7 +161,7 @@ bool init(const config& cfg) {
         return false;
     }
 
-    __ansipp_restore.in_modes = in_modes;
+    __ansipp_restore.in_modes.store(in_modes);
     if (cfg.disable_input_echo) {
         in_modes &= ~(
             ENABLE_ECHO_INPUT | 
@@ -200,7 +184,7 @@ bool init(const config& cfg) {
         return false;
     }
 
-    __ansipp_restore.out_modes = out_modes;
+    __ansipp_restore.out_modes.store(out_modes);
     out_modes |= (ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
     if (!SetConsoleMode(out, out_modes)) {
         return false;
@@ -212,35 +196,39 @@ bool init(const config& cfg) {
         if (tcgetattr(STDOUT_FILENO, &p) != 0) {
             return false;
         }
-        __ansipp_restore.c_lflag = p.c_lflag;
+        __ansipp_restore.lflag.store(p.c_lflag);
         p.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL); 
         if (tcsetattr(STDOUT_FILENO, TCSANOW, &p) != 0) {
             return false;
         }
     }
 #endif
-    if (cfg.enable_sigint_restore && !enable_sigint_restore()) {
-        return false;
-    }
-    if (cfg.enable_exit_restore && std::atexit(&restore) != 0) {
-        return false;
-    }
-
     return true;
 }
 
+bool init(const config& cfg) {
+    if (cfg.enable_utf8 && !enable_utf8()) { return false; }
+    if (!configure_mode(cfg)) { return false; }
+    if (cfg.enable_exit_restore && std::atexit(&restore) != 0) { return false; }
+    if (cfg.enable_sigint_restore && !enable_sigint_restore()) { return false; }
+    return true;
+}
 
 terminal_dimension get_terminal_dimension() {
 #ifdef _WIN32
     CONSOLE_SCREEN_BUFFER_INFO ws;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ws);
+    if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ws)) {
+        return terminal_dimension {};
+    }
     return terminal_dimension {
         static_cast<unsigned short>(ws.srWindow.Bottom - ws.srWindow.Top + 1), 
         static_cast<unsigned short>(ws.srWindow.Right - ws.srWindow.Left + 1)
     };
 #else
     winsize ws;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1) {
+        return terminal_dimension {};
+    }
     return terminal_dimension { ws.ws_row, ws.ws_col };
 #endif
 }
@@ -271,7 +259,6 @@ attrs& attrs::a(unsigned int param) {
     value.append(std::to_string(param));
     return *this;
 }
-
 
 std::size_t terminal_write(const void* buf, std::size_t sz) {
 #ifdef _WIN32

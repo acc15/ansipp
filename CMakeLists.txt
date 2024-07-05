@@ -5,7 +5,8 @@ configure_defaults(WITH_SHARED_LIBS)
 
 add_library(ansipp)
 target_sources(ansipp PRIVATE 
-    ${SRC}/ansipp.cpp
+    ${SRC}/ansipp.cpp 
+    ${SRC}/ts_opt.hpp
 )
 
 target_sources(ansipp PUBLIC FILE_SET HEADERS BASE_DIRS ${INC} FILES
