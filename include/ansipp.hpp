@@ -4,6 +4,11 @@
 namespace ansipp {
 
 /**
+ * @brief formats last error message (`GetLastError()` on windows, `errno` on POSIX)
+ */
+std::string format_last_error();
+
+/**
  * @brief checks whether stdin and stdout attached to terminal
  */
 bool is_terminal();

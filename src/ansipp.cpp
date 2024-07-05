@@ -26,7 +26,8 @@ bool is_terminal() {
 struct ansipp_restore {
 
 #ifdef _WIN32 // windows
-    std::optional<DWORD> modes;
+    std::optional<DWORD> in_modes;
+    std::optional<DWORD> out_modes;
 #else // posix
     std::optional<tcflag_t> c_lflag;
     std::optional<struct sigaction> old_sigint; 
@@ -43,35 +44,76 @@ void sigint_reset(int code) {
 }
 #endif
 
+std::string format_last_error() {
+#ifdef _WIN32
+    DWORD code = GetLastError();
+    
+    LPSTR temp_buf = nullptr;
+
+    //Ask Win32 to give us the string version of that message ID.
+    //The parameters we pass in, tell Win32 to create the buffer that holds the message for us (because we don't yet know how long the message string will be).
+    DWORD sz = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL, code, 
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
+        reinterpret_cast<LPSTR>(&temp_buf), 
+        0, 
+        NULL);
+    
+    //Copy the error message into a std::string.
+    std::string message(temp_buf, sz);
+    
+    //Free the Win32's string's buffer.
+    LocalFree(temp_buf);
+
+    return message;
+#else
+    return std::string(strerror(errno));
+#endif
+}
+
 bool init(const config& cfg) {
 #ifdef _WIN32 // windows
-    HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
     
-    DWORD dwModes;
-    if (!GetConsoleMode(out, &dwModes)) {
+    DWORD in_modes;
+    if (!GetConsoleMode(in, &in_modes)) {
         return false;
     }
 
-    __ansipp_restore.modes = dwModes;
+    __ansipp_restore.in_modes = in_modes;
     if (cfg.disable_input_echo) {
-        dwModes &= ~(
+        in_modes &= ~(
             ENABLE_ECHO_INPUT | 
             ENABLE_INSERT_MODE | 
             ENABLE_LINE_INPUT | 
-            ENABLE_QUICK_EDIT_MODE
+            ENABLE_QUICK_EDIT_MODE |
+            ENABLE_WINDOW_INPUT 
         );
-        dwModes |= DISABLE_NEWLINE_AUTO_RETURN;
     }
+    in_modes |= (ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT);
+
+    if (!SetConsoleMode(in, in_modes)) {
+        return false;
+    }
+
+    HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+    
+    DWORD out_modes;
+    if (!GetConsoleMode(out, &out_modes)) {
+        return false;
+    }
+
+    __ansipp_restore.out_modes = out_modes;
     
     // forcibly enable virtual terminal processing
-    dwModes |= (
-        ENABLE_VIRTUAL_TERMINAL_PROCESSING | 
-        ENABLE_VIRTUAL_TERMINAL_INPUT |
-        ENABLE_PROCESSED_OUTPUT | 
-        ENABLE_PROCESSED_INPUT
-    );
+    out_modes |= (ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
-    return SetConsoleMode(out, dwModes);
+    std::cout << "SetConsoleMode: " << std::hex << "0x" << out_modes << std::endl;
+    if (!SetConsoleMode(out, out_modes)) {
+        std::cout << "SetConsoleMode fail" << std::endl;
+        return false;
+    }
+    std::cout << "SetConsoleMode OK" << std::endl;
 #else // posix
     if (cfg.disable_input_echo) {
         termios p;
@@ -91,8 +133,8 @@ bool init(const config& cfg) {
             __ansipp_restore.old_sigint = osa;
         }
     }
-    return true;
 #endif
+    return true;
 }
 
 void restore() {
