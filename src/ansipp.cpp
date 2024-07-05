@@ -9,6 +9,7 @@
     #include <sys/ioctl.h>
     #include <termios.h>
     #include <unistd.h>
+    #include <signal.h>
 #endif
 
 namespace ansipp {
@@ -28,9 +29,17 @@ struct ansipp_restore {
     std::optional<DWORD> modes;
 #else // posix
     std::optional<tcflag_t> c_lflag;
+    std::optional<struct sigaction> old_sigint; 
 #endif
 
 } __ansipp_restore;
+
+const char __ansipp_reset[] = "\033[m\033[?25h";
+
+void sigint_reset(int code) {
+    write(STDOUT_FILENO, __ansipp_reset, sizeof(__ansipp_reset));
+    std::_Exit(0x80 + code);
+}
 
 bool init(const config& cfg) {
 #ifdef _WIN32 // windows
@@ -73,12 +82,19 @@ bool init(const config& cfg) {
             return false;
         }
     }
+    if (cfg.enable_sigint_reset) {
+        struct sigaction sa = { {&sigint_reset}, 0, 0 };
+        struct sigaction osa;
+        if (sigaction(SIGINT, &sa, &osa) == 0) {
+            __ansipp_restore.old_sigint = osa;
+        }
+    }
     return true;
 #endif
 }
 
 void restore() {
-    std::cout << attrs() << show_cursor() << std::flush;
+    std::cout << __ansipp_reset << std::flush;
     
 #ifdef _WIN32 // windows
     if (__ansipp_restore.modes.has_value()) {

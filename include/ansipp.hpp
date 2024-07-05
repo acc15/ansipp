@@ -16,10 +16,17 @@ struct config {
     bool disable_input_echo = true;
 
     /**
-     * @brief enables SIGINT signal handler which resets attributes and shows cursor (if it was hidden)
+     * @brief enables SIGINT signal handler which reset colors/styles and makes cursor visible (if it was hidden)
      */
-    bool enable_sigint_restore = true;
+    bool enable_sigint_reset = true;
 
+};
+
+enum init_status {
+    OK,
+    NOT_TERMINAL,
+    ERROR_DISABLE_ECHO,
+    ERROR_SIGINT
 };
 
 bool init(const config& cfg = {});

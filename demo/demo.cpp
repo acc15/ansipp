@@ -4,7 +4,6 @@
 
 #include <cstdlib>
 #include <unistd.h>
-#include <signal.h>
 
 using namespace ansipp;
 
@@ -14,19 +13,9 @@ void gradient(const rgb& a, const rgb& b, size_t width) {
     }
 }
 
-const char reset_seq[] = "\033[m\033[?25h";
-
-void on_sigint(int code) {
-    write(STDOUT_FILENO, reset_seq, sizeof(reset_seq));
-    std::_Exit(128 + code);
-}
-
 int run() {
 
     init();
-
-    struct sigaction sa_sigint = { {&on_sigint}, 0, 0 };
-    sigaction(SIGINT, &sa_sigint, nullptr);
 
     std::cout << hide_cursor();
     std::cout << attrs().on(UNDERLINE).fg(WHITE) << "hello" << attrs() << std::endl;
