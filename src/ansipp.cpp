@@ -71,38 +71,11 @@ void restore() {
     restore_utf8();
 }
 
-void sigint_restore(int code) {
-    restore();
-    std::_Exit(0x80 + code);
-}
-
+std::error_code last_error() {
 #ifdef _WIN32
-int sigint_control_handler(DWORD ctrl_code) {
-    if (ctrl_code == CTRL_C_EVENT) {
-        sigint_restore(2);
-    }
-    return false;
-}
-#endif
-
-std::string format_last_error() {
-#ifdef _WIN32
-    DWORD code = GetLastError();
-
-    LPSTR temp_buf = nullptr;
-    DWORD sz = FormatMessageA(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL, code, 
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
-        reinterpret_cast<LPSTR>(&temp_buf), 
-        0, 
-        NULL);
-    
-    std::string message(temp_buf, sz);
-    LocalFree(temp_buf);
-    return message;
+    return std::error_code(GetLastError(), std::system_category());
 #else
-    return std::string(strerror(errno));
+    return std::error_code(errno, std::system_category());
 #endif
 }
 
@@ -134,6 +107,21 @@ bool enable_utf8() {
 #endif
     return true;
 }
+
+
+void sigint_restore(int code) {
+    restore();
+    std::_Exit(0x80 + code);
+}
+
+#ifdef _WIN32
+int sigint_control_handler(DWORD ctrl_code) {
+    if (ctrl_code == CTRL_C_EVENT) {
+        sigint_restore(2);
+    }
+    return false;
+}
+#endif
 
 bool enable_sigint_restore() {
 #ifdef _WIN32 
@@ -211,19 +199,16 @@ bool init(const config& cfg) {
 terminal_dimension get_terminal_dimension() {
 #ifdef _WIN32
     CONSOLE_SCREEN_BUFFER_INFO ws;
-    if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ws)) {
-        return terminal_dimension {};
-    }
-    return terminal_dimension {
-        static_cast<unsigned short>(ws.srWindow.Bottom - ws.srWindow.Top + 1), 
-        static_cast<unsigned short>(ws.srWindow.Right - ws.srWindow.Left + 1)
-    };
+    return GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ws) 
+        ? terminal_dimension {
+            static_cast<unsigned short>(ws.srWindow.Bottom - ws.srWindow.Top + 1),
+            static_cast<unsigned short>(ws.srWindow.Right - ws.srWindow.Left + 1)
+        } : terminal_dimension {};
 #else
     winsize ws;
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1) {
-        return terminal_dimension {};
-    }
-    return terminal_dimension { ws.ws_row, ws.ws_col };
+    return ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) != -1 
+        ? terminal_dimension { ws.ws_row, ws.ws_col }
+        : terminal_dimension {};
 #endif
 }
 
