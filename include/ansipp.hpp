@@ -52,8 +52,8 @@ inline std::ostream& operator<<(std::ostream& o, const cursor_position& p) {
 
 cursor_position get_cursor_position();
 
-constexpr std::string show_cursor() { return "\033[?25h"; }
-constexpr std::string hide_cursor() { return "\033[?25l"; }
+inline std::string show_cursor() { return "\33" "[?25h"; }
+inline std::string hide_cursor() { return "\33" "[?25l"; }
 
 enum move_mode: char {
     UP = 'A', 
@@ -68,26 +68,26 @@ enum move_mode: char {
 };
 
 inline std::string move(move_mode mode, unsigned int value = 1) {
-    return std::string("\33[").append(std::to_string(value)).append(1, static_cast<char>(mode));
+    return std::string("\33" "[").append(std::to_string(value)).append(1, static_cast<char>(mode));
 }
 
 inline std::string move(unsigned short row, unsigned short col) {
-    return std::string("\33[")
+    return std::string("\33" "[")
         .append(std::to_string(row)).append(1, ';')
         .append(std::to_string(col)).append(1, 'H');
 }
 
 inline std::string move(const cursor_position& p) { return move(p.row, p.col); }
 
-constexpr std::string save_position() { return "\0337"; }
-constexpr std::string restore_position() { return "\0338"; }
-constexpr std::string request_position() { return "\033[6n"; }
+inline std::string save_position() { return "\33" "7"; }
+inline std::string restore_position() { return "\33" "8"; }
+inline std::string request_position() { return "\33" "[6n"; }
 
-constexpr std::string save_screen() { return "\033[?47h"; }
-constexpr std::string restore_screen() { return "\033[?47l"; }
+inline std::string save_screen() { return "\33" "[?47h"; }
+inline std::string restore_screen() { return "\33" "[?47l"; }
 
-constexpr std::string enable_alternative_buffer() { return "\033[?1049h"; }
-constexpr std::string disable_alternative_buffer() { return "\033[?1049l"; }
+inline std::string enable_alternative_buffer() { return "\33" "[?1049h"; }
+inline std::string disable_alternative_buffer() { return "\33" "[?1049l"; }
 
 enum erase_target: char {
     SCREEN = 'J',
@@ -100,8 +100,8 @@ enum erase_mode: char {
     ALL = '2'
 };
 
-constexpr std::string erase(erase_target target, erase_mode mode) {
-    return std::string("\33[").append(1, static_cast<char>(mode)).append(1, static_cast<char>(target));
+inline std::string erase(erase_target target, erase_mode mode) {
+    return std::string("\33" "[").append(1, static_cast<char>(mode)).append(1, static_cast<char>(target));
 }
 
 enum style {

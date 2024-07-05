@@ -36,10 +36,12 @@ struct ansipp_restore {
 
 const char __ansipp_reset[] = "\033[m\033[?25h";
 
+#ifndef _WIN32
 void sigint_reset(int code) {
     write(STDOUT_FILENO, __ansipp_reset, sizeof(__ansipp_reset));
     std::_Exit(0x80 + code);
 }
+#endif
 
 bool init(const config& cfg) {
 #ifdef _WIN32 // windows
@@ -117,7 +119,10 @@ terminal_dimension get_terminal_dimension() {
 #ifdef _WIN32
     CONSOLE_SCREEN_BUFFER_INFO ws;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ws);
-    return terminal_dimension { ws.srWindow.Bottom - ws.srWindow.Top + 1, ws.srWindow.Right - ws.srWindow.Left + 1 };
+    return terminal_dimension {
+        static_cast<unsigned short>(ws.srWindow.Bottom - ws.srWindow.Top + 1), 
+        static_cast<unsigned short>(ws.srWindow.Right - ws.srWindow.Left + 1)
+    };
 #else
     winsize ws;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
@@ -155,7 +160,7 @@ attrs& attrs::a(unsigned int param) {
 std::size_t read_stdin(void* buf, std::size_t sz) {
 #ifdef _WIN32
     DWORD dwRead;
-    ReadConsole(GetStdHandle(STD_INPUT_HANDLE), buf, sz, &dwRead, nullptr);
+    ReadConsole(GetStdHandle(STD_INPUT_HANDLE), buf, static_cast<DWORD>(sz), &dwRead, nullptr);
     return dwRead;
 #else
     return read(STDIN_FILENO, buf, sz);

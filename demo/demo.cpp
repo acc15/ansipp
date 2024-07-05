@@ -3,7 +3,10 @@
 #include <ansipp.hpp>
 
 #include <cstdlib>
-#include <unistd.h>
+
+#ifndef _WIN32
+#   include <unistd.h>
+#endif
 
 using namespace ansipp;
 

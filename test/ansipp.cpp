@@ -48,19 +48,19 @@ TEST_CASE("attrs format", "[!benchmark]") {
 }
 
 TEST_CASE("position escapes") {
-    REQUIRE( move(UP, 5) == "\33[5A" );
-    REQUIRE( move(5, 10) == "\33[5;10H" );
-    REQUIRE( show_cursor() == "\33[?25h" );
-    REQUIRE( hide_cursor() == "\33[?25l" );
-    REQUIRE( save_position() == "\0337" );
-    REQUIRE( restore_position() == "\0338" );
+    REQUIRE( move(UP, 5) == "\33" "[5A" );
+    REQUIRE( move(5, 10) == "\33" "[5;10H" );
+    REQUIRE( show_cursor() == "\33" "[?25h" );
+    REQUIRE( hide_cursor() == "\33" "[?25l" );
+    REQUIRE( save_position() == "\33" "7" );
+    REQUIRE( restore_position() == "\33" "8" );
 }
 
 TEST_CASE("colors") {
-    REQUIRE( attrs().str() == "\033[m" );
-    REQUIRE( attrs().fg(RED).bg(BLUE).on(BOLD).str() == "\033[31;44;1m" );
-    REQUIRE( attrs().off().str() == "\033[0m" );
-    REQUIRE( attrs().off(BOLD).str() == "\033[22m" );
+    REQUIRE( attrs().str() == "\33" "[m" );
+    REQUIRE( attrs().fg(RED).bg(BLUE).on(BOLD).str() == "\33" "[31;44;1m" );
+    REQUIRE( attrs().off().str() == "\33" "[0m" );
+    REQUIRE( attrs().off(BOLD).str() == "\33" "[22m" );
     std::cout << attrs().off();
 }
 
