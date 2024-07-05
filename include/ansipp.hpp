@@ -11,16 +11,14 @@ bool is_terminal();
 struct config {
     
     /**
-     * @brief enables/disables terminal input echo
+     * @brief disables terminal input echo
      */
-    bool input_echo = false;
+    bool disable_input_echo = true;
 
     /**
-     * @brief enables/disables sync with stdio for `std::cout` and `std::cin`.
-     * 
-     * This allows to use `std::cin.readsome()`, `std::cin.rdbuf()->in_avail()`, etc
+     * @brief enables SIGINT signal handler which resets attributes and shows cursor (if it was hidden)
      */
-    bool sync_with_stdio = false;
+    bool enable_sigint_restore = true;
 
 };
 
@@ -78,8 +76,8 @@ constexpr std::string save_position() { return "\0337"; }
 constexpr std::string restore_position() { return "\0338"; }
 constexpr std::string request_position() { return "\033[6n"; }
 
-constexpr std::string save_screen() { return "\033?47l"; }
-constexpr std::string restore_screen() { return "\033?47h"; }
+constexpr std::string save_screen() { return "\033[?47h"; }
+constexpr std::string restore_screen() { return "\033[?47l"; }
 
 constexpr std::string enable_alternative_buffer() { return "\033[?1049h"; }
 constexpr std::string disable_alternative_buffer() { return "\033[?1049l"; }
@@ -208,5 +206,16 @@ public:
 };
 inline std::ostream& operator<<(std::ostream& s, attrs&& a) { return s << a.str(); }
 inline std::ostream& operator<<(std::ostream& s, attrs& a) { return s << a.str(); }
+
+/**
+ * @brief simple function to read raw bytes from stdin
+ *
+ * Useful for reading keys (escape sequences) from stdin.
+ * 
+ * - `fread` - will wait until full buffer will be filled
+ * - `std::cin.readsome()` - doesn't work by default in Linux (requires `std::cin.sync_with_stdio(false)`), 
+ *      and never works on MacOS 
+ */
+size_t read_stdin(void* buf, size_t sz);
 
 }

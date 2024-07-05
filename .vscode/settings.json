@@ -4,5 +4,14 @@
     ],
     "cmake.debugConfig": {
         "args": ["[\\!benchmark]"]
+    },
+    "files.associations": {
+        "*.cppm": "cpp",
+        "*.ccm": "cpp",
+        "*.sublime-menu": "jsonc",
+        "*.sublime-settings": "jsonc",
+        "ios": "cpp",
+        "string": "cpp",
+        "iostream": "cpp"
     }
 }

@@ -42,7 +42,7 @@ bool init(const config& cfg) {
     }
 
     __ansipp_restore.modes = dwModes;
-    if (!cfg.input_echo) {
+    if (cfg.disable_input_echo) {
         dwModes &= ~(
             ENABLE_ECHO_INPUT | 
             ENABLE_INSERT_MODE | 
@@ -62,7 +62,7 @@ bool init(const config& cfg) {
 
     return SetConsoleMode(out, dwModes);
 #else // posix
-    if (!cfg.input_echo) {
+    if (cfg.disable_input_echo) {
         termios p;
         if (tcgetattr(STDOUT_FILENO, &p) != 0) {
             return false;
@@ -134,6 +134,16 @@ attrs& attrs::a(unsigned int param) {
     }
     value.append(std::to_string(param));
     return *this;
+}
+
+std::size_t read_stdin(void* buf, std::size_t sz) {
+#ifdef _WIN32
+    DWORD dwRead;
+    ReadConsole(GetStdHandle(STD_INPUT_HANDLE), buf, sz, &dwRead, nullptr);
+    return dwRead;
+#else
+    return read(STDIN_FILENO, buf, sz);
+#endif
 }
 
 }

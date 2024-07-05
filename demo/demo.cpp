@@ -2,6 +2,10 @@
 #include <iomanip>
 #include <ansipp.hpp>
 
+#include <cstdlib>
+#include <unistd.h>
+#include <signal.h>
+
 using namespace ansipp;
 
 void gradient(const rgb& a, const rgb& b, size_t width) {
@@ -10,12 +14,19 @@ void gradient(const rgb& a, const rgb& b, size_t width) {
     }
 }
 
-int main() {
+const char reset_seq[] = "\033[m\033[?25h";
 
-    std::cin.sync_with_stdio(false);
-    std::cout.sync_with_stdio(false);
+void on_sigint(int code) {
+    write(STDOUT_FILENO, reset_seq, sizeof(reset_seq));
+    std::_Exit(128 + code);
+}
+
+int run() {
 
     init();
+
+    struct sigaction sa_sigint = { {&on_sigint}, 0, 0 };
+    sigaction(SIGINT, &sa_sigint, nullptr);
 
     std::cout << hide_cursor();
     std::cout << attrs().on(UNDERLINE).fg(WHITE) << "hello" << attrs() << std::endl;
@@ -35,10 +46,9 @@ int main() {
     std::cout << "type something" << std::endl;
 
     std::string seq_buf;
-    seq_buf.resize(16);
     do {
-        std::cin.peek();
-        seq_buf.resize(std::cin.readsome(seq_buf.data(), seq_buf.capacity()));
+        seq_buf.resize(20);
+        seq_buf.resize(read_stdin(seq_buf.data(), seq_buf.size()));
         std::cout << save_position() 
             << move(UP) << move(TO_COLUMN, 0) << erase(LINE, ALL) << std::dec << seq_buf.size() << " chars received:";
         for (const char& c: seq_buf) {
@@ -51,4 +61,13 @@ int main() {
 
     restore();
     return 0;
+}
+
+int main() {
+    try {
+        return run();
+    } catch (const std::exception& e) {
+        std::cerr << "unexpected error: " << e.what() << std::endl; 
+        return EXIT_FAILURE;
+    }
 }
