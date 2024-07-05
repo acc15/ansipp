@@ -45,18 +45,15 @@ enum init_status {
 };
 
 bool init(const config &cfg = {});
-bool NewFunction(const ansipp::config &cfg, bool &retFlag);
 void restore();
 
-struct terminal_dimension
-{
+struct terminal_dimension {
     unsigned short rows;
     unsigned short cols;
 };
 inline std::ostream& operator<<(std::ostream& o, const terminal_dimension& d) {
     return o << d.cols << "x" << d.rows;
 }
-
 terminal_dimension get_terminal_dimension();
 
 struct cursor_position {
@@ -66,7 +63,6 @@ struct cursor_position {
 inline std::ostream& operator<<(std::ostream& o, const cursor_position& p) {
     return o << p.col << "," << p.row;
 }
-
 cursor_position get_cursor_position();
 
 inline std::string show_cursor() { return "\33" "[?25h"; }
@@ -205,26 +201,125 @@ class attrs {
     inline unsigned int cb(bool bg, unsigned int base = 38) { return base + (bg ? 10 : 0); }
 
 public:
+
+    /**
+     * @brief sets specified foreground/background color
+     * @param bg `false` - foreground, `true` - background
+     * @param v color to set
+     * @param bright bright mode (odd terminal support)
+     * @return self
+     */
     inline attrs& c(bool bg, color v, bool bright) { return a(cb(bg, 30) + (bright ? 90 : 0) + v); }
+    
+    /**
+     * @brief sets specified foreground/background RGB color
+     * @param bg `false` - foreground, `true` - background
+     * @param v color to set
+     * @return self
+     */
     inline attrs& c(bool bg, const rgb& v) { return a(cb(bg)).a(2).a(v.r).a(v.g).a(v.b); }
+    
+    /**
+     * @brief sets specified foreground/background 8-bit color
+     * @param bg `false` - foreground, `true` - background
+     * @param v color to set
+     * @return self
+     */
     inline attrs& c(bool bg, unsigned char v) { return a(cb(bg)).a(5).a(v); }
+    
+    /**
+     * @brief sets default foreground/background color
+     * @param bg `false` - foreground, `true` - background
+     * @return self
+     */
     inline attrs& c(bool bg) { return a(cb(bg, 39)); }
 
+    /**
+     * @brief sets specified foreground color
+     * @param v color to set
+     * @param bright bright mode (odd terminal support)
+     * @return self
+     */
     inline attrs& fg(color v, bool bright = false) { return c(false, v, bright); }
+    
+    /**
+     * @brief sets specified foreground RGB color
+     * @param v color to set
+     * @return self
+     */
     inline attrs& fg(const rgb& v) { return c(false, v); }
+
+    /**
+     * @brief sets specified foreground 8-bit color
+     * @param v color to set
+     * @return self
+     */
     inline attrs& fg(unsigned char v) { return c(false, v); }
+    
+    /**
+     * @brief sets default foreground color
+     * @return self
+     */
     inline attrs& fg() { return c(false); }
 
+    /**
+     * @brief sets specified background color
+     * @param v color to set
+     * @param bright bright mode (odd terminal support)
+     * @return self
+     */
     inline attrs& bg(color v, bool bright = false) { return c(true, v, bright); }
+    
+    /**
+     * @brief sets specified background RGB color
+     * @param v color to set
+     * @return self
+     */
     inline attrs& bg(const rgb& v) { return c(true, v); }
+    
+    /**
+     * @brief sets specified background 8-bit color
+     * @param v color to set
+     * @return self
+     */
     inline attrs& bg(unsigned char v) { return c(true, v); }
+    
+    /**
+     * @brief sets default background color
+     * @return self
+     */
     inline attrs& bg() { return c(true); }
 
+    /**
+     * @brief enables specified style
+     * @param s style to enable
+     * @return self
+     */
     inline attrs& on(style s) { return a(static_cast<unsigned int>(s)); }
+    
+    /**
+     * @brief disables specified style
+     * @param s style to disable
+     * @return self
+     */
     inline attrs& off(style s) { return a(20 + static_cast<unsigned int>(s == style::BOLD ? style::DIM : s)); }
+
+    /**
+     * @brief disables all styles and colors
+     * @return self
+     */
     inline attrs& off() { return a(0); }
 
+    /**
+     * @brief builds ansi sequence
+     * @return ansi sequence 
+     */
     inline const std::string& str() { return value.append(1, 'm'); }
+    
+    /**
+     * @brief builds ansi sequence
+     * @return ansi sequence 
+     */
     inline operator const std::string&() { return str(); }
 
 };
@@ -232,7 +327,7 @@ inline std::ostream& operator<<(std::ostream& s, attrs&& a) { return s << a.str(
 inline std::ostream& operator<<(std::ostream& s, attrs& a) { return s << a.str(); }
 
 /**
- * @brief simple function to write raw bytes from stdout
+ * @brief simple non-bufferring function to write raw bytes to stdout
  *
  * Useful for writing escape sequences.
  * It's safe to use this function in signal handler.
@@ -244,7 +339,7 @@ inline std::ostream& operator<<(std::ostream& s, attrs& a) { return s << a.str()
 size_t terminal_write(const void* buf, size_t sz);
 
 /**
- * @brief simple function to read raw bytes from stdin
+ * @brief simple non-bufferring function to read raw bytes from stdin.
  *
  * Useful for reading keys (escape sequences) from stdin.
  * 
