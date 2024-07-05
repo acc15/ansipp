@@ -12,6 +12,19 @@
         "*.sublime-settings": "jsonc",
         "ios": "cpp",
         "string": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "optional": "cpp",
+        "algorithm": "cpp",
+        "atomic": "cpp",
+        "charconv": "cpp",
+        "cmath": "cpp",
+        "compare": "cpp",
+        "format": "cpp",
+        "memory": "cpp",
+        "utility": "cpp",
+        "xmemory": "cpp",
+        "xutility": "cpp",
+        "xstring": "cpp",
+        "ostream": "cpp"
     }
 }

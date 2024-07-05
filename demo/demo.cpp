@@ -43,7 +43,7 @@ int run() {
     std::string seq_buf;
     do {
         seq_buf.resize(20);
-        seq_buf.resize(read_stdin(seq_buf.data(), seq_buf.size()));
+        seq_buf.resize(terminal_read(seq_buf.data(), seq_buf.size()));
         std::cout << save_position() 
             << move(UP) << move(TO_COLUMN, 0) << erase(LINE, ALL) << std::dec << seq_buf.size() << " chars received:";
         for (const char& c: seq_buf) {

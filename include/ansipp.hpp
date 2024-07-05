@@ -220,6 +220,18 @@ inline std::ostream& operator<<(std::ostream& s, attrs&& a) { return s << a.str(
 inline std::ostream& operator<<(std::ostream& s, attrs& a) { return s << a.str(); }
 
 /**
+ * @brief simple function to write raw bytes from stdout
+ *
+ * Useful for writing escape sequences.
+ * It's safe to use this function in signal handler.
+ * 
+ * @param buf buffer to write
+ * @param sz amount of bytes to write
+ * @return actual amount of bytes was written, or `0` in case of `EOF` or any error
+ */
+size_t terminal_write(const void* buf, size_t sz);
+
+/**
  * @brief simple function to read raw bytes from stdin
  *
  * Useful for reading keys (escape sequences) from stdin.
@@ -227,7 +239,11 @@ inline std::ostream& operator<<(std::ostream& s, attrs& a) { return s << a.str()
  * - `fread` - will wait until full buffer will be filled
  * - `std::cin.readsome()` - doesn't work by default in Linux (requires `std::cin.sync_with_stdio(false)`), 
  *      and never works on MacOS 
+ * 
+ * @param buf buffer to read
+ * @param sz maximum amount of bytes to read
+ * @return actual amount of bytes was read, or `0` in case of `EOF` or any error
  */
-size_t read_stdin(void* buf, size_t sz);
+size_t terminal_read(void* buf, size_t sz);
 
 }

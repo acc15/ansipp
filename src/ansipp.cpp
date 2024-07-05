@@ -38,8 +38,8 @@ struct ansipp_restore {
 const char __ansipp_reset[] = "\033[m\033[?25h";
 
 #ifndef _WIN32
-void sigint_reset(int code) {
-    write(STDOUT_FILENO, __ansipp_reset, sizeof(__ansipp_reset));
+void sigint_restore(int code) {
+    restore();
     std::_Exit(0x80 + code);
 }
 #endif
@@ -91,7 +91,6 @@ bool init(const config& cfg) {
         );
     }
     in_modes |= (ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT);
-
     if (!SetConsoleMode(in, in_modes)) {
         return false;
     }
@@ -104,16 +103,10 @@ bool init(const config& cfg) {
     }
 
     __ansipp_restore.out_modes = out_modes;
-    
-    // forcibly enable virtual terminal processing
     out_modes |= (ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-
-    std::cout << "SetConsoleMode: " << std::hex << "0x" << out_modes << std::endl;
     if (!SetConsoleMode(out, out_modes)) {
-        std::cout << "SetConsoleMode fail" << std::endl;
         return false;
     }
-    std::cout << "SetConsoleMode OK" << std::endl;
 #else // posix
     if (cfg.disable_input_echo) {
         termios p;
@@ -138,12 +131,16 @@ bool init(const config& cfg) {
 }
 
 void restore() {
-    std::cout << __ansipp_reset << std::flush;
+    terminal_write(__ansipp_reset, sizeof(__ansipp_reset));
     
 #ifdef _WIN32 // windows
-    if (__ansipp_restore.modes.has_value()) {
-        SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), __ansipp_restore.modes.value());
-        __ansipp_restore.modes.reset();
+    if (__ansipp_restore.in_modes.has_value()) {
+        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), __ansipp_restore.in_modes.value());
+        __ansipp_restore.in_modes.reset();
+    }
+    if (__ansipp_restore.out_modes.has_value()) {
+        SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), __ansipp_restore.out_modes.value());
+        __ansipp_restore.out_modes.reset();
     }
 #else
     if (__ansipp_restore.c_lflag.has_value()) {
@@ -199,13 +196,24 @@ attrs& attrs::a(unsigned int param) {
     return *this;
 }
 
-std::size_t read_stdin(void* buf, std::size_t sz) {
+
+std::size_t terminal_write(const void* buf, std::size_t sz) {
 #ifdef _WIN32
-    DWORD dwRead;
-    ReadConsole(GetStdHandle(STD_INPUT_HANDLE), buf, static_cast<DWORD>(sz), &dwRead, nullptr);
-    return dwRead;
+    DWORD result;
+    return WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buf, static_cast<DWORD>(sz), &result, nullptr) ? result : 0;
 #else
-    return read(STDIN_FILENO, buf, sz);
+    ssize_t result = write(STDOUT_FILENO, buf, sz);
+    return result < 0 ? 0 : result;
+#endif
+}
+
+std::size_t terminal_read(void* buf, std::size_t sz) {
+#ifdef _WIN32
+    DWORD result;
+    return ReadFile(GetStdHandle(STD_INPUT_HANDLE), buf, static_cast<DWORD>(sz), &result, nullptr) ? result : 0;
+#else
+    ssize_t result = read(STDIN_FILENO, buf, sz);
+    return result < 0 ? 0 : result;
 #endif
 }
 
