@@ -7,7 +7,7 @@ namespace ansipp {
 
 template <typename T>
 struct ts_opt {
-    std::atomic<T> value;
+    std::atomic<T> value = {};
     std::atomic_bool is_set = false;
 
     static_assert(std::atomic<T>::is_always_lock_free, "atomic type is not lock-free");

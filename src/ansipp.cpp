@@ -28,10 +28,10 @@ bool is_terminal() {
 
 struct ansipp_restore {
 #ifdef _WIN32 // windows
-    tc_opt<DWORD> in_modes;
-    tc_opt<DWORD> out_modes;
-    tc_opt<UINT> in_cp = 0;
-    tc_opt<UINT> out_cp = 0;
+    ts_opt<DWORD> in_modes;
+    ts_opt<DWORD> out_modes;
+    ts_opt<UINT> in_cp;
+    ts_opt<UINT> out_cp;
 #else // posix
     ts_opt<tcflag_t> lflag;
 #endif
@@ -52,7 +52,7 @@ void restore_mode() {
         SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), in_modes);
     });
     __ansipp_restore.out_modes.restore([](DWORD out_modes) {
-        SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), __ansipp_restore.out_modes.value());
+        SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), out_modes);
     });
 #else
     __ansipp_restore.lflag.restore([](tcflag_t lflag) {
@@ -88,24 +88,18 @@ int sigint_control_handler(DWORD ctrl_code) {
 std::string format_last_error() {
 #ifdef _WIN32
     DWORD code = GetLastError();
-    
-    LPSTR temp_buf = nullptr;
 
-    //Ask Win32 to give us the string version of that message ID.
-    //The parameters we pass in, tell Win32 to create the buffer that holds the message for us (because we don't yet know how long the message string will be).
-    DWORD sz = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+    LPSTR temp_buf = nullptr;
+    DWORD sz = FormatMessageA(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL, code, 
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
         reinterpret_cast<LPSTR>(&temp_buf), 
         0, 
         NULL);
     
-    //Copy the error message into a std::string.
     std::string message(temp_buf, sz);
-    
-    //Free the Win32's string's buffer.
     LocalFree(temp_buf);
-
     return message;
 #else
     return std::string(strerror(errno));
