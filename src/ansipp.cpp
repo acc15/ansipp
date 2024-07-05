@@ -109,26 +109,26 @@ bool enable_utf8() {
 }
 
 
-void sigint_restore(int code) {
+void signal_restore(int code) {
     restore();
     std::_Exit(0x80 + code);
 }
 
 #ifdef _WIN32
-int sigint_control_handler(DWORD ctrl_code) {
+int signal_control_handler(DWORD ctrl_code) {
     if (ctrl_code == CTRL_C_EVENT) {
-        sigint_restore(2);
+        signal_restore(2);
     }
     return false;
 }
 #endif
 
-bool enable_sigint_restore() {
+bool enable_signal_restore() {
 #ifdef _WIN32 
-    return SetConsoleCtrlHandler(&sigint_control_handler, true);
+    return SetConsoleCtrlHandler(&signal_control_handler, true);
 #else
     struct sigaction sa;
-    sa.sa_handler = &sigint_restore;
+    sa.sa_handler = &signal_restore;
     return sigaction(SIGINT, &sa, nullptr) == 0;
 #endif
 }
@@ -190,7 +190,7 @@ bool configure_mode(const config& cfg) {
 
 bool init(const config& cfg) {
     if (cfg.enable_exit_restore && std::atexit(&restore) != 0) { return false; }
-    if (cfg.enable_sigint_restore && !enable_sigint_restore()) { return false; }
+    if (cfg.enable_signal_restore && !enable_signal_restore()) { return false; }
     if (cfg.enable_utf8 && !enable_utf8()) { return false; }
     if (!configure_mode(cfg)) { return false; }
     return true;

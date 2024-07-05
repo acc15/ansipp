@@ -23,7 +23,7 @@ struct config {
     /**
      * @brief enables SIGINT signal handler which reset colors/styles and makes cursor visible (if it was hidden)
      */
-    bool enable_sigint_restore = true;
+    bool enable_signal_restore = true;
 
     /**
      * @brief enables exit handler which reset colors/styles and makes cursor visible (if it was hidden)
