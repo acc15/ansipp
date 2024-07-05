@@ -201,10 +201,10 @@ bool configure_mode(const config& cfg) {
 }
 
 bool init(const config& cfg) {
-    if (cfg.enable_utf8 && !enable_utf8()) { return false; }
-    if (!configure_mode(cfg)) { return false; }
     if (cfg.enable_exit_restore && std::atexit(&restore) != 0) { return false; }
     if (cfg.enable_sigint_restore && !enable_sigint_restore()) { return false; }
+    if (cfg.enable_utf8 && !enable_utf8()) { return false; }
+    if (!configure_mode(cfg)) { return false; }
     return true;
 }
 
