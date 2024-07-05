@@ -53,8 +53,6 @@ int run() {
         }
         std::cout << restore_position() << std::flush;
     } while (std::cin && seq_buf != "q");
-
-    restore();
     return 0;
 }
 

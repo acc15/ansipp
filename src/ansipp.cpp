@@ -1,5 +1,7 @@
 #include <iostream>
 #include <optional>
+#include <atomic>
+
 #include <cmath>
 #include <ansipp.hpp>
 
@@ -28,6 +30,8 @@ struct ansipp_restore {
 #ifdef _WIN32 // windows
     std::optional<DWORD> in_modes;
     std::optional<DWORD> out_modes;
+    std::atomic<UINT> in_cp = 0;
+    std::atomic<UINT> out_cp = 0;
 #else // posix
     std::optional<tcflag_t> lflag;
 #endif
@@ -36,8 +40,21 @@ struct ansipp_restore {
 
 const char __ansipp_reset[] = "\033[m\033[?25h";
 
-void restore() {
-    terminal_write(__ansipp_reset, sizeof(__ansipp_reset));
+void restore_utf8() {
+#ifdef _WIN32 // windows
+    UINT in_cp = __ansipp_restore.in_cp.exchange(0);
+    if (in_cp != 0) {
+        SetConsoleCP(in_cp);
+    }
+    
+    UINT out_cp = __ansipp_restore.out_cp.exchange(0);
+    if (out_cp != 0) {
+        SetConsoleOutputCP(out_cp);
+    }
+#endif
+}
+
+void restore_mode() {
 #ifdef _WIN32 // windows
     if (__ansipp_restore.in_modes.has_value()) {
         SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), __ansipp_restore.in_modes.value());
@@ -59,6 +76,13 @@ void restore() {
 #endif
 }
 
+
+void restore() {
+    terminal_write(__ansipp_reset, sizeof(__ansipp_reset));
+    restore_mode();
+    restore_utf8();
+}
+
 void sigint_restore(int code) {
     restore();
     std::_Exit(0x80 + code);
@@ -68,7 +92,6 @@ void sigint_restore(int code) {
 int sigint_control_handler(DWORD ctrl_code) {
     if (ctrl_code == CTRL_C_EVENT) {
         sigint_restore(2);
-        return true;
     }
     return false;
 }
@@ -101,8 +124,52 @@ std::string format_last_error() {
 #endif
 }
 
+bool enable_utf8() {
+#ifdef _WIN32
+
+    UINT in_cp = GetConsoleCP();
+    if (in_cp != 0 && in_cp != CP_UTF8) {
+        if (__ansipp_restore.in_cp.exchange(in_cp) != 0) {
+            // init was called twice?
+            return false;
+        }
+        if (!SetConsoleCP(CP_UTF8)) {
+            return false;
+        }
+    }
+
+    UINT out_cp = GetConsoleOutputCP();
+    if (out_cp != 0 && out_cp != CP_UTF8) {
+        if (__ansipp_restore.out_cp.exchange(out_cp) != 0) {
+            // init was called twice?
+            return false;
+        }
+        if (!SetConsoleOutputCP(CP_UTF8)) {
+            return false;
+        }
+    }
+
+#endif
+    return true;
+}
+
+bool enable_sigint_restore() {
+#ifdef _WIN32 
+    return SetConsoleCtrlHandler(&sigint_control_handler, true);
+#else
+    struct sigaction sa;
+    sa.sa_handler = &sigint_reset;
+    return sigaction(SIGINT, &sa, nullptr) == 0;
+#endif
+}
+
 bool init(const config& cfg) {
+    if (cfg.enable_utf8 && !enable_utf8()) {
+        return false;
+    }
+
 #ifdef _WIN32 // windows
+
     HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
     
     DWORD in_modes;
@@ -139,10 +206,6 @@ bool init(const config& cfg) {
         return false;
     }
 
-    if (cfg.enable_sigint_restore && !SetConsoleCtrlHandler(&sigint_control_handler, true)) {
-        return false;
-    }
-
 #else // posix
     if (cfg.disable_input_echo) {
         termios p;
@@ -155,14 +218,14 @@ bool init(const config& cfg) {
             return false;
         }
     }
-    if (cfg.enable_sigint_restore) {
-        struct sigaction sa;
-        sa.sa_handler = &sigint_reset;
-        if (sigaction(SIGINT, &sa, nullptr) != 0) {
-            return false;
-        }
-    }
 #endif
+    if (cfg.enable_sigint_restore && !enable_sigint_restore()) {
+        return false;
+    }
+    if (cfg.enable_exit_restore && std::atexit(&restore) != 0) {
+        return false;
+    }
+
     return true;
 }
 

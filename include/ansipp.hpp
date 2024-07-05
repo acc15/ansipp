@@ -25,6 +25,16 @@ struct config {
      */
     bool enable_sigint_restore = true;
 
+    /**
+     * @brief enables exit handler which reset colors/styles and makes cursor visible (if it was hidden)
+     */
+    bool enable_exit_restore = true;
+
+    /**
+     * @brief changes windows console encoding to UTF-8
+     */
+    bool enable_utf8 = true;
+
 };
 
 enum init_status {
@@ -34,10 +44,12 @@ enum init_status {
     ERROR_SIGINT
 };
 
-bool init(const config& cfg = {});
+bool init(const config &cfg = {});
+bool NewFunction(const ansipp::config &cfg, bool &retFlag);
 void restore();
 
-struct terminal_dimension {
+struct terminal_dimension
+{
     unsigned short rows;
     unsigned short cols;
 };
