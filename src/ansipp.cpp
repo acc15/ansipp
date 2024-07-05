@@ -29,18 +29,48 @@ struct ansipp_restore {
     std::optional<DWORD> in_modes;
     std::optional<DWORD> out_modes;
 #else // posix
-    std::optional<tcflag_t> c_lflag;
-    std::optional<struct sigaction> old_sigint; 
+    std::optional<tcflag_t> lflag;
 #endif
 
 } __ansipp_restore;
 
 const char __ansipp_reset[] = "\033[m\033[?25h";
 
-#ifndef _WIN32
+void restore() {
+    terminal_write(__ansipp_reset, sizeof(__ansipp_reset));
+#ifdef _WIN32 // windows
+    if (__ansipp_restore.in_modes.has_value()) {
+        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), __ansipp_restore.in_modes.value());
+        __ansipp_restore.in_modes.reset();
+    }
+    if (__ansipp_restore.out_modes.has_value()) {
+        SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), __ansipp_restore.out_modes.value());
+        __ansipp_restore.out_modes.reset();
+    }
+#else
+    if (__ansipp_restore.lflag.has_value()) {
+        termios p;
+        if (tcgetattr(STDOUT_FILENO, &p) == 0) {
+            p.c_lflag = __ansipp_restore.lflag.value();
+            tcsetattr(STDOUT_FILENO, TCSANOW, &p);
+        }
+        __ansipp_restore.lflag.reset();
+    }
+#endif
+}
+
 void sigint_restore(int code) {
     restore();
     std::_Exit(0x80 + code);
+}
+
+#ifdef _WIN32
+int sigint_control_handler(DWORD ctrl_code) {
+    if (ctrl_code == CTRL_C_EVENT) {
+        sigint_restore(2);
+        return true;
+    }
+    return false;
 }
 #endif
 
@@ -87,7 +117,8 @@ bool init(const config& cfg) {
             ENABLE_INSERT_MODE | 
             ENABLE_LINE_INPUT | 
             ENABLE_QUICK_EDIT_MODE |
-            ENABLE_WINDOW_INPUT 
+            ENABLE_WINDOW_INPUT |
+            ENABLE_MOUSE_INPUT
         );
     }
     in_modes |= (ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT);
@@ -107,6 +138,11 @@ bool init(const config& cfg) {
     if (!SetConsoleMode(out, out_modes)) {
         return false;
     }
+
+    if (cfg.enable_sigint_restore && !SetConsoleCtrlHandler(&sigint_control_handler, true)) {
+        return false;
+    }
+
 #else // posix
     if (cfg.disable_input_echo) {
         termios p;
@@ -119,40 +155,17 @@ bool init(const config& cfg) {
             return false;
         }
     }
-    if (cfg.enable_sigint_reset) {
-        struct sigaction sa = { {&sigint_reset}, 0, 0 };
-        struct sigaction osa;
-        if (sigaction(SIGINT, &sa, &osa) == 0) {
-            __ansipp_restore.old_sigint = osa;
+    if (cfg.enable_sigint_restore) {
+        struct sigaction sa;
+        sa.sa_handler = &sigint_reset;
+        if (sigaction(SIGINT, &sa, nullptr) != 0) {
+            return false;
         }
     }
 #endif
     return true;
 }
 
-void restore() {
-    terminal_write(__ansipp_reset, sizeof(__ansipp_reset));
-    
-#ifdef _WIN32 // windows
-    if (__ansipp_restore.in_modes.has_value()) {
-        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), __ansipp_restore.in_modes.value());
-        __ansipp_restore.in_modes.reset();
-    }
-    if (__ansipp_restore.out_modes.has_value()) {
-        SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), __ansipp_restore.out_modes.value());
-        __ansipp_restore.out_modes.reset();
-    }
-#else
-    if (__ansipp_restore.c_lflag.has_value()) {
-        termios p;
-        if (tcgetattr(STDOUT_FILENO, &p) == 0) {
-            p.c_lflag = __ansipp_restore.c_lflag.value();
-            tcsetattr(STDOUT_FILENO, TCSANOW, &p);
-        }
-        __ansipp_restore.c_lflag.reset();
-    }
-#endif
-}
 
 terminal_dimension get_terminal_dimension() {
 #ifdef _WIN32
