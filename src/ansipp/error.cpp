@@ -1,5 +1,11 @@
 #include <ansipp/error.hpp>
 
+#ifdef _WIN32
+#   include <windows.h>
+#else
+#   include <errno.h>
+#endif
+
 namespace ansipp {
 
 std::error_code last_error() {

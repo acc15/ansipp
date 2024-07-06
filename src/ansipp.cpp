@@ -99,8 +99,8 @@ void enable_signal_restore(std::error_code& ec) {
 void configure_mode(std::error_code& ec, const config& cfg) {
 #ifdef _WIN32 // windows
 
-    HANDLE in;
-    if (in = GetStdHandle(STD_INPUT_HANDLE); in == INVALID_HANDLE_VALUE) { ec = last_error(); return; }
+    HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
+    if (in == INVALID_HANDLE_VALUE) { ec = last_error(); return; }
     
     DWORD in_modes;
     if (!GetConsoleMode(in, &in_modes)) { ec = last_error(); return; }
@@ -124,9 +124,9 @@ void configure_mode(std::error_code& ec, const config& cfg) {
     DWORD out_modes; 
     if (!GetConsoleMode(out, &out_modes)) { ec = last_error(); return; }
 
-    if (!__ansipp_restore.out_modes.store(out_modes)) { ec = ansipp_errc::already_initialized; return; }
+    if (!__ansipp_restore.out_modes.store(out_modes)) { ec = ansipp_error::already_initialized; return; }
     out_modes |= (ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-    if (!SetConsoleMode(out, out_modes)) { ec = last_error(): return; }
+    if (!SetConsoleMode(out, out_modes)) { ec = last_error(); return; }
 
 #else // posix
     if (cfg.disable_input_echo) {
