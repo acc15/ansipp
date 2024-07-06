@@ -106,6 +106,7 @@
         "cinttypes": "cpp",
         "typeindex": "cpp",
         "valarray": "cpp",
-        "cerrno": "cpp"
+        "cerrno": "cpp",
+        "__config": "cpp"
     }
 }

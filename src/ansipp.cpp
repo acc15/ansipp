@@ -30,21 +30,12 @@ struct ansipp_restore {
 #ifdef _WIN32 // windows
     ts_opt<DWORD> in_modes;
     ts_opt<DWORD> out_modes;
-    ts_opt<UINT> in_cp;
-    ts_opt<UINT> out_cp;
 #else // posix
     ts_opt<tcflag_t> lflag;
 #endif
 } __ansipp_restore;
 
 const std::string __ansipp_reset = attrs().str() + show_cursor();
-
-void restore_utf8() {
-#ifdef _WIN32 // windows
-    __ansipp_restore.in_cp.restore([](UINT in_cp) { SetConsoleCP(in_cp); });
-    __ansipp_restore.out_cp.restore([](UINT out_cp) { SetConsoleOutputCP(out_cp); });
-#endif
-}
 
 void restore_mode() {
 #ifdef _WIN32 // windows
@@ -68,7 +59,6 @@ void restore_mode() {
 void restore() {
     terminal_write(__ansipp_reset.data(), __ansipp_reset.size());
     restore_mode();
-    restore_utf8();
 }
 
 std::error_code last_error() {
@@ -83,29 +73,10 @@ std::error_code last_error() {
 
 bool enable_utf8() {
 #ifdef _WIN32
-
     UINT in_cp = GetConsoleCP();
-    if (in_cp == 0) {
-        return false;
-    }
-    if (in_cp != CP_UTF8) {
-        __ansipp_restore.in_cp.store(in_cp);
-        if (!SetConsoleCP(CP_UTF8)) {
-            return false;
-        }
-    }
-
+    if (in_cp == 0 || (in_cp != CP_UTF8 && !SetConsoleCP(CP_UTF8))) { return false; }
     UINT out_cp = GetConsoleOutputCP();
-    if (out_cp == 0) {
-        return false;
-    }
-    if (out_cp != CP_UTF8) {
-        __ansipp_restore.out_cp.store(out_cp);
-        if (!SetConsoleOutputCP(CP_UTF8)) {
-            return false;
-        }
-    }
-
+    if (out_cp == 0 || (out_cp != CP_UTF8 && !SetConsoleOutputCP(CP_UTF8))) { return false; }
 #endif
     return true;
 }
