@@ -18,8 +18,8 @@ void gradient(const rgb& a, const rgb& b, size_t width) {
 
 int run() {
 
-    if (!init()) {
-        std::cerr << "can't init: " << last_error().message() << std::endl;
+    if (std::error_code ec; init(ec), ec) {
+        std::cerr << "can't init: " << ec.message() << std::endl;
         std::exit(EXIT_FAILURE);
     }
 

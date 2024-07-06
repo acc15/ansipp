@@ -13,7 +13,8 @@
 #endif
 
 #include <ansipp.hpp>
-#include "ts_opt.hpp"
+
+#include "ansipp/ts_opt.hpp"
 
 namespace ansipp {
 
@@ -61,26 +62,15 @@ void restore() {
     restore_mode();
 }
 
-std::error_code last_error() {
-    return std::error_code(
+void enable_utf8([[maybe_unused]] std::error_code& ec) {
 #ifdef _WIN32
-        GetLastError()
-#else
-        errno
+    UINT in_cp = GetConsoleCP(); 
+    if (in_cp == 0 || (in_cp != CP_UTF8 && !SetConsoleCP(CP_UTF8))) { ec = last_error(); return; }
+    
+    UINT out_cp = GetConsoleOutputCP(); 
+    if (out_cp == 0 || (out_cp != CP_UTF8 && !SetConsoleOutputCP(CP_UTF8))) { ec = last_error(); return; }
 #endif
-        , std::system_category());
 }
-
-bool enable_utf8() {
-#ifdef _WIN32
-    UINT in_cp = GetConsoleCP();
-    if (in_cp == 0 || (in_cp != CP_UTF8 && !SetConsoleCP(CP_UTF8))) { return false; }
-    UINT out_cp = GetConsoleOutputCP();
-    if (out_cp == 0 || (out_cp != CP_UTF8 && !SetConsoleOutputCP(CP_UTF8))) { return false; }
-#endif
-    return true;
-}
-
 
 void signal_restore(int code) {
     restore();
@@ -96,27 +86,25 @@ int signal_control_handler(DWORD ctrl_code) {
 }
 #endif
 
-bool enable_signal_restore() {
+void enable_signal_restore(std::error_code& ec) {
 #ifdef _WIN32 
-    return SetConsoleCtrlHandler(&signal_control_handler, true);
+    if (!SetConsoleCtrlHandler(&signal_control_handler, true)) { ec = last_error(); return; }
 #else
     struct sigaction sa;
     sa.sa_handler = &signal_restore;
-    return sigaction(SIGINT, &sa, nullptr) == 0;
+    if (sigaction(SIGINT, &sa, nullptr) == -1) { ec = last_error(); return; }
 #endif
 }
 
-bool configure_mode(const config& cfg) {
+void configure_mode(std::error_code& ec, const config& cfg) {
 #ifdef _WIN32 // windows
 
-    HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE in;
+    if (in = GetStdHandle(STD_INPUT_HANDLE); in == INVALID_HANDLE_VALUE) { ec = last_error(); return; }
     
     DWORD in_modes;
-    if (!GetConsoleMode(in, &in_modes)) {
-        return false;
-    }
-
-    __ansipp_restore.in_modes.store(in_modes);
+    if (!GetConsoleMode(in, &in_modes)) { ec = last_error(); return; }
+    if (!__ansipp_restore.in_modes.store(in_modes)) { ec = ansipp_error::already_initialized; return; }
     if (cfg.disable_input_echo) {
         in_modes &= ~(
             ENABLE_ECHO_INPUT | 
@@ -128,45 +116,34 @@ bool configure_mode(const config& cfg) {
         );
     }
     in_modes |= (ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT);
-    if (!SetConsoleMode(in, in_modes)) {
-        return false;
-    }
-
-    HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (!SetConsoleMode(in, in_modes)) { ec = last_error(); return; }
     
-    DWORD out_modes;
-    if (!GetConsoleMode(out, &out_modes)) {
-        return false;
-    }
+    HANDLE out;
+    if (out = GetStdHandle(STD_OUTPUT_HANDLE); out == INVALID_HANDLE_VALUE) { ec = last_error(); return; }
+    
+    DWORD out_modes; 
+    if (!GetConsoleMode(out, &out_modes)) { ec = last_error(); return; }
 
-    __ansipp_restore.out_modes.store(out_modes);
+    if (!__ansipp_restore.out_modes.store(out_modes)) { ec = ansipp_errc::already_initialized; return; }
     out_modes |= (ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-    if (!SetConsoleMode(out, out_modes)) {
-        return false;
-    }
+    if (!SetConsoleMode(out, out_modes)) { ec = last_error(): return; }
 
 #else // posix
     if (cfg.disable_input_echo) {
-        termios p;
-        if (tcgetattr(STDOUT_FILENO, &p) != 0) {
-            return false;
-        }
-        __ansipp_restore.lflag.store(p.c_lflag);
+        termios p; 
+        if (tcgetattr(STDOUT_FILENO, &p) == -1) { ec = last_error(); return; }
+        if (!__ansipp_restore.lflag.store(p.c_lflag)) { ec = ansipp_error::already_initialized; return; }
         p.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL); 
-        if (tcsetattr(STDOUT_FILENO, TCSANOW, &p) != 0) {
-            return false;
-        }
+        if (tcsetattr(STDOUT_FILENO, TCSANOW, &p) == -1) { ec = last_error(); return; }
     }
 #endif
-    return true;
 }
 
-bool init(const config& cfg) {
-    if (cfg.enable_exit_restore && std::atexit(&restore) != 0) { return false; }
-    if (cfg.enable_signal_restore && !enable_signal_restore()) { return false; }
-    if (cfg.enable_utf8 && !enable_utf8()) { return false; }
-    if (!configure_mode(cfg)) { return false; }
-    return true;
+void init(std::error_code& ec, const config& cfg) {
+    if (cfg.enable_exit_restore && std::atexit(&restore) != 0) { ec = ansipp_error::at_exit_failure; return; }
+    if (cfg.enable_signal_restore && (enable_signal_restore(ec), ec)) { return; }
+    if (cfg.enable_utf8 && (enable_utf8(ec), ec)) { return; }
+    if (configure_mode(ec, cfg), ec) { return; }
 }
 
 terminal_dimension get_terminal_dimension() {
@@ -210,26 +187,6 @@ attrs& attrs::a(unsigned int param) {
     }
     value.append(std::to_string(param));
     return *this;
-}
-
-std::size_t terminal_write(const void* buf, std::size_t sz) {
-#ifdef _WIN32
-    DWORD result;
-    return WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buf, static_cast<DWORD>(sz), &result, nullptr) ? result : 0;
-#else
-    ssize_t result = write(STDOUT_FILENO, buf, sz);
-    return result < 0 ? 0 : result;
-#endif
-}
-
-std::size_t terminal_read(void* buf, std::size_t sz) {
-#ifdef _WIN32
-    DWORD result;
-    return ReadFile(GetStdHandle(STD_INPUT_HANDLE), buf, static_cast<DWORD>(sz), &result, nullptr) ? result : 0;
-#else
-    ssize_t result = read(STDIN_FILENO, buf, sz);
-    return result < 0 ? 0 : result;
-#endif
 }
 
 }

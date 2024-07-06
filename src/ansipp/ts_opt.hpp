@@ -18,21 +18,16 @@ class ts_opt {
 
 public:
 
-    void store(const T& v) {
-        if ( is_set.load() ) {
-            throw is_set_condition_failed();
-        }
+    bool store(const T& v) {
+        if (is_set.load()) { return false; }
         value = v;
-        if ( is_set.exchange(true) == true ) {
-            throw is_set_condition_failed();
-        }
+        if (is_set.exchange(true) == true) { return false; }
+        return true;
     }
 
     template <std::regular_invocable<T> Callback>
     void restore(const Callback& v) {
-        if ( is_set.exchange(false) ) {
-            v(value);
-        }
+        if (is_set.exchange(false)) { v(value); }
     }
 
 };
