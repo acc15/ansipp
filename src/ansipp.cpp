@@ -72,11 +72,13 @@ void restore() {
 }
 
 std::error_code last_error() {
+    return std::error_code(
 #ifdef _WIN32
-    return std::error_code(GetLastError(), std::system_category());
+        GetLastError()
 #else
-    return std::error_code(errno, std::system_category());
+        errno
 #endif
+        , std::system_category());
 }
 
 bool enable_utf8() {
