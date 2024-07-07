@@ -108,5 +108,4 @@ void init(std::error_code& ec, const config& cfg) {
     if (configure_mode(ec, cfg), ec) { return; }
 }
 
-
 }

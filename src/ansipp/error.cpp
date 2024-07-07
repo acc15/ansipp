@@ -1,10 +1,10 @@
-#include <ansipp/error.hpp>
-
 #ifdef _WIN32
 #   include <windows.h>
 #else
 #   include <errno.h>
 #endif
+
+#include <ansipp/error.hpp>
 
 namespace ansipp {
 
