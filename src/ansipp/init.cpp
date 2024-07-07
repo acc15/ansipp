@@ -1,66 +1,20 @@
-#include <iostream>
-#include <optional>
-#include <cmath>
-#include <cassert>
+#include <signal.h>
+
+#include <ansipp/error.hpp>
+#include <ansipp/init.hpp>
+#include <ansipp/terminal.hpp>
+#include <ansipp/restore.hpp>
 
 #ifdef _WIN32
-    #include <windows.h>
+#   include <windows.h>
 #else
-    #include <sys/ioctl.h>
-    #include <termios.h>
-    #include <unistd.h>
-    #include <signal.h>
+#   include <unistd.h>
+#   include <termios.h>
 #endif
 
-#include <ansipp.hpp>
-
-#include "ansipp/ts_opt.hpp"
+#include "restore.hpp"
 
 namespace ansipp {
-
-bool is_terminal() {
-#ifdef _WIN32
-    return GetFileType(GetStdHandle(STD_INPUT_HANDLE)) == FILE_TYPE_CHAR && 
-        GetFileType(GetStdHandle(STD_OUTPUT_HANDLE)) == FILE_TYPE_CHAR;
-#else
-    return isatty(STDIN_FILENO) && isatty(STDOUT_FILENO);
-#endif
-}
-
-struct ansipp_restore {
-#ifdef _WIN32 // windows
-    ts_opt<DWORD> in_modes;
-    ts_opt<DWORD> out_modes;
-#else // posix
-    ts_opt<tcflag_t> lflag;
-#endif
-} __ansipp_restore;
-
-const std::string __ansipp_reset = attrs().str() + show_cursor();
-
-void restore_mode() {
-#ifdef _WIN32 // windows
-    __ansipp_restore.in_modes.restore([](DWORD in_modes) {
-        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), in_modes);
-    });
-    __ansipp_restore.out_modes.restore([](DWORD out_modes) {
-        SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), out_modes);
-    });
-#else
-    __ansipp_restore.lflag.restore([](tcflag_t lflag) {
-        termios p;
-        if (tcgetattr(STDOUT_FILENO, &p) == 0) {
-            p.c_lflag = lflag;
-            tcsetattr(STDOUT_FILENO, TCSANOW, &p);
-        }
-    });
-#endif
-}
-
-void restore() {
-    terminal_write(__ansipp_reset);
-    restore_mode();
-}
 
 void enable_utf8([[maybe_unused]] std::error_code& ec) {
 #ifdef _WIN32
@@ -147,20 +101,5 @@ void init(std::error_code& ec, const config& cfg) {
     if (configure_mode(ec, cfg), ec) { return; }
 }
 
-terminal_dimension get_terminal_dimension() {
-#ifdef _WIN32
-    CONSOLE_SCREEN_BUFFER_INFO ws;
-    return GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ws) 
-        ? terminal_dimension {
-            static_cast<unsigned short>(ws.srWindow.Bottom - ws.srWindow.Top + 1),
-            static_cast<unsigned short>(ws.srWindow.Right - ws.srWindow.Left + 1)
-        } : terminal_dimension {};
-#else
-    winsize ws;
-    return ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) != -1 
-        ? terminal_dimension { ws.ws_row, ws.ws_col }
-        : terminal_dimension {};
-#endif
-}
 
 }

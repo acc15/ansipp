@@ -1,55 +1,8 @@
-#include <string>
-#include <ostream>
-#include <system_error>
-
 #include <ansipp/error.hpp>
 #include <ansipp/io.hpp> 
 #include <ansipp/config.hpp>
+#include <ansipp/terminal.hpp>
 #include <ansipp/attrs.hpp>
 #include <ansipp/cursor.hpp>
-
-namespace ansipp {
-
-/**
- * @brief checks whether stdin and stdout attached to terminal
- */
-bool is_terminal();
-
-
-void init(std::error_code& ec, const config &cfg = {});
-void restore();
-
-struct terminal_dimension {
-    unsigned short rows;
-    unsigned short cols;
-};
-inline std::ostream& operator<<(std::ostream& o, const terminal_dimension& d) {
-    return o << d.cols << "x" << d.rows;
-}
-terminal_dimension get_terminal_dimension();
-
-
-inline std::string save_screen() { return "\33" "[?47h"; }
-inline std::string restore_screen() { return "\33" "[?47l"; }
-
-inline std::string enable_alternative_buffer() { return "\33" "[?1049h"; }
-inline std::string disable_alternative_buffer() { return "\33" "[?1049l"; }
-
-enum erase_target: char {
-    SCREEN = 'J',
-    LINE = 'K'
-};
-
-enum erase_mode: char {
-    TO_END = '0',
-    TO_BEGIN = '1',
-    ALL = '2'
-};
-
-inline std::string erase(erase_target target, erase_mode mode) {
-    return std::string("\33" "[")
-        .append(1, static_cast<char>(mode))
-        .append(1, static_cast<char>(target));
-}
-
-}
+#include <ansipp/restore.hpp>
+#include <ansipp/init.hpp>

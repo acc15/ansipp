@@ -1,0 +1,24 @@
+#pragma once
+
+#include "ts_opt.hpp"
+
+#ifdef _WIN32
+#   include <windows.h>
+#else
+#   include <termios.h>
+#endif
+
+namespace ansipp {
+
+struct restore_data {
+#ifdef _WIN32 // windows
+    ts_opt<DWORD> in_modes;
+    ts_opt<DWORD> out_modes;
+#else // posix
+    ts_opt<tcflag_t> lflag;
+#endif
+};
+
+extern restore_data __ansipp_restore;
+
+}
