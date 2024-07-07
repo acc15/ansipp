@@ -24,6 +24,11 @@ struct config {
      */
     bool enable_utf8 = true;
 
+    /**
+     * @brief disables stdio sync for `std::cin` and `std::cout`
+     */
+    bool disable_stdio_sync = true;
+
 };
 
 }

@@ -1,16 +1,17 @@
-#include <signal.h>
-
-#include <ansipp/error.hpp>
-#include <ansipp/init.hpp>
-#include <ansipp/terminal.hpp>
-#include <ansipp/restore.hpp>
+#include <iostream>
 
 #ifdef _WIN32
 #   include <windows.h>
 #else
 #   include <unistd.h>
 #   include <termios.h>
+#   include <signal.h>
 #endif
+
+#include <ansipp/error.hpp>
+#include <ansipp/init.hpp>
+#include <ansipp/terminal.hpp>
+#include <ansipp/restore.hpp>
 
 #include "restore.hpp"
 
@@ -93,11 +94,17 @@ void configure_mode(std::error_code& ec, const config& cfg) {
 #endif
 }
 
+void disable_stdio_sync() {
+    std::cin.sync_with_stdio(false);
+    std::cout.sync_with_stdio(false);
+}
+
 void init(std::error_code& ec, const config& cfg) {
     if (!is_terminal()) { ec = ansipp_error::not_terminal; return; }
     if (cfg.enable_exit_restore && std::atexit(&restore) != 0) { ec = ansipp_error::at_exit_failure; return; }
     if (cfg.enable_signal_restore && (enable_signal_restore(ec), ec)) { return; }
     if (cfg.enable_utf8 && (enable_utf8(ec), ec)) { return; }
+    if (cfg.disable_stdio_sync) { disable_stdio_sync(); }
     if (configure_mode(ec, cfg), ec) { return; }
 }
 

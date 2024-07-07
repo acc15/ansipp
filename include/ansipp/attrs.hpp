@@ -31,9 +31,7 @@ struct rgb {
     unsigned char r;
     unsigned char g;
     unsigned char b;
-
     static rgb lerp(const rgb& a, const rgb& b, float factor);
-
 };
 
 /**
