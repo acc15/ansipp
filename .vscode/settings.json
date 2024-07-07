@@ -3,7 +3,7 @@
         "ansipp"
     ],
     "cmake.debugConfig": {
-        "args": ["[\\!benchmark]"]
+        "args": []
     },
     "files.associations": {
         "*.cppm": "cpp",

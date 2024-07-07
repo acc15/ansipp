@@ -163,16 +163,4 @@ terminal_dimension get_terminal_dimension() {
 #endif
 }
 
-cursor_position get_cursor_position() {
-    std::cout << request_position() << std::flush;
-
-    cursor_position p;
-    // (ignore '\033' '[')(row)(ignore ';')(col)(ignore 'R')
-    if (!((std::cin.ignore(2) >> p.row).ignore() >> p.col).ignore()) {
-        throw std::runtime_error("can't parse cursor position escape sequence");
-    }
-    return p;
-}
-
-
 }

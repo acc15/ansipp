@@ -8,6 +8,7 @@ target_sources(ansipp PRIVATE
     ${SRC}/ansipp/ts_opt.hpp
     ${SRC}/ansipp/error.cpp
     ${SRC}/ansipp/io.cpp
+    ${SRC}/ansipp/cursor.cpp
     ${SRC}/ansipp/attrs.cpp
     ${SRC}/ansipp.cpp
 )
@@ -16,12 +17,14 @@ target_sources(ansipp PUBLIC FILE_SET HEADERS BASE_DIRS ${INC} FILES
     ${INC}/ansipp/error.hpp
     ${INC}/ansipp/io.hpp
     ${INC}/ansipp/config.hpp
+    ${INC}/ansipp/cursor.hpp
     ${INC}/ansipp/attrs.hpp
     ${INC}/ansipp.hpp
 )
 
 testing(TARGETS ansipp SOURCES 
-    ${TEST}/ansipp.cpp
+    ${TEST}/ansipp/attrs.cpp
+    ${TEST}/ansipp/cursor.cpp
 )
 
 option(BUILD_DEMO "Build demo program" ${PROJECT_IS_TOP_LEVEL})
