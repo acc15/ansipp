@@ -25,6 +25,8 @@ const char* ansipp_category_impl::name() const noexcept {
 std::string ansipp_category_impl::message(int code) const {
     switch (static_cast<ansipp_error>(code)) {
     using enum ansipp_error;
+    case not_terminal:
+        return "ansipp requires attached terminal";
     case already_initialized:
         return "ansipp already initialized, call restore() before calling init(ec) again";
     case at_exit_failure:

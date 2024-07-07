@@ -15,6 +15,7 @@ target_sources(ansipp PRIVATE
 target_sources(ansipp PUBLIC FILE_SET HEADERS BASE_DIRS ${INC} FILES
     ${INC}/ansipp/error.hpp
     ${INC}/ansipp/io.hpp
+    ${INC}/ansipp/config.hpp
     ${INC}/ansipp/attrs.hpp
     ${INC}/ansipp.hpp
 )

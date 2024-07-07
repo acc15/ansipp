@@ -4,6 +4,7 @@
 
 #include <ansipp/error.hpp>
 #include <ansipp/io.hpp> 
+#include <ansipp/config.hpp>
 #include <ansipp/attrs.hpp>
 
 namespace ansipp {
@@ -13,36 +14,6 @@ namespace ansipp {
  */
 bool is_terminal();
 
-struct config {
-    
-    /**
-     * @brief disables terminal input echo
-     */
-    bool disable_input_echo = true;
-
-    /**
-     * @brief enables SIGINT signal handler which reset colors/styles and makes cursor visible (if it was hidden)
-     */
-    bool enable_signal_restore = true;
-
-    /**
-     * @brief enables exit handler which reset colors/styles and makes cursor visible (if it was hidden)
-     */
-    bool enable_exit_restore = true;
-
-    /**
-     * @brief changes windows console encoding to UTF-8
-     */
-    bool enable_utf8 = true;
-
-};
-
-enum init_status {
-    OK,
-    NOT_TERMINAL,
-    ERROR_DISABLE_ECHO,
-    ERROR_SIGINT
-};
 
 void init(std::error_code& ec, const config &cfg = {});
 void restore();

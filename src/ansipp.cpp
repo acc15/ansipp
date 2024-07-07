@@ -140,6 +140,7 @@ void configure_mode(std::error_code& ec, const config& cfg) {
 }
 
 void init(std::error_code& ec, const config& cfg) {
+    if (!is_terminal()) { ec = ansipp_error::not_terminal; return; }
     if (cfg.enable_exit_restore && std::atexit(&restore) != 0) { ec = ansipp_error::at_exit_failure; return; }
     if (cfg.enable_signal_restore && (enable_signal_restore(ec), ec)) { return; }
     if (cfg.enable_utf8 && (enable_utf8(ec), ec)) { return; }
