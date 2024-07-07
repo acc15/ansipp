@@ -7,10 +7,13 @@
 namespace ansipp {
 
 cursor_position parse_cursor_position_escape(std::string_view v) {
+    cursor_position p;
+    if (v.size() < 6) {
+        return p;
+    }
+
     v.remove_prefix(2);
     v.remove_suffix(1);
-
-    cursor_position p;
 
     const auto sep_pos = v.find(';');
     if (sep_pos != std::string_view::npos) {
@@ -25,10 +28,7 @@ cursor_position parse_cursor_position_escape(std::string_view v) {
 cursor_position get_cursor_position() {
     terminal_write(request_position());
     std::string esc;
-    if (!terminal_read(esc)) {
-        return cursor_position {};
-    }
-    return parse_cursor_position_escape(esc);
+    return terminal_read(esc) ? parse_cursor_position_escape(esc) : cursor_position{};
 }
 
 }
