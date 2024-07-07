@@ -24,9 +24,10 @@ const char* ansipp_category_impl::name() const noexcept {
 
 std::string ansipp_category_impl::message(int code) const {
     switch (static_cast<ansipp_error>(code)) {
-    case ansipp_error::already_initialized:
+    using enum ansipp_error;
+    case already_initialized:
         return "ansipp already initialized, call restore() before calling init(ec) again";
-    case ansipp_error::at_exit_failure:
+    case at_exit_failure:
         return "unable to set std::atexit handler";
     default:
         return "unknown error";

@@ -18,6 +18,10 @@ std::size_t terminal_write(const void* buf, std::size_t sz) {
 #endif
 }
 
+std::size_t terminal_write(std::string_view sw) {
+    return terminal_write(sw.data(), sw.size());
+}
+
 std::size_t terminal_read(void* buf, std::size_t sz) {
 #ifdef _WIN32
     DWORD result;
@@ -26,6 +30,12 @@ std::size_t terminal_read(void* buf, std::size_t sz) {
     ssize_t result = read(STDIN_FILENO, buf, sz);
     return result < 0 ? 0 : result;
 #endif
+}
+
+bool terminal_read(std::string& str, std::size_t max_size) {
+    str.resize(max_size);
+    str.resize(terminal_read(str.data(), str.size()));
+    return !str.empty();
 }
 
 }

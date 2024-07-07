@@ -41,9 +41,7 @@ int run() {
     std::cout << "type something" << std::endl;
 
     std::string seq_buf;
-    do {
-        seq_buf.resize(20);
-        seq_buf.resize(terminal_read(seq_buf.data(), seq_buf.size()));
+    while (terminal_read(seq_buf) && seq_buf != "q") {
         std::cout << save_position() 
             << move(UP) << move(TO_COLUMN, 0) << erase(LINE, ALL) << std::dec << seq_buf.size() << " chars received:";
         for (const char& c: seq_buf) {
@@ -52,7 +50,7 @@ int run() {
                 << static_cast<unsigned int>(static_cast<unsigned char>(c));
         }
         std::cout << restore_position() << std::flush;
-    } while (std::cin && seq_buf != "q");
+    }
     return 0;
 }
 
