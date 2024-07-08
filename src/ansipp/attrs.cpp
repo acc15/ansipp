@@ -1,5 +1,7 @@
 #include <ansipp/attrs.hpp>
 
+#include <cmath>
+
 namespace ansipp {
 
 rgb rgb::lerp(const rgb& a, const rgb& b, float factor) {
