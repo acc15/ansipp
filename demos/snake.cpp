@@ -80,18 +80,19 @@ class snake_game {
 
 public:
     static constexpr vec grid_size = { 120, 40 };
+    static constexpr unsigned int initial_length = 1;
 
     cell grid[grid_size.y][grid_size.x] = {};
     direction prev_dir = dir;
     vec tail = { 0, 0 };
-    vec head = { 15, 0 };
+    vec head = { initial_length, 0 };
 
     std::atomic<direction> dir = direction::RIGHT;
     std::atomic_bool game_over = false;
 
     snake_game() {
-        for (unsigned int i = 0; i < 15; i++) {
-            grid[0][i] = cell { .type = object_type::SNAKE, .dir = direction::RIGHT, .prev_dir = direction::RIGHT };
+        for (unsigned int i = 0; i < initial_length; i++) {
+            grid[0][i] = cell { object_type::SNAKE, direction::RIGHT, direction::RIGHT };
         }
     }
 
@@ -105,9 +106,7 @@ public:
             case object_type::APPLE: return "";
             default: break;
         }
-        
         if (v == head) return "";
-        
         const direction p = c.prev_dir, d = c.dir;
         using enum direction;
         if ((p == LEFT || p == RIGHT) && (d == LEFT || d == RIGHT))     return "━";
@@ -134,17 +133,16 @@ public:
             return;
         }
 
-        cell& phc = grid_cell(head);
+        cell& ohc = grid_cell(head);
         if (nhc.type == object_type::EMPTY) {
-            cell& tc = grid_cell(tail);
-            tc.type = object_type::EMPTY;
-            tail += dir_to_vec(tc.dir);
-            
+            cell& otc = grid_cell(tail);
+            otc.type = object_type::EMPTY;
+            tail += dir_to_vec(otc.dir);
             cell& ntc = grid_cell(tail);
             ntc.prev_dir = ntc.dir;
         }
 
-        phc = cell { object_type::SNAKE, dir, prev_dir };
+        ohc = cell { object_type::SNAKE, dir, prev_dir };
         nhc = cell { object_type::SNAKE, dir, dir };
 
         head = h;
@@ -158,7 +156,9 @@ public:
         
         for (int y = 0; y < grid_size.y; y++) {
             std::cout << "█";
-            for (int x = 0; x < grid_size.x; x++) { std::cout << snake_symbol({x,y}); }
+            for (int x = 0; x < grid_size.x; x++) { 
+                std::cout << snake_symbol({x,y}); 
+            }
             std::cout << "█";
             std::cout << "\n";
         }
@@ -171,7 +171,7 @@ public:
 
 void input_thread(snake_game& game) {
     std::string seq;
-    while (terminal_read(seq) && seq != "q") {
+    while (!game.game_over && terminal_read(seq) && seq != "q") {
         if (seq == "\33" "[A") { game.dir = direction::UP; }
         if (seq == "\33" "[B") { game.dir = direction::DOWN; }
         if (seq == "\33" "[C") { game.dir = direction::RIGHT; }
@@ -186,7 +186,7 @@ int main() {
         std::cerr << "can't init: " << ec.message() << std::endl;
         return EXIT_FAILURE;
     }
-    std::cout << hide_cursor() << save_position();
+    std::cout << save_position();
 
     snake_game g;
 
