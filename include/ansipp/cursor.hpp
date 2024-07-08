@@ -20,13 +20,13 @@ inline std::string show_cursor() { return "\33" "[?25h"; }
 inline std::string hide_cursor() { return "\33" "[?25l"; }
 
 enum move_mode: char {
-    UP = 'A', 
-    DOWN = 'B', 
-    RIGHT = 'C', 
-    LEFT = 'D', 
+    CURSOR_UP = 'A', 
+    CURSOR_DOWN = 'B', 
+    CURSOR_RIGHT = 'C', 
+    CURSOR_LEFT = 'D', 
     NEXT_LINE = 'E', 
     PREV_LINE = 'F', 
-    TO_COLUMN = 'G',
+    CURSOR_TO_COLUMN = 'G',
     SCROLL_UP = 'S',
     SCROLL_DOWN = 'T'
 };

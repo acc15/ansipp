@@ -38,4 +38,9 @@ bool terminal_read(std::string& str, std::size_t max_size) {
     return !str.empty();
 }
 
+int terminal_getch() {
+    char v[1];
+    return terminal_read(v, 1) == 1 ? v[0] : -1;
+}
+
 }

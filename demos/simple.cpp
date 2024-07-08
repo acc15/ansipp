@@ -2,12 +2,6 @@
 #include <iomanip>
 #include <ansipp.hpp>
 
-#include <cstdlib>
-
-#ifndef _WIN32
-#   include <unistd.h>
-#endif
-
 using namespace ansipp;
 
 void gradient(const rgb& a, const rgb& b, size_t width) {
@@ -16,11 +10,11 @@ void gradient(const rgb& a, const rgb& b, size_t width) {
     }
 }
 
-int run() {
+int main() {
 
     if (std::error_code ec; init(ec), ec) {
         std::cerr << "can't init: " << ec.message() << std::endl;
-        std::exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     std::cout << hide_cursor();
@@ -43,7 +37,7 @@ int run() {
     std::string seq_buf;
     while (terminal_read(seq_buf) && seq_buf != "q") {
         std::cout << save_position() 
-            << move(UP) << move(TO_COLUMN, 0) << erase(LINE, ALL) << std::dec << seq_buf.size() << " chars received:";
+            << move(CURSOR_UP) << move(CURSOR_TO_COLUMN, 0) << erase(LINE, ALL) << std::dec << seq_buf.size() << " chars received:";
         for (const char& c: seq_buf) {
             std::cout << " 0x" 
                 << std::hex << std::setw(2) << std::setfill('0') << std::uppercase 
@@ -52,13 +46,4 @@ int run() {
         std::cout << restore_position() << std::flush;
     }
     return 0;
-}
-
-int main() {
-    try {
-        return run();
-    } catch (const std::exception& e) {
-        std::cerr << "unexpected error: " << e.what() << std::endl; 
-        return EXIT_FAILURE;
-    }
 }

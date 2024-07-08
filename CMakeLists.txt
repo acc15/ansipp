@@ -33,8 +33,11 @@ testing(TARGETS ansipp SOURCES
     ${TEST}/ansipp/cursor.cpp
 )
 
-option(BUILD_DEMO "Build demo program" ${PROJECT_IS_TOP_LEVEL})
-if(BUILD_DEMO)
-    add_executable(ansipp_demo demo/demo.cpp)
-    target_link_libraries(ansipp_demo ansipp)
+option(BUILD_DEMOS "Build demo programs" ${PROJECT_IS_TOP_LEVEL})
+if(BUILD_DEMOS)
+    add_executable(ansipp_demo_simple demos/simple.cpp)
+    target_link_libraries(ansipp_demo_simple ansipp)
+
+    add_executable(ansipp_demo_snake demos/snake.cpp)
+    target_link_libraries(ansipp_demo_snake ansipp)
 endif()

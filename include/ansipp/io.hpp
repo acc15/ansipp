@@ -54,5 +54,10 @@ std::size_t terminal_read(void* buf, std::size_t max_size);
  */
 bool terminal_read(std::string& str, std::size_t max_size = 20);
 
+/**
+ * @brief reads single character (getch)
+ * @return read character or `-1` if `EOF` or error ocurred
+ */
+int terminal_getch();
 
 }
