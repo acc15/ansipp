@@ -79,8 +79,8 @@ inline std::string move(unsigned short row, unsigned short col) {
 
 inline std::string move(const cursor_position& p) { return move(p.row, p.col); }
 
-inline std::string save_position() { return "\33" "7"; }
-inline std::string restore_position() { return "\33" "8"; }
-inline std::string request_position() { return "\33" "[6n"; }
+inline std::string save_cursor() { return "\33" "7"; }
+inline std::string restore_cursor() { return "\33" "8"; }
+inline std::string request_cursor() { return "\33" "[6n"; }
 
 }

@@ -40,6 +40,15 @@ struct cell {
     direction next_dir : 2;
 };
 
+
+template <typename T> 
+concept arithmetic = std::is_arithmetic_v<T>;
+
+template <arithmetic T> 
+T center(T ext_size, T inner_size) {
+    return ext_size / 2 - inner_size / 2;
+}
+
 class snake_game {
 
 public:
@@ -53,6 +62,8 @@ public:
 
     std::atomic<direction> dir = direction::RIGHT;
     std::atomic_bool game_over = false;
+
+    const std::string game_over_text = "GAME IS OVER";
 
     snake_game() {
         for (unsigned int i = 0; i < initial_length; i++) {
@@ -124,8 +135,7 @@ public:
     }
 
     void draw(std::ostream& o) const {
-        for (int x = 0; x < grid_size.x + 2; x++) { o << "█"; }
-        o << "\n";
+        for (int x = 0; x < grid_size.x + 2; x++) { o << "█"; } o << "\n";
         
         for (int y = 0; y < grid_size.y; y++) {
             o << "█";
@@ -136,12 +146,19 @@ public:
             o << "\n";
         }
         
-        for (int x = 0; x < grid_size.x + 2; x++) { std::cout << "█"; }
-        o << "\n";
+        for (int x = 0; x < grid_size.x + 2; x++) { std::cout << "█"; } o << "\n";
+
+        if (game_over) {
+            o << save_cursor() << move(CURSOR_UP, center(grid_size.y + 2, 1))
+              << move(CURSOR_TO_COLUMN, center<int>(grid_size.x + 2, game_over_text.size())) 
+              << attrs().bg(WHITE).fg(BLACK) << game_over_text << attrs() << restore_cursor();
+        }
+
         o << erase(LINE, TO_END)
              << "head = " << head.x << "," << head.y 
              << "; tail = " << tail.x << "," << tail.y 
-             << "; game_over = " << game_over << "\n";
+             << "; game_over = " << game_over << move(CURSOR_TO_COLUMN, 1);
+
         o << std::flush;
     }
 
@@ -173,7 +190,7 @@ int main() {
     while (!g.game_over) {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         g.process();
-        std::cout << move(CURSOR_UP, g.grid_size.y + 3);
+        std::cout << move(CURSOR_UP, g.grid_size.y + 2);
         g.draw(std::cout);
     }
     t.join();

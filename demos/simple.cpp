@@ -36,14 +36,14 @@ int main() {
 
     std::string seq_buf;
     while (terminal_read(seq_buf) && seq_buf != "q") {
-        std::cout << save_position() 
+        std::cout << save_cursor() 
             << move(CURSOR_UP) << move(CURSOR_TO_COLUMN, 0) << erase(LINE, ALL) << std::dec << seq_buf.size() << " chars received:";
         for (const char& c: seq_buf) {
             std::cout << " 0x" 
                 << std::hex << std::setw(2) << std::setfill('0') << std::uppercase 
                 << static_cast<unsigned int>(static_cast<unsigned char>(c));
         }
-        std::cout << restore_position() << std::flush;
+        std::cout << restore_cursor() << std::flush;
     }
     return 0;
 }

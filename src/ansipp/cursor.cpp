@@ -26,7 +26,7 @@ cursor_position parse_cursor_position_escape(std::string_view v) {
 }
 
 cursor_position get_cursor_position() {
-    terminal_write(request_position());
+    terminal_write(request_cursor());
     std::string esc;
     return terminal_read(esc) ? parse_cursor_position_escape(esc) : cursor_position{};
 }
