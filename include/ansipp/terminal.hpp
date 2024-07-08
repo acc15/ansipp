@@ -18,7 +18,7 @@ inline std::ostream& operator<<(std::ostream& o, const terminal_dimension& d) {
 }
 terminal_dimension get_terminal_dimension();
 
-inline std::string save_screen() { return "\33" "[?47h"; }
+inline std::string store_screen() { return "\33" "[?47h"; }
 inline std::string restore_screen() { return "\33" "[?47l"; }
 
 inline std::string enable_alternative_buffer() { return "\33" "[?1049h"; }
@@ -40,5 +40,7 @@ inline std::string erase(erase_target target, erase_mode mode) {
         .append(1, static_cast<char>(mode))
         .append(1, static_cast<char>(target));
 }
+
+
 
 }

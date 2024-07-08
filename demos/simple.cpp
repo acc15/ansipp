@@ -36,7 +36,7 @@ int main() {
 
     std::string seq_buf;
     while (terminal_read(seq_buf) && seq_buf != "q") {
-        std::cout << save_cursor() 
+        std::cout << store_cursor() 
             << move(CURSOR_UP) << move(CURSOR_TO_COLUMN, 0) << erase(LINE, ALL) << std::dec << seq_buf.size() << " chars received:";
         for (const char& c: seq_buf) {
             std::cout << " 0x" 

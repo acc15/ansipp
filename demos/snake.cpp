@@ -15,6 +15,7 @@ struct vec {
     vec operator+(const vec& b) const { return vec{x,y} += b; }
     bool operator==(const vec& b) const { return x == b.x && y == b.y; }
 };
+std::ostream& operator<<(std::ostream& o, const vec& v) { return o << v.x << "," << v.y; }
 
 enum class object_type: unsigned char {
     EMPTY,
@@ -26,20 +27,26 @@ enum class direction: unsigned char { UP, DOWN, LEFT, RIGHT };
 vec dir_to_vec(direction d) {
     switch (d) {
         using enum direction;
-        case UP:    return {  0, -1 };
+        default:    return {  0, -1 };
         case DOWN:  return {  0,  1 };
         case LEFT:  return { -1,  0 };
         case RIGHT: return {  1,  0 };
-        default:    return vec{};
+    }
+}
+move_mode dir_to_cursor_move(direction d) {
+    switch (d) {
+        using enum direction;
+        default:    return CURSOR_UP;
+        case DOWN:  return CURSOR_DOWN;
+        case LEFT:  return CURSOR_LEFT;
+        case RIGHT: return CURSOR_RIGHT;
     }
 }
 
 struct cell {
     object_type type : 2;
-    direction prev_dir : 2;
-    direction next_dir : 2;
+    direction dir : 2;
 };
-
 
 template <typename T> 
 concept arithmetic = std::is_arithmetic_v<T>;
@@ -49,57 +56,39 @@ T center(T ext_size, T inner_size) {
     return ext_size / 2 - inner_size / 2;
 }
 
-class snake_game {
+const std::string game_over_text = "GAME IS OVER";
 
+class snake_game {
 public:
     static constexpr vec grid_size = { 120, 40 };
-    static constexpr unsigned int initial_length = 20;
+    static constexpr unsigned int initial_snake_length = 20;
 
     cell grid[grid_size.y][grid_size.x] = {};
-    direction prev_dir = dir;
-    vec tail = { 0, 0 };
-    vec head = { initial_length - 1, 0 };
 
-    std::atomic<direction> dir = direction::RIGHT;
     std::atomic_bool game_over = false;
-
-    const std::string game_over_text = "GAME IS OVER";
+    std::atomic<direction> dir = direction::RIGHT;
+    
+    vec tail = { 0, 0 };
+    vec head = { initial_snake_length - 1, 0 };
 
     snake_game() {
-        for (unsigned int i = 0; i < initial_length; i++) {
-            grid[0][i] = cell { object_type::SNAKE, direction::RIGHT, direction::RIGHT };
+        for (unsigned int i = 0; i < initial_snake_length; i++) {
+            grid[0][i] = cell { object_type::SNAKE, direction::RIGHT };
         }
     }
 
     const cell& grid_cell(const vec& v) const { return grid[v.y][v.x]; }
     cell& grid_cell(const vec& v) { return grid[v.y][v.x]; }
 
-    void draw_cell(std::ostream& o, const vec& v) const {
-        const cell& c = grid_cell(v);
-        switch (c.type) {
-            case object_type::EMPTY: 
-                o << " "; 
-                return;
-
-            case object_type::APPLE: 
-                o << attrs().fg(color::RED) << "" << attrs();
-                return;
-
-            default: break;
-        }
-
-        const direction p = c.prev_dir, d = c.next_dir;
+    const char* get_snake_tail(direction p, direction n) const {
         using enum direction;
-
-        o << attrs().fg(color::GREEN);
-        if (v == head)                                                      o << "";
-        else if ((p == LEFT || p == RIGHT) && (d == LEFT || d == RIGHT))    o << "━";
-        else if ((p == UP || p == DOWN) && (d == UP || d == DOWN))          o << "┃";
-        else if ((p == RIGHT && d == UP) || (p == DOWN && d == LEFT))       o << "┛";
-        else if ((p == RIGHT && d == DOWN) || (p == UP && d == LEFT))       o << "┓";
-        else if ((p == LEFT && d == UP) || (p == DOWN && d == RIGHT))       o << "┗";
-        else if ((p == LEFT && d == DOWN) || (p == UP && d == RIGHT))       o << "┏";
-        o << attrs();
+        if ((p == LEFT  || p == RIGHT)  && (n == LEFT   || n == RIGHT)) return "━";
+        if ((p == UP    || p == DOWN)   && (n == UP     || n == DOWN))  return "┃";
+        if ((p == RIGHT && n == UP)     || (p == DOWN   && n == LEFT))  return "┛";
+        if ((p == RIGHT && n == DOWN)   || (p == UP     && n == LEFT))  return "┓";
+        if ((p == LEFT  && n == UP)     || (p == DOWN   && n == RIGHT)) return "┗";
+        if ((p == LEFT  && n == DOWN)   || (p == UP     && n == RIGHT)) return "┏";
+        return "X";
     }
 
     void process() {
@@ -119,45 +108,63 @@ public:
             return;
         }
 
-        cell& ohc = grid_cell(head);
-        head = next_head;
-        ohc.next_dir = prev_dir = dir;
-
+        grid_cell(head).dir = dir;
         if (nhc.type == object_type::EMPTY) {
             cell& otc = grid_cell(tail);
             otc.type = object_type::EMPTY;
-            tail += dir_to_vec(otc.next_dir);
-            cell& ntc = grid_cell(tail);
-            ntc.prev_dir = ntc.next_dir;
+            tail += dir_to_vec(otc.dir);
         }
-        nhc = cell { object_type::SNAKE, dir, dir };
+        head = next_head;
+        nhc = cell { object_type::SNAKE, dir };
+    }
 
+    void draw_frame(std::ostream& o) const {
+        o << attrs().bg(color::WHITE);
+        for (int x = 0; x < grid_size.x + 2; x++) { o << " "; } o << "\n";
+        for (int y = 0; y < grid_size.y; y++) {
+            o << " " << move(CURSOR_TO_COLUMN, grid_size.x + 2) << " " << "\n";
+        }
+        for (int x = 0; x < grid_size.x + 2; x++) { o << " "; } o << "\n";
+        o << attrs();
+    }
+
+    void draw_snake(std::ostream& o) const {
+        o << store_cursor() 
+            << move(CURSOR_UP, grid_size.y - tail.y + 1) 
+            << move(CURSOR_TO_COLUMN, tail.x + 2) 
+            << attrs().fg(color::GREEN);
+
+        vec cur = tail;
+        const cell* cell = &grid_cell(cur);
+        direction prev_dir = cell->dir;
+        while (cur != head) {
+            direction next_dir = cell->dir;
+            o   << get_snake_tail(prev_dir, next_dir) 
+                << move(CURSOR_LEFT) 
+                << move(dir_to_cursor_move(next_dir));
+            cur += dir_to_vec(next_dir);
+            cell = &grid_cell(cur);
+            prev_dir = next_dir;
+        }
+        o << "" << attrs() << restore_cursor();
     }
 
     void draw(std::ostream& o) const {
-        for (int x = 0; x < grid_size.x + 2; x++) { o << "█"; } o << "\n";
-        
-        for (int y = 0; y < grid_size.y; y++) {
-            o << "█";
-            for (int x = 0; x < grid_size.x; x++) { 
-                draw_cell(o, {x,y}); 
-            }
-            o << "█";
-            o << "\n";
-        }
-        
-        for (int x = 0; x < grid_size.x + 2; x++) { std::cout << "█"; } o << "\n";
+        o << move(CURSOR_UP, grid_size.y + 2) << erase(SCREEN, TO_END);
+
+        draw_frame(o);
+        draw_snake(o);
 
         if (game_over) {
-            o << save_cursor() << move(CURSOR_UP, center(grid_size.y + 2, 1))
+            o << store_cursor() << move(CURSOR_UP, center(grid_size.y + 2, 1))
               << move(CURSOR_TO_COLUMN, center<int>(grid_size.x + 2, game_over_text.size())) 
               << attrs().bg(WHITE).fg(BLACK) << game_over_text << attrs() << restore_cursor();
         }
 
-        o << erase(LINE, TO_END)
-             << "head = " << head.x << "," << head.y 
-             << "; tail = " << tail.x << "," << tail.y 
-             << "; game_over = " << game_over << move(CURSOR_TO_COLUMN, 1);
+        o   << "head = " << head
+            << "; tail = " << tail
+            << "; game_over = " << game_over 
+            << move(CURSOR_TO_COLUMN, 1);
 
         o << std::flush;
     }
@@ -183,14 +190,13 @@ int main() {
     }
 
     snake_game g;
+    std::thread t(input_thread, std::ref(g));
 
-    std::jthread t(input_thread, std::ref(g));
-
+    std::cout << hide_cursor() << std::string(g.grid_size.y + 2, '\n');
     g.draw(std::cout);
     while (!g.game_over) {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         g.process();
-        std::cout << move(CURSOR_UP, g.grid_size.y + 2);
         g.draw(std::cout);
     }
     t.join();
