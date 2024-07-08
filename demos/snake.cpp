@@ -36,56 +36,20 @@ vec dir_to_vec(direction d) {
 
 struct cell {
     object_type type : 2;
-    direction dir : 2;
     direction prev_dir : 2;
+    direction next_dir : 2;
 };
-
-std::string get_symbol(const cell& c) {
-    switch (c.type) {
-    using enum object_type;
-    case EMPTY: return " ";
-    case APPLE: return "";
-    default: 
-        vec po = dir_to_vec(c.prev_dir);
-        vec no = dir_to_vec(c.dir);
-        if (po.y == 0 && no.y == 0) {
-            return "━";
-        }
-        if (po.x == 0 && no.x == 0) {
-            return "┃";
-        }
-        return "L";
-    }
-}
-
-// std::unordered_map<object_type, std::string> snake_symbols = {
-//     { EMPTY, " " },
-//     { SNAKE_HEAD, "⚉" },
-//     { SNAKE_LR, "━" },
-//     { SNAKE_LU, "┛" },
-//     { SNAKE_LD, "┓" },
-//     { SNAKE_RL, "━" },
-//     { SNAKE_RU, "┗" },
-//     { SNAKE_RD, "┏" },
-//     { SNAKE_UD, "┃" },
-//     { SNAKE_UR, "┗" },
-//     { SNAKE_UL, "┛" },
-//     { SNAKE_DU, "┃" },
-//     { SNAKE_DR, "┏" },
-//     { SNAKE_DL, "┓" },
-//     { APPLE, "" }
-// };
 
 class snake_game {
 
 public:
     static constexpr vec grid_size = { 120, 40 };
-    static constexpr unsigned int initial_length = 1;
+    static constexpr unsigned int initial_length = 20;
 
     cell grid[grid_size.y][grid_size.x] = {};
     direction prev_dir = dir;
     vec tail = { 0, 0 };
-    vec head = { initial_length, 0 };
+    vec head = { initial_length - 1, 0 };
 
     std::atomic<direction> dir = direction::RIGHT;
     std::atomic_bool game_over = false;
@@ -99,72 +63,86 @@ public:
     const cell& grid_cell(const vec& v) const { return grid[v.y][v.x]; }
     cell& grid_cell(const vec& v) { return grid[v.y][v.x]; }
 
-    const char* snake_symbol(const vec& v) const {
+    void draw_cell(std::ostream& o, const vec& v) const {
         const cell& c = grid_cell(v);
         switch (c.type) {
-            case object_type::EMPTY: return " ";
-            case object_type::APPLE: return "";
+            case object_type::EMPTY: 
+                o << " "; 
+                return;
+
+            case object_type::APPLE: 
+                o << attrs().fg(color::RED) << "" << attrs();
+                return;
+
             default: break;
         }
-        if (v == head) return "";
-        const direction p = c.prev_dir, d = c.dir;
+
+        const direction p = c.prev_dir, d = c.next_dir;
         using enum direction;
-        if ((p == LEFT || p == RIGHT) && (d == LEFT || d == RIGHT))     return "━";
-        if ((p == UP || p == DOWN) && (d == UP || d == DOWN))           return "┃";
-        if ((p == RIGHT && d == UP) || (p == DOWN && d == LEFT))        return "┛";
-        if ((p == RIGHT && d == DOWN) || (p == UP && d == LEFT))        return "┓";
-        if ((p == LEFT && d == UP) || (p == DOWN && d == RIGHT))        return "┗";
-        if ((p == LEFT && d == DOWN) || (p == UP && d == RIGHT))        return "┏";
-        return "X";
+
+        o << attrs().fg(color::GREEN);
+        if (v == head)                                                      o << "";
+        else if ((p == LEFT || p == RIGHT) && (d == LEFT || d == RIGHT))    o << "━";
+        else if ((p == UP || p == DOWN) && (d == UP || d == DOWN))          o << "┃";
+        else if ((p == RIGHT && d == UP) || (p == DOWN && d == LEFT))       o << "┛";
+        else if ((p == RIGHT && d == DOWN) || (p == UP && d == LEFT))       o << "┓";
+        else if ((p == LEFT && d == UP) || (p == DOWN && d == RIGHT))       o << "┗";
+        else if ((p == LEFT && d == DOWN) || (p == UP && d == RIGHT))       o << "┏";
+        o << attrs();
     }
 
     void process() {
-        if (game_over) { return; }
+        if (game_over) { 
+            return; 
+        }
 
-        vec h = head + dir_to_vec(dir);
-        if (h.x < 0 || h.x >= grid_size.x || h.y < 0 || h.y >= grid_size.y) {
+        vec next_head = head + dir_to_vec(dir);
+        if (next_head.x < 0 || next_head.x >= grid_size.x || next_head.y < 0 || next_head.y >= grid_size.y) {
             game_over = true;
             return;
         }
 
-        cell& nhc = grid_cell(h);
+        cell& nhc = grid_cell(next_head);
         if (nhc.type == object_type::SNAKE) {
             game_over = true;
             return;
         }
 
         cell& ohc = grid_cell(head);
+        head = next_head;
+        ohc.next_dir = prev_dir = dir;
+
         if (nhc.type == object_type::EMPTY) {
             cell& otc = grid_cell(tail);
             otc.type = object_type::EMPTY;
-            tail += dir_to_vec(otc.dir);
+            tail += dir_to_vec(otc.next_dir);
             cell& ntc = grid_cell(tail);
-            ntc.prev_dir = ntc.dir;
+            ntc.prev_dir = ntc.next_dir;
         }
-
-        ohc = cell { object_type::SNAKE, dir, prev_dir };
         nhc = cell { object_type::SNAKE, dir, dir };
 
-        head = h;
-        prev_dir = dir;
     }
 
-    void draw() const {
-        std::cout << restore_position() << move(0, 0);
-        for (int x = 0; x < grid_size.x + 2; x++) { std::cout << "█"; }
-        std::cout << "\n";
+    void draw(std::ostream& o) const {
+        for (int x = 0; x < grid_size.x + 2; x++) { o << "█"; }
+        o << "\n";
         
         for (int y = 0; y < grid_size.y; y++) {
-            std::cout << "█";
+            o << "█";
             for (int x = 0; x < grid_size.x; x++) { 
-                std::cout << snake_symbol({x,y}); 
+                draw_cell(o, {x,y}); 
             }
-            std::cout << "█";
-            std::cout << "\n";
+            o << "█";
+            o << "\n";
         }
         
         for (int x = 0; x < grid_size.x + 2; x++) { std::cout << "█"; }
-        std::cout << "\n" << std::flush;
+        o << "\n";
+        o << erase(LINE, TO_END)
+             << "head = " << head.x << "," << head.y 
+             << "; tail = " << tail.x << "," << tail.y 
+             << "; game_over = " << game_over << "\n";
+        o << std::flush;
     }
 
 };
@@ -172,10 +150,10 @@ public:
 void input_thread(snake_game& game) {
     std::string seq;
     while (!game.game_over && terminal_read(seq) && seq != "q") {
-        if (seq == "\33" "[A") { game.dir = direction::UP; }
-        if (seq == "\33" "[B") { game.dir = direction::DOWN; }
-        if (seq == "\33" "[C") { game.dir = direction::RIGHT; }
-        if (seq == "\33" "[D") { game.dir = direction::LEFT; }
+        if      (seq == "\33" "[A") game.dir = direction::UP;
+        else if (seq == "\33" "[B") game.dir = direction::DOWN;
+        else if (seq == "\33" "[C") game.dir = direction::RIGHT;
+        else if (seq == "\33" "[D") game.dir = direction::LEFT;
     }
     game.game_over = true;
 }
@@ -186,17 +164,17 @@ int main() {
         std::cerr << "can't init: " << ec.message() << std::endl;
         return EXIT_FAILURE;
     }
-    std::cout << save_position();
 
     snake_game g;
 
     std::jthread t(input_thread, std::ref(g));
 
-    g.draw();
+    g.draw(std::cout);
     while (!g.game_over) {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         g.process();
-        g.draw();
+        std::cout << move(CURSOR_UP, g.grid_size.y + 3);
+        g.draw(std::cout);
     }
     t.join();
     return 0;
