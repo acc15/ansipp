@@ -1,6 +1,7 @@
 #include <iostream>
 #include <thread>
 #include <atomic>
+#include <csignal>
 
 #include <ansipp.hpp>
 #include <unordered_map>
@@ -189,7 +190,7 @@ int main() {
 
     snake_game g;
 
-    std::thread t(input_thread, std::ref(g));
+    std::jthread t(input_thread, std::ref(g));
 
     g.draw();
     while (!g.game_over) {
