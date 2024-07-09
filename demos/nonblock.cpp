@@ -9,6 +9,8 @@
 
 using namespace ansipp;
 
+// mouse tracking linux https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Functions-using-CSI-_-ordered-by-the-final-character_s_
+
 int main() {
 
     if (std::error_code ec; init(ec), ec) {
@@ -20,8 +22,15 @@ int main() {
     int old_flags = fcntl(STDIN_FILENO, F_GETFL);
     fcntl(STDIN_FILENO, F_SETFL, old_flags | O_NONBLOCK);
 
-    char buf[20];
+// #define SET_X10_MOUSE 9
+// #define SET_VT200_MOUSE 1000
+// #define SET_VT200_HIGHLIGHT_MOUSE 1001
+// #define SET_BTN_EVENT_MOUSE 1002
+// #define SET_ANY_EVENT_MOUSE 1003
+    const char mouse_buf[] = "\33" "[?1003h";
+    write(STDOUT_FILENO, mouse_buf, sizeof(mouse_buf));
 
+    char buf[20];
     while (true) {
         ssize_t result = read(STDIN_FILENO, buf, sizeof(buf));
         if (result < 0) {
