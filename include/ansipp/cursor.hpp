@@ -42,14 +42,14 @@ enum move_mode: char {
     CURSOR_LEFT = 'D', 
     
     /**
-     * @brief moves cursor to N lines up and to 1st column
-     */
-    CURSOR_UP_START = 'E', 
-    
-    /**
      * @brief moves cursor to N lines down and to 1st column
      */
-    CURSOR_DOWN_START = 'F', 
+    CURSOR_DOWN_START = 'E', 
+    
+    /**
+     * @brief moves cursor to N lines up and to 1st column
+     */
+    CURSOR_UP_START = 'F', 
     
     /**
      * @brief moves cursor to specified column (line number isn't changed)
@@ -57,14 +57,14 @@ enum move_mode: char {
     CURSOR_TO_COLUMN = 'G',
     
     /**
-     * @brief moves cursor down (scrolling up by N lines), allows to allocate free space for drawing
+     * @brief scrolls up by N lines
      */
-    CURSOR_DOWN_FORCE = 'S',
+    SCROLL_UP = 'S',
     
     /**
-     * @brief moves cursor up (scrolling down by N lines)
+     * @brief scrolls down by N lines
      */
-    CURSOR_UP_FORCE = 'T'
+    SCROLL_DOWN = 'T'
 };
 
 inline std::string move(move_mode mode, unsigned int value = 1) {
