@@ -1,5 +1,6 @@
 #include <ansipp/error.hpp>
 #include <ansipp/io.hpp> 
+#include <ansipp/stream.hpp> 
 #include <ansipp/config.hpp>
 #include <ansipp/terminal.hpp>
 #include <ansipp/attrs.hpp>

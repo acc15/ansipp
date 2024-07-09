@@ -8,6 +8,7 @@ target_sources(ansipp PRIVATE
     ${SRC}/ansipp/ts_opt.hpp
     ${SRC}/ansipp/error.cpp
     ${SRC}/ansipp/io.cpp
+    ${SRC}/ansipp/stream.cpp
     ${SRC}/ansipp/terminal.cpp
     ${SRC}/ansipp/cursor.cpp
     ${SRC}/ansipp/attrs.cpp
@@ -19,6 +20,7 @@ target_sources(ansipp PRIVATE
 target_sources(ansipp PUBLIC FILE_SET HEADERS BASE_DIRS ${INC} FILES
     ${INC}/ansipp/error.hpp
     ${INC}/ansipp/io.hpp
+    ${INC}/ansipp/stream.hpp
     ${INC}/ansipp/config.hpp
     ${INC}/ansipp/terminal.hpp
     ${INC}/ansipp/cursor.hpp

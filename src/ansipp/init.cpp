@@ -41,9 +41,9 @@ int signal_control_handler(DWORD ctrl_code) {
 }
 #endif
 
-void enable_signal_restore(std::error_code& ec) {
+void enable_signal_restore([[maybe_unused]] std::error_code& ec) {
 #ifdef _WIN32 
-    if (!SetConsoleCtrlHandler(&signal_control_handler, true)) { ec = last_error(); return; }
+    // if (!SetConsoleCtrlHandler(&signal_control_handler, true)) { ec = last_error(); return; }
 #else
     struct sigaction sa;
     sa.sa_handler = &signal_restore;

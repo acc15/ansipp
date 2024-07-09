@@ -3,6 +3,8 @@
 #include <string>
 #include <string_view>
 #include <cstddef>
+#include <ostream>
+#include <sstream>
 
 namespace ansipp {
 

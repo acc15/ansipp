@@ -5,6 +5,7 @@
 #include <vector>
 #include <csignal>
 #include <cstdlib>
+#include <sstream>
 
 #include <ansipp.hpp>
 #include <unordered_map>
@@ -191,6 +192,22 @@ public:
         process_apples();
     }
 
+    // void draw_frame(std::ostream& o) const {
+    //     o << attrs().bg(color::WHITE);
+    //     for (int x = 0; x < grid_size.x + 2; x++) { o << " "; }
+    //     o << attrs() << "\n";
+
+    //     for (int y = 0; y < grid_size.y; y++) {
+    //         o << attrs().bg(color::WHITE) << " " << attrs().bg(color::BLACK);
+    //         for (int x = 0; x < grid_size.x; x++) { o << " "; }
+    //         o << attrs().bg(color::WHITE) << " " << attrs() << "\n";
+    //     }
+
+    //     o << attrs().bg(color::WHITE);
+    //     for (int x = 0; x < grid_size.x + 2; x++) { o << " "; } o << "\n";
+    //     o << attrs();
+    // }
+
     void draw_frame(std::ostream& o) const {
         o << attrs().bg(color::WHITE);
         for (int x = 0; x < grid_size.x + 2; x++) { o << " "; } o << "\n";
@@ -243,15 +260,16 @@ public:
                 << attrs().bg(WHITE).fg(BLACK) << game_over_text << attrs() << restore_cursor();
         }
 
-        o   << move(CURSOR_DOWN_START, grid_size.y + 1)
+        o   << move(CURSOR_DOWN, grid_size.y) << move(CURSOR_TO_COLUMN, 2) << attrs().fg(color::BLACK).bg(color::WHITE)
             << "head = " << head
-            << "; tail = " << tail
-            << "; game_over = " << game_over 
-            << "; apples = " << apples.size()
-            << "; length = " << length
-            << move(CURSOR_TO_COLUMN, 1);
+            << " tail = " << tail
+            << " game_over = " << game_over 
+            << " apples = " << apples.size()
+            << " length = " << length
+            << attrs()
+            << "\n";
 
-        o << std::flush;
+        o   << std::flush;
     }
 
 };
@@ -277,12 +295,14 @@ int main() {
     snake_game g;
     std::thread t(input_thread, std::ref(g));
 
-    std::cout << hide_cursor();
-    g.draw(std::cout);
+    terminal_stream out;
+    out << hide_cursor();
+
+    g.draw(out);
     while (!g.game_over) {
         std::this_thread::sleep_for(std::chrono::milliseconds(80));
         g.process();
-        g.draw(std::cout << move(CURSOR_UP, g.grid_size.y + 2) << erase(SCREEN, TO_END));
+        g.draw(out << move(CURSOR_UP, g.grid_size.y + 2) << erase(SCREEN, TO_END));
     }
     t.join();
     return 0;
