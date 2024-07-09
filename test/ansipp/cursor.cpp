@@ -13,6 +13,7 @@ TEST_CASE("cursor: parse_cursor_position_escape", "[cursor]") {
 }
 
 TEST_CASE("cursor: position escapes") {
+    REQUIRE( move(CURSOR_UP, 0) == "" );
     REQUIRE( move(CURSOR_UP, 5) == "\33" "[5A" );
     REQUIRE( move(5, 10) == "\33" "[5;10H" );
     REQUIRE( show_cursor() == "\33" "[?25h" );

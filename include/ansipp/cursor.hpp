@@ -67,17 +67,13 @@ enum move_mode: char {
     SCROLL_DOWN = 'T'
 };
 
-inline std::string move(move_mode mode, unsigned int value = 1) {
-    return std::string("\33" "[").append(std::to_string(value)).append(1, static_cast<char>(mode));
-}
-
-inline std::string move(unsigned short row, unsigned short col) {
-    return std::string("\33" "[")
-        .append(std::to_string(row)).append(1, ';')
-        .append(std::to_string(col)).append(1, 'H');
-}
-
+std::string move(move_mode mode, unsigned int value = 1);
+std::string move(unsigned short row, unsigned short col);
 inline std::string move(const cursor_position& p) { return move(p.row, p.col); }
+
+std::string move_x(int x);
+std::string move_y(int y);
+std::string move_xy(int x, int y);
 
 inline std::string store_cursor() { return "\33" "7"; }
 inline std::string restore_cursor() { return "\33" "8"; }

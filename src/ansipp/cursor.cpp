@@ -31,4 +31,28 @@ cursor_position get_cursor_position() {
     return terminal_read(esc) ? parse_cursor_position_escape(esc) : cursor_position{};
 }
 
+std::string move(move_mode mode, unsigned int value) {
+    return value > 0 
+        ? std::string("\33" "[").append(std::to_string(value)).append(1, static_cast<char>(mode))
+        : std::string();
+}
+
+std::string move(unsigned short row, unsigned short col) {
+    return std::string("\33" "[")
+        .append(std::to_string(row)).append(1, ';')
+        .append(std::to_string(col)).append(1, 'H');
+}
+
+std::string move_x(int x) {
+    return x >= 0 ? move(CURSOR_RIGHT, static_cast<unsigned int>(x)) : move(CURSOR_LEFT, static_cast<unsigned int>(-x));
+}
+
+std::string move_y(int y) {
+    return y >= 0 ? move(CURSOR_DOWN, static_cast<unsigned int>(y)) : move(CURSOR_UP, static_cast<unsigned int>(-y));
+}
+
+std::string move_xy(int x, int y) {
+    return move_y(y) + move_x(x);
+}
+
 }
