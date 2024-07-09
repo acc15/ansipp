@@ -212,9 +212,10 @@ public:
         draw_apples(o);
 
         if (game_over) {
-            o << store_cursor() << move(CURSOR_UP, center(grid_size.y + 2, 1))
-              << move(CURSOR_TO_COLUMN, center<int>(grid_size.x + 2, game_over_text.size())) 
-              << attrs().bg(WHITE).fg(BLACK) << game_over_text << attrs() << restore_cursor();
+            o   << store_cursor() 
+                << move(CURSOR_UP, center(grid_size.y + 2, 1))
+                << move(CURSOR_TO_COLUMN, center<int>(grid_size.x + 2, game_over_text.size())) 
+                << attrs().bg(WHITE).fg(BLACK) << game_over_text << attrs() << restore_cursor();
         }
 
         o   << "head = " << head
