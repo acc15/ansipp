@@ -55,7 +55,10 @@ struct apple {
     apple_type type;
 };
 
-template <typename T> T center(T ext_size, T inner_size) { return ext_size / 2 - inner_size / 2; }
+template <typename T> 
+T center(const T& ext_size, const T& inner_size) { 
+    return ext_size / 2 - inner_size / 2; 
+}
 
 template <typename Collection, typename Predicate>
 void erase_if(Collection& coll, Predicate pred) {
@@ -236,7 +239,7 @@ public:
 
         if (game_over) {
             o   << store_cursor() 
-                << move_xy(center<int>(grid_size.x + 2, game_over_text.size()), center(grid_size.y + 2, 1))
+                << move_xy(center(grid_size.x + 2, static_cast<int>(game_over_text.size())), center(grid_size.y + 2, 1))
                 << attrs().bg(WHITE).fg(BLACK) << game_over_text << attrs() << restore_cursor();
         }
 
