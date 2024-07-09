@@ -40,4 +40,10 @@ if(BUILD_DEMOS)
 
     add_executable(ansipp_demo_snake demos/snake.cpp)
     target_link_libraries(ansipp_demo_snake ansipp)
+    
+    add_executable(ansipp_demo_readkey demos/readkey.cpp)
+    target_link_libraries(ansipp_demo_readkey ansipp)
+
+    add_executable(ansipp_demo_nonblock demos/nonblock.cpp)
+    target_link_libraries(ansipp_demo_nonblock ansipp)
 endif()

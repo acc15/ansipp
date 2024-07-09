@@ -89,7 +89,7 @@ void configure_mode(std::error_code& ec, const config& cfg) {
         if (tcgetattr(STDOUT_FILENO, &p) == -1) { ec = last_error(); return; }
         if (!__ansipp_restore.lflag.store(p.c_lflag)) { ec = ansipp_error::already_initialized; return; }
         p.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL); 
-        if (tcsetattr(STDOUT_FILENO, TCSANOW, &p) == -1) { ec = last_error(); return; }
+        if (tcsetattr(STDOUT_FILENO, TCSAFLUSH, &p) == -1) { ec = last_error(); return; }
     }
 #endif
 }

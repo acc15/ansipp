@@ -32,7 +32,7 @@ void restore_mode() {
         termios p;
         if (tcgetattr(STDOUT_FILENO, &p) == 0) {
             p.c_lflag = lflag;
-            tcsetattr(STDOUT_FILENO, TCSANOW, &p);
+            tcsetattr(STDOUT_FILENO, TCSAFLUSH, &p);
         }
     });
 #endif
