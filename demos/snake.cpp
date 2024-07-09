@@ -48,9 +48,11 @@ struct cell {
     direction dir : 2;
 };
 
+enum class apple_type { SMALL, BIG };
 struct apple {
     vec pos;
     std::size_t ttl;
+    apple_type type;
 };
 
 template <typename T> T center(T ext_size, T inner_size) { return ext_size / 2 - inner_size / 2; }
@@ -88,6 +90,7 @@ public:
     vec head = { initial_snake_length - 1, 0 };
     unsigned int length = initial_snake_length;
     unsigned int frames_till_apple = 0;
+    unsigned int grow_frames = 0;
     std::vector<apple> apples;
 
     snake_game() {
@@ -122,17 +125,32 @@ public:
             return;
         }
 
-        frames_till_apple = 20 + std::rand() % 120;
+        frames_till_apple = 10 + std::rand() % 91;
         while (true) {
             vec pos = { std::rand() % grid_size.x, std::rand() % grid_size.y };
             auto& cell = grid_cell(pos);
             if (cell.type == object_type::EMPTY) {
                 cell.type = object_type::APPLE;
-                apples.emplace_back(apple { pos, static_cast<unsigned int>(100 + std::rand() % 900) });
+                apples.emplace_back(apple { 
+                    pos, 
+                    static_cast<unsigned int>(100 + std::rand() % 900), 
+                    static_cast<apple_type>(std::rand() % 2) 
+                });
                 break;
             }
         }
         
+    }
+
+    void process_grow() {
+        if (grow_frames > 0) {
+            --grow_frames;
+            ++length;
+            return;
+        }
+        cell& otc = grid_cell(tail);
+        otc.type = object_type::EMPTY;
+        tail += dir_to_vec(otc.dir);
     }
 
     void process() {
@@ -155,16 +173,18 @@ public:
         grid_cell(head).dir = dir;
         head = next_head;
 
-        if (nhc.type == object_type::EMPTY) {
-            cell& otc = grid_cell(tail);
-            otc.type = object_type::EMPTY;
-            tail += dir_to_vec(otc.dir);
-        } else if (nhc.type == object_type::APPLE) {
-            erase_if(apples, [this](apple& a) { return a.pos == head; });
-            ++length;
+        if (nhc.type == object_type::APPLE) {
+            const auto it = std::find_if(apples.begin(), apples.end(), 
+                [this](const apple& a) { return a.pos == head; });
+            if (it != apples.end()) {
+                grow_frames += it->type == apple_type::SMALL ? 1 : 5;
+                apples.erase(it);
+            }
         }
+
         nhc = cell { object_type::SNAKE, dir };
 
+        process_grow();
         process_apples();
     }
 
@@ -203,7 +223,7 @@ public:
         for (const apple& apple: apples) {
             o   << store_cursor() 
                 << move_xy(apple.pos.x, apple.pos.y)
-                << "•"
+                << (apple.type == apple_type::SMALL ? "•" : "●")
                 << restore_cursor();
         }
         o << attrs();
