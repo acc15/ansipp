@@ -94,7 +94,7 @@ public:
     unsigned int frames_till_apple = 0;
     unsigned int grow_frames = 0;
     std::vector<apple> apples;
-    unsigned int draw_height = 0;
+    unsigned int draw_rows = 0;
 
     snake_game() {
         for (unsigned int i = 0; i < initial_snake_length; i++) {
@@ -157,7 +157,7 @@ public:
     }
 
     void process() {
-        if (game_over || draw_height != static_cast<unsigned int>(grid_size.y + 2)) { 
+        if (game_over || draw_rows != static_cast<unsigned int>(grid_size.y + 2)) { 
             return; 
         }
 
@@ -250,15 +250,14 @@ public:
     }
 
     void draw(std::ostream& o) {
-        
+
+        o << move(CURSOR_TO_COLUMN, 0) << move(CURSOR_UP, draw_rows) << erase(SCREEN, TO_END);
+
         terminal_dimension td = get_terminal_dimension();
-
-        o << move(CURSOR_TO_COLUMN, 0) << move(CURSOR_UP, draw_height) << erase(SCREEN, TO_END);
-
         if (td.rows < border_size.y || td.cols < border_size.x) {
             o   << "not enough room to render game, current size " << td 
                 << " required " << border_size.x << "x" << border_size.y << '\n' << std::flush;
-            draw_height = 1;
+            draw_rows = 1;
             return;
         }
 
@@ -268,13 +267,13 @@ public:
         if (game_over) {
             o   << store_cursor() 
                 << move_xy(
-                    align(CENTER, grid_size.x + 2, static_cast<int>(game_over_text.size())), 
-                    align(CENTER, grid_size.y + 2, 1)
-                    )
+                    align(CENTER, grid_size.x, static_cast<int>(game_over_text.size())), 
+                    align(CENTER, grid_size.y, 1)
+                )
                 << attrs().bg(WHITE).fg(BLACK) << game_over_text << attrs() << restore_cursor();
         }
         o << move(CURSOR_TO_COLUMN, 0) << move(CURSOR_DOWN, grid_size.y + 1) << std::flush;
-        draw_height = grid_size.y + 2;
+        draw_rows = border_size.y;
     }
 
 };
@@ -298,12 +297,13 @@ int main() {
     }
 
     snake_game g;
-    std::thread t(input_thread, std::ref(g));
 
     terminal_stream out;
-    out << hide_cursor() << disable_line_wrap();
+    out << hide_cursor();
 
     g.draw(out);
+    
+    std::thread t(input_thread, std::ref(g));
     while (!g.game_over) {
         std::this_thread::sleep_for(std::chrono::milliseconds(80));
         g.process();

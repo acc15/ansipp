@@ -4,6 +4,7 @@
 #include <ansipp/attrs.hpp>
 #include <ansipp/io.hpp>
 #include <ansipp/cursor.hpp>
+#include <ansipp/terminal.hpp>
 
 #ifdef _WIN32
 #   include <windows.h>
@@ -17,7 +18,7 @@ namespace ansipp {
 
 restore_data __ansipp_restore;
 
-const std::string __ansipp_reset = attrs().str() + show_cursor();
+const std::string __ansipp_reset = attrs().str() + show_cursor() + disable_alternative_buffer();
 
 void restore_mode() {
 #ifdef _WIN32 // windows
