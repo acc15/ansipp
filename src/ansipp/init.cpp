@@ -61,20 +61,13 @@ void configure_mode(std::error_code& ec, const config& cfg) {
     if (!GetConsoleMode(in, &in_modes)) { ec = last_error(); return; }
     if (!__ansipp_restore.in_modes.store(in_modes)) { ec = ansipp_error::already_initialized; return; }
     if (cfg.disable_input_echo) {
-        in_modes &= ~(
-            ENABLE_ECHO_INPUT | 
-            ENABLE_INSERT_MODE | 
-            ENABLE_LINE_INPUT | 
-            ENABLE_QUICK_EDIT_MODE |
-            ENABLE_WINDOW_INPUT |
-            ENABLE_MOUSE_INPUT
-        );
+        in_modes = 0;
     }
     in_modes |= (ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT);
     if (!SetConsoleMode(in, in_modes)) { ec = last_error(); return; }
     
-    HANDLE out;
-    if (out = GetStdHandle(STD_OUTPUT_HANDLE); out == INVALID_HANDLE_VALUE) { ec = last_error(); return; }
+    HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (out == INVALID_HANDLE_VALUE) { ec = last_error(); return; }
     
     DWORD out_modes; 
     if (!GetConsoleMode(out, &out_modes)) { ec = last_error(); return; }
