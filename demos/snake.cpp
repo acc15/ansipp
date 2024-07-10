@@ -56,11 +56,6 @@ struct apple {
     apple_type type;
 };
 
-template <typename T> 
-T center(const T& ext_size, const T& inner_size) { 
-    return ext_size / 2 - inner_size / 2; 
-}
-
 template <typename Collection, typename Predicate>
 void erase_if(Collection& coll, Predicate pred) {
     auto it = coll.begin();
@@ -192,30 +187,31 @@ public:
         process_apples();
     }
 
-    // void draw_frame(std::ostream& o) const {
-    //     o << attrs().bg(color::WHITE);
-    //     for (int x = 0; x < grid_size.x + 2; x++) { o << " "; }
-    //     o << attrs() << "\n";
-
-    //     for (int y = 0; y < grid_size.y; y++) {
-    //         o << attrs().bg(color::WHITE) << " " << attrs().bg(color::BLACK);
-    //         for (int x = 0; x < grid_size.x; x++) { o << " "; }
-    //         o << attrs().bg(color::WHITE) << " " << attrs() << "\n";
-    //     }
-
-    //     o << attrs().bg(color::WHITE);
-    //     for (int x = 0; x < grid_size.x + 2; x++) { o << " "; } o << "\n";
-    //     o << attrs();
-    // }
-
     void draw_frame(std::ostream& o) const {
-        o << attrs().bg(color::WHITE);
-        for (int x = 0; x < grid_size.x + 2; x++) { o << " "; } o << "\n";
+        o << attrs().bg(color::WHITE) << std::string(grid_size.x + 2, ' ') << attrs() << '\n';
         for (int y = 0; y < grid_size.y; y++) {
-            o << " " << move(CURSOR_TO_COLUMN, grid_size.x + 2) << " " << "\n";
+            o   << attrs().bg(color::WHITE) << " " << attrs() 
+                << move(CURSOR_TO_COLUMN, grid_size.x + 2) 
+                << attrs().bg(color::WHITE) << " " << attrs() 
+                << '\n';
         }
-        for (int x = 0; x < grid_size.x + 2; x++) { o << " "; } o << "\n";
-        o << attrs() << move(CURSOR_UP, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 2);
+        
+        std::stringstream status_line_stream;
+        status_line_stream
+            << "head = " << head
+            << " tail = " << tail
+            << " game_over = " << game_over 
+            << " apples = " << apples.size()
+            << " length = " << length;
+
+        std::string_view status_line = status_line_stream.view();
+        std::string bottom_border = std::string(grid_size.x + 2, ' ');
+
+        o   << attrs().bg(color::WHITE).fg(color::BLACK) 
+            << bottom_border.replace(1, std::min(status_line.size(), bottom_border.size()), status_line) 
+            << attrs() << '\n'
+            << move(CURSOR_UP, grid_size.y + 1)
+            << move(CURSOR_TO_COLUMN, 2);
     }
 
     void draw_snake(std::ostream& o) const {
@@ -253,23 +249,15 @@ public:
         draw_frame(o);
         draw_snake(o);
         draw_apples(o);
-
         if (game_over) {
             o   << store_cursor() 
-                << move_xy(center(grid_size.x + 2, static_cast<int>(game_over_text.size())), center(grid_size.y + 2, 1))
+                << move_xy(
+                    align(CENTER, grid_size.x + 2, static_cast<int>(game_over_text.size())), 
+                    align(CENTER, grid_size.y + 2, 1)
+                    )
                 << attrs().bg(WHITE).fg(BLACK) << game_over_text << attrs() << restore_cursor();
         }
-
-        o   << move(CURSOR_DOWN, grid_size.y) << move(CURSOR_TO_COLUMN, 2) << attrs().fg(color::BLACK).bg(color::WHITE)
-            << "head = " << head
-            << " tail = " << tail
-            << " game_over = " << game_over 
-            << " apples = " << apples.size()
-            << " length = " << length
-            << attrs()
-            << "\n";
-
-        o   << std::flush;
+        o   << move(CURSOR_DOWN, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 0) << std::flush;
     }
 
 };

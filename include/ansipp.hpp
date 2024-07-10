@@ -7,3 +7,4 @@
 #include <ansipp/cursor.hpp>
 #include <ansipp/restore.hpp>
 #include <ansipp/init.hpp>
+#include <ansipp/util.hpp>
