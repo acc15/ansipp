@@ -21,6 +21,9 @@ terminal_dimension get_terminal_dimension();
 inline std::string store_screen() { return "\33" "[?47h"; }
 inline std::string restore_screen() { return "\33" "[?47l"; }
 
+inline std::string enable_line_wrap() { return "\33" "[?7h"; }
+inline std::string disable_line_wrap() { return "\33" "[?7l"; }
+
 inline std::string enable_alternative_buffer() { return "\33" "[?1049h"; }
 inline std::string disable_alternative_buffer() { return "\33" "[?1049l"; }
 

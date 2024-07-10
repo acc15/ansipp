@@ -91,6 +91,7 @@ public:
     unsigned int frames_till_apple = 0;
     unsigned int grow_frames = 0;
     std::vector<apple> apples;
+    unsigned int draw_height = 0;
 
     snake_game() {
         for (unsigned int i = 0; i < initial_snake_length; i++) {
@@ -153,7 +154,7 @@ public:
     }
 
     void process() {
-        if (game_over) { 
+        if (game_over || draw_height != static_cast<unsigned int>(grid_size.y + 2)) { 
             return; 
         }
 
@@ -245,7 +246,18 @@ public:
         o << attrs();
     }
 
-    void draw(std::ostream& o) const {
+    void draw(std::ostream& o) {
+        
+        o << move(CURSOR_UP, draw_height) << erase(SCREEN, TO_END);
+
+        terminal_dimension td = get_terminal_dimension();
+        if (td.rows < grid_size.y || td.cols < grid_size.x) {
+            o   << "not enough room to render game, current size " << td 
+                << " required " << grid_size.x << "x" << grid_size.y << '\n' << std::flush;
+            draw_height = 1;
+            return;
+        }
+
         draw_frame(o);
         draw_snake(o);
         draw_apples(o);
@@ -258,6 +270,7 @@ public:
                 << attrs().bg(WHITE).fg(BLACK) << game_over_text << attrs() << restore_cursor();
         }
         o   << move(CURSOR_DOWN, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 0) << std::flush;
+        draw_height = grid_size.y + 2;
     }
 
 };
@@ -284,13 +297,13 @@ int main() {
     std::thread t(input_thread, std::ref(g));
 
     terminal_stream out;
-    out << hide_cursor();
+    out << hide_cursor() << disable_line_wrap();
 
     g.draw(out);
     while (!g.game_over) {
         std::this_thread::sleep_for(std::chrono::milliseconds(80));
         g.process();
-        g.draw(out << move(CURSOR_UP, g.grid_size.y + 2) << erase(SCREEN, TO_END));
+        g.draw(out);
     }
     t.join();
     return 0;
