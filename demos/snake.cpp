@@ -15,9 +15,11 @@ using namespace ansipp;
 struct vec { 
     int x;
     int y; 
-    vec& operator+=(const vec& b) { x += b.x; y += b.y; return *this; }
-    vec operator+(const vec& b) const { return vec{x,y} += b; }
-    bool operator==(const vec& b) const { return x == b.x && y == b.y; }
+    constexpr vec& operator+=(const vec& b) { x += b.x; y += b.y; return *this; }
+    constexpr vec& operator+=(const int& v) { x += v; y += v; return *this; }
+    constexpr vec operator+(const vec& b) const { return vec{x,y} += b; }
+    constexpr vec operator+(const int& b) const { return vec{x,y} += b; }
+    constexpr bool operator==(const vec& b) const { return x == b.x && y == b.y; }
 };
 std::ostream& operator<<(std::ostream& o, const vec& v) { return o << v.x << "," << v.y; }
 
@@ -78,6 +80,7 @@ const std::string apple_big =       "";
 class snake_game {
 public:
     static constexpr vec grid_size = { 120, 40 };
+    static constexpr vec border_size = grid_size + 2;
     static constexpr unsigned int initial_snake_length = 5;
 
     cell grid[grid_size.y][grid_size.x] = {};
@@ -188,8 +191,8 @@ public:
         process_apples();
     }
 
-    void draw_frame(std::ostream& o) const {
-        o << attrs().bg(color::WHITE) << std::string(grid_size.x + 2, ' ') << attrs() << '\n';
+    void draw_border(std::ostream& o) const {
+        o << attrs().bg(color::WHITE) << std::string(border_size.x, ' ') << attrs() << '\n';
         for (int y = 0; y < grid_size.y; y++) {
             o   << attrs().bg(color::WHITE) << " " << attrs() 
                 << move(CURSOR_TO_COLUMN, grid_size.x + 2) 
@@ -206,7 +209,7 @@ public:
             << " length = " << length;
 
         std::string_view status_line = status_line_stream.view();
-        std::string bottom_border = std::string(grid_size.x + 2, ' ');
+        std::string bottom_border = std::string(border_size.x, ' ');
 
         o   << attrs().bg(color::WHITE).fg(color::BLACK) 
             << bottom_border.replace(1, std::min(status_line.size(), bottom_border.size()), status_line) 
@@ -248,17 +251,18 @@ public:
 
     void draw(std::ostream& o) {
         
-        o << move(CURSOR_UP, draw_height) << erase(SCREEN, TO_END);
-
         terminal_dimension td = get_terminal_dimension();
-        if (td.rows < grid_size.y || td.cols < grid_size.x) {
+
+        o << move(CURSOR_TO_COLUMN, 0) << move(CURSOR_UP, draw_height) << erase(SCREEN, TO_END);
+
+        if (td.rows < border_size.y || td.cols < border_size.x) {
             o   << "not enough room to render game, current size " << td 
-                << " required " << grid_size.x << "x" << grid_size.y << '\n' << std::flush;
+                << " required " << border_size.x << "x" << border_size.y << '\n' << std::flush;
             draw_height = 1;
             return;
         }
 
-        draw_frame(o);
+        draw_border(o);
         draw_snake(o);
         draw_apples(o);
         if (game_over) {
@@ -269,7 +273,7 @@ public:
                     )
                 << attrs().bg(WHITE).fg(BLACK) << game_over_text << attrs() << restore_cursor();
         }
-        o   << move(CURSOR_DOWN, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 0) << std::flush;
+        o << move(CURSOR_TO_COLUMN, 0) << move(CURSOR_DOWN, grid_size.y + 1) << std::flush;
         draw_height = grid_size.y + 2;
     }
 

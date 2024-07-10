@@ -49,4 +49,7 @@ if(BUILD_DEMOS)
 
     add_executable(ansipp_demo_nonblock demos/nonblock.cpp)
     target_link_libraries(ansipp_demo_nonblock ansipp)
+
+    add_executable(ansipp_demo_resize demos/resize.cpp)
+    target_link_libraries(ansipp_demo_resize ansipp)
 endif()

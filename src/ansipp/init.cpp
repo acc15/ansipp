@@ -73,7 +73,7 @@ void configure_mode(std::error_code& ec, const config& cfg) {
     if (!GetConsoleMode(out, &out_modes)) { ec = last_error(); return; }
 
     if (!__ansipp_restore.out_modes.store(out_modes)) { ec = ansipp_error::already_initialized; return; }
-    out_modes |= (ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_WRAP_AT_EOL_OUTPUT);
+    out_modes |= (ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
     if (!SetConsoleMode(out, out_modes)) { ec = last_error(); return; }
 
 #else // posix
