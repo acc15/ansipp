@@ -20,7 +20,6 @@ inline std::string show_cursor() { return "\33" "[?25h"; }
 inline std::string hide_cursor() { return "\33" "[?25l"; }
 
 enum move_mode: char {
-    
     /**
      * @brief moves cursor to N lines up
      */

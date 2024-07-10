@@ -32,6 +32,7 @@ cursor_position get_cursor_position() {
 }
 
 std::string move(move_mode mode, unsigned int value) {
+    if (mode == CURSOR_TO_COLUMN && value < 2) return "\r";
     return value > 0 
         ? std::string("\33" "[").append(std::to_string(value)).append(1, static_cast<char>(mode))
         : std::string();
