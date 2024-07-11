@@ -115,6 +115,8 @@
         "__verbose_abort": "cpp",
         "bitset": "cpp",
         "execution": "cpp",
-        "xhash": "cpp"
+        "xhash": "cpp",
+        "__hash_table": "cpp",
+        "__node_handle": "cpp"
     }
 }

@@ -26,9 +26,11 @@ cursor_position parse_cursor_position_escape(std::string_view v) {
 }
 
 cursor_position get_cursor_position() {
-    terminal_write(request_cursor());
-    std::string esc;
-    return terminal_read(esc) ? parse_cursor_position_escape(esc) : cursor_position{};
+    std::string rq_cur = request_cursor(); 
+    if (auto w = terminal_write(rq_cur); static_cast<std::streamsize>(rq_cur.size()) != w) { return cursor_position{}; }
+    char buf[20];
+    auto r = terminal_read(buf, sizeof(buf));
+    return r < 0 ? cursor_position{} : parse_cursor_position_escape(std::string_view(buf, r));
 }
 
 std::string move(move_mode mode, unsigned int value) {

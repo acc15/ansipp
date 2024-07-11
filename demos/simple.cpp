@@ -34,11 +34,18 @@ int main() {
     std::cout << "press " << attrs().on(BOLD).fg(GREEN) << "q" << attrs() << " to exit" << std::endl;
     std::cout << "type something" << std::endl;
 
-    std::string seq_buf;
-    while (terminal_read(seq_buf) && seq_buf != "q") {
+    std::string seq_buf(20, '\0');
+    while (true) {
+        auto rd = std::string_view();
+        auto sz = terminal_read(seq_buf.data(), seq_buf.size());
+        if (sz < 0) {
+            std::cerr << "can't read stdin: " << last_error().message() << std::endl;
+            return EXIT_FAILURE;
+        }
+
         std::cout << store_cursor() 
             << move(CURSOR_UP) << move(CURSOR_TO_COLUMN, 0) << erase(LINE, ALL) << std::dec << seq_buf.size() << " chars received:";
-        for (const char& c: seq_buf) {
+        for (const char& c: rd) {
             std::cout << " 0x" 
                 << std::hex << std::setw(2) << std::setfill('0') << std::uppercase 
                 << static_cast<unsigned int>(static_cast<unsigned char>(c));

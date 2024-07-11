@@ -11,11 +11,20 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    std::string buf;
     std::cout << std::hex;    
-    while (terminal_read(buf)) {
+
+    std::string buf(512, '\0');
+    while (true) {
+        
+        auto sz = terminal_read(buf.data(), buf.size());
+        if (sz < 0) { 
+            std::cerr << "can't read stdin: " << last_error().message() << std::endl;
+            return EXIT_FAILURE;
+        }
+        auto rd = std::string_view(buf.data(), sz);
+
         std::cout << "BYTES:";
-        for (const char ch: buf) {
+        for (const char ch: rd) {
             std::cout << " 0x" 
                 << std::setw(2)
                 << std::setfill('0') 

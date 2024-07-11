@@ -98,7 +98,7 @@ public:
     std::vector<apple> apples;
     unsigned int draw_rows = 0;
     
-    std::string input_buffer;
+    char input_buffer[512];
     std::deque<direction> input_queue;
 
     snake_game() {
@@ -179,8 +179,12 @@ public:
     }
 
     bool input() {
-        if (!terminal_read_ready() || !terminal_read(input_buffer, 1024)) return true;
-        std::string_view input = input_buffer;
+        std::streamsize sz = terminal_read(input_buffer, sizeof(input_buffer), 0);
+        if (sz < 0) { 
+            std::cerr << "can't read stdin: " << last_error().message() << std::endl; 
+            return false;
+        }
+        std::string_view input = std::string_view(input_buffer, sz);
         while (!input.empty()) {
             if      (remove_prefix(input, "q")) return false;
             else if (remove_prefix(input, "\33" "[A")) queue_dir(direction::UP);
