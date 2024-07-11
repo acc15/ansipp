@@ -60,6 +60,11 @@ bool terminal_read(std::string& str, std::size_t max_size = 20);
  * @brief reads single character (getch)
  * @return read character or `-1` if `EOF` or error ocurred
  */
-int terminal_getch();
+int terminal_getch(); 
+
+/**
+ * @brief checks that terminal has any byte to read
+ */
+bool terminal_read_ready();
 
 }

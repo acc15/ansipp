@@ -3,6 +3,7 @@
 #include <atomic>
 #include <algorithm>
 #include <vector>
+#include <deque>
 #include <csignal>
 #include <cstdlib>
 #include <sstream>
@@ -66,8 +67,14 @@ void erase_if(Collection& coll, Predicate pred) {
     }
 }
 
+bool remove_prefix(std::string_view& view, std::string_view prefix) {
+    if (!view.starts_with(prefix)) return false;
+    view.remove_prefix(prefix.size());
+    return true;
+}
+
 const std::string game_over_text =  "GAME IS OVER";
-const std::string snake_head =      "";
+const std::string snake_head =      "⬤";
 const std::string snake_tail_h =    "━";
 const std::string snake_tail_v =    "┃";
 const std::string snake_tail_ru =   "┛";
@@ -85,8 +92,8 @@ public:
 
     cell grid[grid_size.y][grid_size.x] = {};
 
-    std::atomic_bool game_over = false;
-    std::atomic<direction> dir = direction::RIGHT;
+    bool game_over = false;
+    direction dir = direction::RIGHT;
     
     vec tail = { 0, 0 };
     vec head = { initial_snake_length - 1, 0 };
@@ -95,6 +102,9 @@ public:
     unsigned int grow_frames = 0;
     std::vector<apple> apples;
     unsigned int draw_rows = 0;
+    
+    std::string input_buffer;
+    std::deque<direction> input_queue;
 
     snake_game() {
         for (unsigned int i = 0; i < initial_snake_length; i++) {
@@ -156,11 +166,37 @@ public:
         tail += dir_to_vec(otc.dir);
     }
 
+    void queue_dir(direction input_dir) {
+        direction last_dir = input_queue.empty() ? dir : input_queue.back();
+        if (input_dir != last_dir) {
+            input_queue.push_back(input_dir);
+        }
+    }
+
+    bool input() {
+        if (!terminal_read_ready() || !terminal_read(input_buffer, 1024)) return true;
+        std::string_view input = input_buffer;
+        while (!input.empty()) {
+            if      (remove_prefix(input, "q")) return false;
+            else if (remove_prefix(input, "\33" "[A")) queue_dir(direction::UP);
+            else if (remove_prefix(input, "\33" "[B")) queue_dir(direction::DOWN);
+            else if (remove_prefix(input, "\33" "[C")) queue_dir(direction::RIGHT);
+            else if (remove_prefix(input, "\33" "[D")) queue_dir(direction::LEFT);
+            else input.remove_prefix(1);
+        }
+        return true;
+    }
+
     void process() {
         if (game_over || draw_rows != static_cast<unsigned int>(grid_size.y + 2)) { 
             return; 
         }
 
+        if (!input_queue.empty()) {
+            dir = input_queue.front();
+            input_queue.pop_front();
+        }
+        
         vec next_head = head + dir_to_vec(dir);
         if (next_head.x < 0 || next_head.x >= grid_size.x || next_head.y < 0 || next_head.y >= grid_size.y) {
             game_over = true;
@@ -276,18 +312,17 @@ public:
         draw_rows = border_size.y;
     }
 
-};
-
-void input_thread(snake_game& game) {
-    std::string seq;
-    while (!game.game_over && terminal_read(seq) && seq != "q") {
-        if      (seq == "\33" "[A") game.dir = direction::UP;
-        else if (seq == "\33" "[B") game.dir = direction::DOWN;
-        else if (seq == "\33" "[C") game.dir = direction::RIGHT;
-        else if (seq == "\33" "[D") game.dir = direction::LEFT;
+    void loop(std::ostream& out) {
+        draw(out);
+        while (!game_over) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(80));
+            if (!input()) break;
+            process();
+            draw(out);
+        }
     }
-    game.game_over = true;
-}
+
+};
 
 int main() {
 
@@ -300,15 +335,6 @@ int main() {
 
     terminal_stream out;
     out << hide_cursor();
-
-    g.draw(out);
-    
-    std::thread t(input_thread, std::ref(g));
-    while (!g.game_over) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(80));
-        g.process();
-        g.draw(out);
-    }
-    t.join();
+    g.loop(out);
     return 0;
 }

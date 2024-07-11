@@ -4,6 +4,7 @@
 #   include <windows.h>
 #else
 #   include <unistd.h>
+#   include <poll.h>
 #endif
 
 namespace ansipp {
@@ -41,6 +42,15 @@ bool terminal_read(std::string& str, std::size_t max_size) {
 int terminal_getch() {
     char v[1];
     return terminal_read(v, 1) == 1 ? v[0] : -1;
+}
+
+bool terminal_read_ready() {
+#ifdef _WIN32
+    return WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0) == WAIT_OBJECT_0;
+#else
+    static pollfd stdin_pollfd = { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 };
+    return poll(&stdin_pollfd, 1, 0) > 0;
+#endif
 }
 
 }
