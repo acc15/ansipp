@@ -28,9 +28,10 @@ enum class object_type: unsigned char { EMPTY, APPLE, SNAKE };
 enum class direction: unsigned char { UP, DOWN, LEFT, RIGHT };
 
 vec dir_to_vec(direction d) {
+    using enum direction;
     switch (d) {
-        using enum direction;
-        default:    return {  0, -1 };
+        default:
+        case UP:    return {  0, -1 };
         case DOWN:  return {  0,  1 };
         case LEFT:  return { -1,  0 };
         case RIGHT: return {  1,  0 };
@@ -38,9 +39,10 @@ vec dir_to_vec(direction d) {
 }
 
 move_mode dir_to_cursor_move(direction d) { 
+    using enum direction;
     switch (d) {
-        using enum direction;
-        default:    return CURSOR_UP;
+        default:    
+        case UP:    return CURSOR_UP;
         case DOWN:  return CURSOR_DOWN;
         case LEFT:  return CURSOR_LEFT;
         case RIGHT: return CURSOR_RIGHT;
@@ -74,13 +76,6 @@ bool remove_prefix(std::string_view& view, std::string_view prefix) {
 }
 
 const std::string game_over_text =  "GAME IS OVER";
-const std::string snake_head =      "⬤";
-const std::string snake_tail_h =    "━";
-const std::string snake_tail_v =    "┃";
-const std::string snake_tail_ru =   "┛";
-const std::string snake_tail_rd =   "┓";
-const std::string snake_tail_lu =   "┗";
-const std::string snake_tail_ld =   "┏";
 const std::string apple_small =     "•";
 const std::string apple_big =       "";
 
@@ -115,14 +110,24 @@ public:
     const cell& grid_cell(const vec& v) const { return grid[v.y][v.x]; }
     cell& grid_cell(const vec& v) { return grid[v.y][v.x]; }
 
-    const std::string& get_snake_tail(direction p, direction n) const {
+    const char* get_snake_symbol(direction p, direction n, bool head) const {
         using enum direction;
-        if ((p == LEFT  || p == RIGHT)  && (n == LEFT   || n == RIGHT)) return snake_tail_h;
-        if ((p == UP    || p == DOWN)   && (n == UP     || n == DOWN))  return snake_tail_v;
-        if ((p == RIGHT && n == UP)     || (p == DOWN   && n == LEFT))  return snake_tail_ru;
-        if ((p == RIGHT && n == DOWN)   || (p == UP     && n == LEFT))  return snake_tail_rd;
-        if ((p == LEFT  && n == UP)     || (p == DOWN   && n == RIGHT)) return snake_tail_lu;
-        return snake_tail_ld;
+        if (head) {
+            switch (n) {
+            default:    
+            case UP:    return "▲";
+            case DOWN:  return "▼";
+            case LEFT:  return "◀︎";
+            case RIGHT: return "▶︎";
+            }
+        }
+
+        if ((p == LEFT  || p == RIGHT)  && (n == LEFT   || n == RIGHT)) return "━";
+        if ((p == UP    || p == DOWN)   && (n == UP     || n == DOWN))  return "┃";
+        if ((p == RIGHT && n == UP)     || (p == DOWN   && n == LEFT))  return "┛";
+        if ((p == RIGHT && n == DOWN)   || (p == UP     && n == LEFT))  return "┓";
+        if ((p == LEFT  && n == UP)     || (p == DOWN   && n == RIGHT)) return "┗";
+        return "┏";
     }
 
     void process_apples() {
@@ -264,14 +269,14 @@ public:
         direction prev_dir = cell->dir;
         while (cur != head) {
             direction next_dir = cell->dir;
-            o   << get_snake_tail(prev_dir, next_dir) 
-                << move(CURSOR_LEFT) 
-                << move(dir_to_cursor_move(next_dir));
-            cur += dir_to_vec(next_dir);
+            vec v = dir_to_vec(next_dir);
+            o   << get_snake_symbol(prev_dir, next_dir, false) 
+                << move_xy(v.x - 1, v.y);
+            cur += v;
             cell = &grid_cell(cur);
             prev_dir = next_dir;
         }
-        o << snake_head << attrs() << restore_cursor();
+        o << get_snake_symbol(prev_dir, cell->dir, true) << attrs() << restore_cursor();
     }
 
     void draw_apples(std::ostream& o) const {
