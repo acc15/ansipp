@@ -46,7 +46,7 @@ struct cell {
 enum class apple_type { SMALL, BIG };
 struct apple {
     vec pos;
-    std::size_t ttl;
+    unsigned int ttl; // in frame count
     apple_type type;
 };
 
