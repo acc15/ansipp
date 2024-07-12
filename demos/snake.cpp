@@ -38,17 +38,6 @@ vec dir_to_vec(direction d) {
     }
 }
 
-move_mode dir_to_cursor_move(direction d) { 
-    using enum direction;
-    switch (d) {
-        default:    
-        case UP:    return CURSOR_UP;
-        case DOWN:  return CURSOR_DOWN;
-        case LEFT:  return CURSOR_LEFT;
-        case RIGHT: return CURSOR_RIGHT;
-    }
-}
-
 struct cell {
     object_type type : 2;
     direction dir : 2;
