@@ -104,7 +104,7 @@ public:
     const cell& grid_cell(const vec& v) const { return grid[v.y][v.x]; }
     cell& grid_cell(const vec& v) { return grid[v.y][v.x]; }
 
-    const char* get_snake_symbol(direction p, direction n, bool head) const {
+    static const char* get_snake_symbol(direction p, direction n, bool head) {
         using enum direction;
         if (head) {
             switch (n) {
@@ -289,7 +289,11 @@ public:
 
     void draw(std::ostream& o) {
 
-        o << move(CURSOR_TO_COLUMN, 0) << move(CURSOR_UP, draw_rows) << erase(SCREEN, TO_END);
+        for (int i=0; i< border_size.y; i++) {
+            o << '\n';
+        }
+
+        o << move(CURSOR_UP, draw_rows) << move(CURSOR_TO_COLUMN, 0) << erase(SCREEN, TO_END);
 
         terminal_dimension td = get_terminal_dimension();
         if (td.rows < border_size.y || td.cols < border_size.x) {
@@ -311,7 +315,7 @@ public:
                 )
                 << attrs().bg(WHITE).fg(BLACK) << game_over_text << attrs() << restore_cursor();
         }
-        o << move(CURSOR_TO_COLUMN, 0) << move(CURSOR_DOWN, grid_size.y + 1) << std::flush;
+        o << move(CURSOR_DOWN, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 0)  << std::flush;
         draw_rows = border_size.y;
     }
 
@@ -339,7 +343,7 @@ int main() {
     snake_game g;
 
     terminal_stream out;
-    out << hide_cursor();
+    //out << hide_cursor();
     g.loop(out);
     return 0;
 }
