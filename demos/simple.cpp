@@ -35,21 +35,20 @@ int main() {
     std::cout << "type something" << std::endl;
 
     std::string seq_buf(20, '\0');
-    while (true) {
-        std::string_view rd;
+    std::string_view rd;
+    do {
         if (!terminal_read(seq_buf, rd)) {
             std::cerr << "can't read stdin: " << last_error().message() << std::endl;
             return EXIT_FAILURE;
         }
-
         std::cout << store_cursor() 
-            << move(CURSOR_UP) << move(CURSOR_TO_COLUMN, 0) << erase(LINE, ALL) << std::dec << seq_buf.size() << " chars received:";
+            << move(CURSOR_UP) << move(CURSOR_TO_COLUMN, 0) << erase(LINE, ALL) << std::dec << rd.size() << " chars received:";
         for (const char& c: rd) {
             std::cout << " 0x" 
                 << std::hex << std::setw(2) << std::setfill('0') << std::uppercase 
                 << static_cast<unsigned int>(static_cast<unsigned char>(c));
         }
         std::cout << restore_cursor() << std::flush;
-    }
+    } while (rd != "q");
     return 0;
 }

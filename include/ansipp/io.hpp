@@ -41,9 +41,10 @@ bool terminal_read(T& buf, std::string_view& rd, int timeout = -1) {
 
 /**
  * @brief reads single char
+ * @param timeout timeout in milliseconds, `0` return immediately, negative values - infinite timeout
  * @return read single char or `-1` if error ocurred
  */
-int terminal_getch(); 
+int terminal_getch(int timeout = -1); 
 
 /**
  * @brief checks that terminal has any byte to read

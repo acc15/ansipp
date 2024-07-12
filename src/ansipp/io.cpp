@@ -36,9 +36,9 @@ std::streamsize terminal_write(std::string_view sw) {
     return terminal_write(sw.data(), sw.size());
 }
 
-int terminal_getch() {
+int terminal_getch(int timeout) {
     char v[1];
-    return terminal_read(v, 1) == 1 ? v[0] : -1;
+    return terminal_read(v, 1, timeout) == 1 ? v[0] : -1;
 }
 
 int terminal_read_ready(int timeout) {
