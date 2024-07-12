@@ -28,7 +28,7 @@ std::streamsize terminal_read(void* buf, std::size_t sz) {
 }
 
 std::streamsize terminal_read(void* buf, std::size_t sz, int timeout) {
-    const int v = terminal_read_ready(timeout);
+    const int v = timeout < 0 ? 1 : terminal_read_ready(timeout);
     return v > 0 ? terminal_read(buf, sz) : v;
 }
 

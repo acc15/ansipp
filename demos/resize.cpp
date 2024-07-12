@@ -15,8 +15,6 @@ int main() {
 
     terminal_stream o;
 
-
-
     // o << disable_line_wrap() << std::flush;
     // int ch;
     while (true) {

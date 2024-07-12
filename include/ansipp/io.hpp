@@ -19,6 +19,9 @@ namespace ansipp {
  */
 std::streamsize terminal_write(const void* buf, std::size_t sz);
 
+
+std::streamsize terminal_write(std::string_view str);
+
 /**
  * @brief simple non-bufferring function to read raw bytes from `stdin`.
  *
@@ -29,7 +32,13 @@ std::streamsize terminal_write(const void* buf, std::size_t sz);
 std::streamsize terminal_read(void* buf, std::size_t sz);
 std::streamsize terminal_read(void* buf, std::size_t sz, int timeout);
 
-std::streamsize terminal_write(std::string_view str);
+template <typename T>
+bool terminal_read(T& buf, std::string_view& rd, int timeout = -1) {
+    std::streamsize res = terminal_read(std::data(buf), std::size(buf), timeout); 
+    if (res < 0) return false;
+    rd = std::string_view(std::data(buf), res);
+    return true;
+}
 
 /**
  * @brief reads single character (getch)

@@ -24,17 +24,22 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    
     char buf[20];
     while (true) {
-        std::size_t result = terminal_read_ready() ? terminal_read(buf, sizeof(buf)) : 0;
+
+        std::string_view rd;
+        if (!terminal_read(buf, rd)) { 
+            std::cerr << "can't read stdin: " << last_error().message() << std::endl;
+            return EXIT_FAILURE;
+        }
+
         std::cout << "BYTES:";
-        for (std::size_t i = 0; i < result; i++) {
+        for (char v: rd) {
             std::cout << " 0x" 
                 << std::setw(2)
                 << std::setfill('0') 
                 << std::uppercase 
-                << static_cast<unsigned short>(static_cast<unsigned char>(buf[i]));
+                << static_cast<unsigned short>(static_cast<unsigned char>(v));
         }
         std::cout << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(1));

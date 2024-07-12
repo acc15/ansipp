@@ -16,12 +16,11 @@ int main() {
     std::string buf(512, '\0');
     while (true) {
         
-        auto sz = terminal_read(buf.data(), buf.size());
-        if (sz < 0) { 
+        std::string_view rd;
+        if (!terminal_read(buf, rd)) { 
             std::cerr << "can't read stdin: " << last_error().message() << std::endl;
             return EXIT_FAILURE;
         }
-        auto rd = std::string_view(buf.data(), sz);
 
         std::cout << "BYTES:";
         for (const char ch: rd) {

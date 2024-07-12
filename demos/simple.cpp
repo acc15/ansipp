@@ -36,9 +36,8 @@ int main() {
 
     std::string seq_buf(20, '\0');
     while (true) {
-        auto rd = std::string_view();
-        auto sz = terminal_read(seq_buf.data(), seq_buf.size());
-        if (sz < 0) {
+        std::string_view rd;
+        if (!terminal_read(seq_buf, rd)) {
             std::cerr << "can't read stdin: " << last_error().message() << std::endl;
             return EXIT_FAILURE;
         }

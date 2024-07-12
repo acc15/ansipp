@@ -179,19 +179,18 @@ public:
     }
 
     bool input() {
-        std::streamsize sz = terminal_read(input_buffer, sizeof(input_buffer), 0);
-        if (sz < 0) { 
+        std::string_view rd;
+        if (!terminal_read(input_buffer, rd, 0)) { 
             std::cerr << "can't read stdin: " << last_error().message() << std::endl; 
             return false;
         }
-        std::string_view input = std::string_view(input_buffer, sz);
-        while (!input.empty()) {
-            if      (remove_prefix(input, "q")) return false;
-            else if (remove_prefix(input, "\33" "[A")) queue_dir(direction::UP);
-            else if (remove_prefix(input, "\33" "[B")) queue_dir(direction::DOWN);
-            else if (remove_prefix(input, "\33" "[C")) queue_dir(direction::RIGHT);
-            else if (remove_prefix(input, "\33" "[D")) queue_dir(direction::LEFT);
-            else input.remove_prefix(1);
+        while (!rd.empty()) {
+            if      (remove_prefix(rd, "q")) return false;
+            else if (remove_prefix(rd, "\33" "[A")) queue_dir(direction::UP);
+            else if (remove_prefix(rd, "\33" "[B")) queue_dir(direction::DOWN);
+            else if (remove_prefix(rd, "\33" "[C")) queue_dir(direction::RIGHT);
+            else if (remove_prefix(rd, "\33" "[D")) queue_dir(direction::LEFT);
+            else rd.remove_prefix(1);
         }
         return true;
     }
