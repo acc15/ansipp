@@ -32,9 +32,10 @@ std::streamsize terminal_read(void* buf, std::size_t sz, int timeout);
 
 template <typename T>
 bool terminal_read(T& buf, std::string_view& rd, int timeout = -1) {
-    std::streamsize res = terminal_read(std::data(buf), std::size(buf), timeout); 
+    char* data = std::data(buf);
+    auto res = terminal_read(data, std::size(buf), timeout); 
     if (res < 0) return false;
-    rd = std::string_view(std::data(buf), res);
+    rd = std::string_view(data, res);
     return true;
 }
 
