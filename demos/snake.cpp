@@ -64,10 +64,6 @@ bool remove_prefix(std::string_view& view, std::string_view prefix) {
     return true;
 }
 
-const std::string game_over_text =  "GAME IS OVER";
-const std::string apple_small =     "•";
-const std::string apple_big =       "";
-
 std::string make_border_str(unsigned int width, std::string_view indicators) {
     std::string result(width, ' ');
     return result.replace(1, std::min(result.size(), indicators.size()), indicators);
@@ -91,6 +87,10 @@ public:
     unsigned int grow_frames = 0;
     std::vector<apple> apples;
     unsigned int draw_rows = 0;
+
+    using hr_clock = std::chrono::high_resolution_clock;
+
+    hr_clock::duration last_frame_duration;
     
     char input_buffer[512];
     std::deque<direction> input_queue;
@@ -243,7 +243,8 @@ public:
 
         o   << attrs().bg(WHITE).fg(BLACK) 
             << make_border_str(border_size.x, (std::stringstream() 
-                << "head = " << head
+                << "frame = " << std::chrono::duration_cast<std::chrono::microseconds>(last_frame_duration).count()
+                << " head = " << head
                 << " tail = " << tail
                 << " game_over = " << game_over 
                 << " apples = " << apples.size()
@@ -302,6 +303,7 @@ public:
         draw_snake(o);
         draw_apples(o);
         if (game_over) {
+            static const std::string game_over_text =  "GAME IS OVER";
             o   << store_cursor() 
                 << move_xy(
                     align(CENTER, grid_size.x, static_cast<int>(game_over_text.size())), 
@@ -317,9 +319,11 @@ public:
         draw(out);
         while (!game_over) {
             std::this_thread::sleep_for(std::chrono::milliseconds(80));
+            hr_clock::time_point t1 = hr_clock::now();
             if (!input()) break;
             process();
             draw(out);
+            last_frame_duration = hr_clock::now() - t1;
         }
     }
 
