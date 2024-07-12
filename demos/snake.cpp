@@ -68,6 +68,11 @@ const std::string game_over_text =  "GAME IS OVER";
 const std::string apple_small =     "•";
 const std::string apple_big =       "";
 
+std::string make_border_str(unsigned int width, std::string_view indicators) {
+    std::string result(width, ' ');
+    return result.replace(1, std::min(result.size(), indicators.size()), indicators);
+}
+
 class snake_game {
 public:
     static constexpr vec grid_size = { 120, 40 };
@@ -225,29 +230,28 @@ public:
     }
 
     void draw_border(std::ostream& o) const {
-        o << attrs().bg(color::WHITE) << std::string(border_size.x, ' ') << attrs() << '\n';
+        o   << attrs().bg(WHITE).fg(BLACK)
+            << make_border_str(border_size.x, "press q to exit, <arrows> to move") 
+            << attrs() << '\n';
+        
         for (int y = 0; y < grid_size.y; y++) {
-            o   << attrs().bg(color::WHITE) << " " << attrs() 
+            o   << attrs().bg(WHITE) << " " << attrs() 
                 << move(CURSOR_TO_COLUMN, grid_size.x + 2) 
-                << attrs().bg(color::WHITE) << " " << attrs() 
+                << attrs().bg(WHITE) << " " << attrs() 
                 << '\n';
         }
-        
-        std::stringstream status_line_stream;
-        status_line_stream
-            << "head = " << head
-            << " tail = " << tail
-            << " game_over = " << game_over 
-            << " apples = " << apples.size()
-            << " length = " << length;
 
-        std::string_view status_line = status_line_stream.view();
-        std::string bottom_border = std::string(border_size.x, ' ');
+        o   << attrs().bg(WHITE).fg(BLACK) 
+            << make_border_str(border_size.x, (std::stringstream() 
+                << "head = " << head
+                << " tail = " << tail
+                << " game_over = " << game_over 
+                << " apples = " << apples.size()
+                << " length = " << length
+            ).view())
+            << attrs() << '\n';
 
-        o   << attrs().bg(color::WHITE).fg(color::BLACK) 
-            << bottom_border.replace(1, std::min(status_line.size(), bottom_border.size()), status_line) 
-            << attrs() << '\n'
-            << move(CURSOR_UP, grid_size.y + 1)
+        o   << move(CURSOR_UP, grid_size.y + 1)
             << move(CURSOR_TO_COLUMN, 2);
     }
 
