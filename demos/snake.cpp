@@ -289,10 +289,6 @@ public:
 
     void draw(std::ostream& o) {
 
-        for (int i=0; i< border_size.y; i++) {
-            o << '\n';
-        }
-
         o << move(CURSOR_UP, draw_rows) << move(CURSOR_TO_COLUMN, 0) << erase(SCREEN, TO_END);
 
         terminal_dimension td = get_terminal_dimension();

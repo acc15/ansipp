@@ -18,7 +18,9 @@ namespace ansipp {
 
 restore_data __ansipp_restore;
 
-const std::string __ansipp_reset = attrs().str() + show_cursor() + disable_alternative_buffer();
+const std::string __ansipp_reset = attrs().str() + show_cursor();
+    // breaks windows cursors !!!
+    // + disable_alternative_buffer();
 
 void restore_mode() {
 #ifdef _WIN32 // windows
