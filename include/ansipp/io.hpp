@@ -18,8 +18,6 @@ namespace ansipp {
  * @return actual amount of bytes was written, or `-1` in case of error
  */
 std::streamsize terminal_write(const void* buf, std::size_t sz);
-
-
 std::streamsize terminal_write(std::string_view str);
 
 /**
@@ -41,8 +39,8 @@ bool terminal_read(T& buf, std::string_view& rd, int timeout = -1) {
 }
 
 /**
- * @brief reads single character (getch)
- * @return read character or `-1` if `EOF` or error ocurred
+ * @brief reads single char
+ * @return read single char or `-1` if error ocurred
  */
 int terminal_getch(); 
 
@@ -50,7 +48,7 @@ int terminal_getch();
  * @brief checks that terminal has any byte to read
  * @param timeout timeout in milliseconds, `0` return immediately, negative values - infinite timeout
  * @return 
- *   `1` - terminal has byte (or bytes) to read, 
+ *   `1` - terminal has byte (or bytes) to read
  *   `0` - nothing to read (i.e. `terminal_read(void*, std::size_t)` would block)
  *   `-1` - in case of error
  */
