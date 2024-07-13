@@ -331,8 +331,11 @@ public:
 };
 
 int main() {
+    const config c = {
+        .hide_cursor = true,
 
-    if (std::error_code ec; init(ec), ec) {
+    };
+    if (std::error_code ec; init(ec, c), ec) {
         std::cerr << "can't init: " << ec.message() << std::endl;
         return EXIT_FAILURE;
     }
@@ -340,7 +343,6 @@ int main() {
     snake_game g;
 
     terminal_stream out;
-    //out << hide_cursor();
     g.loop(out);
     return 0;
 }

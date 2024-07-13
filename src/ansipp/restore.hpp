@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ansipp/config.hpp>
 #include "ts_opt.hpp"
 
 #ifdef _WIN32
@@ -17,6 +18,7 @@ struct restore_data {
 #else // posix
     ts_opt<tcflag_t> lflag;
 #endif
+    ts_opt<config> init_config;
 };
 
 extern restore_data __ansipp_restore;

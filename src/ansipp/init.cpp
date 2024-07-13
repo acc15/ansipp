@@ -12,6 +12,8 @@
 #include <ansipp/init.hpp>
 #include <ansipp/terminal.hpp>
 #include <ansipp/restore.hpp>
+#include <ansipp/io.hpp>
+#include <ansipp/cursor.hpp>
 
 #include "restore.hpp"
 
@@ -92,13 +94,22 @@ void disable_stdio_sync() {
     std::cout.sync_with_stdio(false);
 }
 
+void configure_escapes(const config& cfg, std::error_code& ec) {
+    std::string esc;
+    if (cfg.hide_cursor) esc += hide_cursor();
+    if (cfg.use_alternate_screen_buffer) esc += enable_alternate_buffer();
+    if (terminal_write(esc) < 0) ec = last_error();
+}
+
 void init(std::error_code& ec, const config& cfg) {
+    if (!__ansipp_restore.init_config.store(cfg)) { ec = ansipp_error::already_initialized; return; }
     if (!is_terminal()) { ec = ansipp_error::not_terminal; return; }
     if (cfg.enable_exit_restore && std::atexit(&restore) != 0) { ec = ansipp_error::at_exit_failure; return; }
     if (cfg.enable_signal_restore && (enable_signal_restore(ec), ec)) { return; }
     if (cfg.enable_utf8 && (enable_utf8(ec), ec)) { return; }
     if (cfg.disable_stdio_sync) { disable_stdio_sync(); }
     if (configure_mode(ec, cfg), ec) { return; }
+    if (configure_escapes(cfg, ec), ec) { return; }
 }
 
 }

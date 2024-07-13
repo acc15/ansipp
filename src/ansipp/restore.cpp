@@ -18,10 +18,6 @@ namespace ansipp {
 
 restore_data __ansipp_restore;
 
-const std::string __ansipp_reset = attrs().str() + show_cursor();
-    // breaks windows cursors !!!
-    // + disable_alternative_buffer();
-
 void restore_mode() {
 #ifdef _WIN32 // windows
     __ansipp_restore.in_modes.restore([](DWORD in_modes) {
@@ -42,7 +38,13 @@ void restore_mode() {
 }
 
 void restore() {
-    terminal_write(__ansipp_reset);
+    __ansipp_restore.init_config.restore([](const config& cfg) {
+        std::string esc;
+        if (cfg.reset_attrs_on_restore) esc += attrs().str();
+        if (cfg.use_alternate_screen_buffer) esc += disable_alternate_buffer();
+        if (cfg.hide_cursor) esc += show_cursor();
+        terminal_write(esc);
+    });
     restore_mode();
 }
 

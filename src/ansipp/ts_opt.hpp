@@ -9,15 +9,7 @@ template <typename T>
 class ts_opt {
     T value = {};
     std::atomic_bool is_set = false;
-
-    inline std::logic_error is_set_condition_failed() {
-        return std::logic_error(
-            "double initialization will cause very odd bugs, "
-            "call restore() before calling init()");
-    }
-
 public:
-
     bool store(const T& v) {
         if (is_set.load()) { return false; }
         value = v;
@@ -29,7 +21,6 @@ public:
     void restore(const Callback& v) {
         if (is_set.exchange(false)) { v(value); }
     }
-
 };
 
 }

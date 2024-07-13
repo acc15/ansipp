@@ -10,6 +10,9 @@
 namespace ansipp {
 
 std::streamsize terminal_write(const void* buf, std::size_t sz) {
+    if (sz == 0) {
+        return 0; // fast return to avoid syscall
+    }
 #ifdef _WIN32
     DWORD result;
     return WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buf, static_cast<DWORD>(sz), &result, nullptr) ? result : -1;
