@@ -233,12 +233,7 @@ public:
         o   << attrs().bg(WHITE).fg(BLACK)
             << make_border_str(border_size.x, "press q to exit, <arrows> to move") 
             << attrs() << '\n';
-        
-
-        o   << attrs().bg(WHITE).fg(BLACK)
-            << ' ' << std::setfill(' ') << std::setw(border_size.x - 1) << std::left << "q to exit, <arrows> - move snake" 
-            << '\n';
-        
+                
         for (int y = 0; y < grid_size.y; y++) {
             o   << attrs().bg(WHITE) << " " << attrs() 
                 << move(CURSOR_TO_COLUMN, grid_size.x + 2) 
