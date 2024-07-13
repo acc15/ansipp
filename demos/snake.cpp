@@ -7,6 +7,7 @@
 #include <csignal>
 #include <cstdlib>
 #include <sstream>
+#include <chrono>
 
 #include <ansipp.hpp>
 #include <unordered_map>
@@ -89,7 +90,6 @@ public:
     unsigned int draw_rows = 0;
 
     using hr_clock = std::chrono::high_resolution_clock;
-
     hr_clock::duration last_frame_duration;
     
     char input_buffer[512];
@@ -234,6 +234,11 @@ public:
             << make_border_str(border_size.x, "press q to exit, <arrows> to move") 
             << attrs() << '\n';
         
+
+        o   << attrs().bg(WHITE).fg(BLACK)
+            << ' ' << std::setfill(' ') << std::setw(border_size.x - 1) << std::left << "q to exit, <arrows> - move snake" 
+            << '\n';
+        
         for (int y = 0; y < grid_size.y; y++) {
             o   << attrs().bg(WHITE) << " " << attrs() 
                 << move(CURSOR_TO_COLUMN, grid_size.x + 2) 
@@ -317,6 +322,7 @@ public:
 
     void loop(std::ostream& out) {
         draw(out);
+
         while (!game_over) {
             std::this_thread::sleep_for(std::chrono::milliseconds(80));
             hr_clock::time_point t1 = hr_clock::now();

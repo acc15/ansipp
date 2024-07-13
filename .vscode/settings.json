@@ -117,6 +117,7 @@
         "execution": "cpp",
         "xhash": "cpp",
         "__hash_table": "cpp",
-        "__node_handle": "cpp"
+        "__node_handle": "cpp",
+        "coroutine": "cpp"
     }
 }
