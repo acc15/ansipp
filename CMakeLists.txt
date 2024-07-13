@@ -38,18 +38,17 @@ testing(TARGETS ansipp SOURCES
 
 option(BUILD_DEMOS "Build demo programs" ${PROJECT_IS_TOP_LEVEL})
 if(BUILD_DEMOS)
-    add_executable(ansipp_demo_simple demos/simple.cpp)
-    target_link_libraries(ansipp_demo_simple ansipp)
 
-    add_executable(ansipp_demo_snake demos/snake.cpp)
-    target_link_libraries(ansipp_demo_snake ansipp)
-    
-    add_executable(ansipp_demo_readkey demos/readkey.cpp)
-    target_link_libraries(ansipp_demo_readkey ansipp)
+    function(add_demo name)
+        add_executable(ansipp_demo_${name} demos/${name}.cpp)
+        target_link_libraries(ansipp_demo_${name} ansipp)
+    endfunction()
 
-    add_executable(ansipp_demo_nonblock demos/nonblock.cpp)
-    target_link_libraries(ansipp_demo_nonblock ansipp)
+    add_demo(simple)
+    add_demo(snake)
+    add_demo(readkey)
+    add_demo(nonblock)
+    add_demo(resize)
+    add_demo(dead_pixels)
 
-    add_executable(ansipp_demo_resize demos/resize.cpp)
-    target_link_libraries(ansipp_demo_resize ansipp)
 endif()
