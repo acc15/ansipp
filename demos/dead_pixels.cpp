@@ -13,15 +13,15 @@ struct dead_pixel {
     unsigned int x, y, frame;
 
     bool process() {
-        ++frame;
+        frame += 8;
         return frame < max_frame;
     }
 
     void draw(std::ostream& out) const {
         unsigned char v = frame < 256 
             ? static_cast<unsigned char>(frame) 
-            : static_cast<unsigned char>(256 - (frame - 256)); 
-        out << move(x, y) << attrs().bg(rgb { v, v, v }).fg(BLACK) << ' ' << attrs();
+            : static_cast<unsigned char>(255 - (frame - 256)); 
+        out << move(y, x) << attrs().bg(rgb { v, v, v }).fg(BLACK) << ' ' << attrs();
     }
 
 };
@@ -47,21 +47,24 @@ struct dead_pixels {
             return;
         }
 
-        next_frames = 10;
+        next_frames = 2;
         pixels.push_back(dead_pixel{ 
-            static_cast<unsigned int>(std::rand() % dim.cols), 
-            static_cast<unsigned int>(std::rand() % dim.rows), 
-            0 
+            .x = static_cast<unsigned int>(std::rand() % dim.cols), 
+            .y = static_cast<unsigned int>(std::rand() % dim.rows), 
+            .frame = 0 
         });
     }
 
     void draw(std::ostream& out) const {
+        out << store_cursor();
         for (const dead_pixel& p: pixels) {
             p.draw(out);
         }
+        out << restore_cursor() << std::flush;
     }
 
     void loop(std::ostream& out) {
+        dim = get_terminal_dimension();
         draw(out);
 
         char buf[20];
@@ -85,14 +88,13 @@ struct dead_pixels {
 };
 
 int main() {
-    if (std::error_code ec; init(ec), ec) {
+    if (std::error_code ec; init(ec, { .hide_cursor = true }), ec) {
         std::cerr << "can't init: " << ec.message() << std::endl;
         return EXIT_FAILURE;
     }
 
     dead_pixels g;
     terminal_stream out;
-    out << hide_cursor();
     g.loop(out);
     return 0;
 }
