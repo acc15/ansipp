@@ -10,11 +10,15 @@ class ts_opt {
     T value = {};
     std::atomic_bool is_set = false;
 public:
-    bool store(const T& v) {
+    bool store(T&& v) {
         if (is_set.load()) { return false; }
-        value = v;
+        value = std::move(v);
         if (is_set.exchange(true) == true) { return false; }
         return true;
+    }
+
+    bool store(const T& v) {
+        return store(T(v));
     }
 
     template <std::regular_invocable<T> Callback>

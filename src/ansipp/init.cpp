@@ -14,6 +14,7 @@
 #include <ansipp/restore.hpp>
 #include <ansipp/io.hpp>
 #include <ansipp/cursor.hpp>
+#include <ansipp/attrs.hpp>
 
 #include "restore.hpp"
 
@@ -94,22 +95,43 @@ void disable_stdio_sync() {
     std::cout.sync_with_stdio(false);
 }
 
+void atexit_restore(std::error_code& ec) {
+    if (std::atexit(&restore) != 0) ec = ansipp_error::at_exit_failure;
+}
+
 void configure_escapes(const config& cfg, std::error_code& ec) {
-    std::string esc;
-    if (cfg.hide_cursor) esc += hide_cursor();
-    if (cfg.use_alternate_screen_buffer) esc += enable_alternate_buffer();
-    if (terminal_write(esc) < 0) ec = last_error();
+    std::string init_esc, restore_esc;
+    if (cfg.reset_attrs_on_restore) {
+        restore_esc += attrs().str();
+    }
+    if (cfg.hide_cursor) {
+        init_esc    += hide_cursor();
+        restore_esc += show_cursor();
+    }
+    if (cfg.use_alternate_screen_buffer) { 
+        init_esc    += enable_alternate_buffer(); 
+        restore_esc += disable_alternate_buffer(); 
+    }
+    if (terminal_write(init_esc) < 0) { ec = last_error(); return; }
+    if (!__ansipp_restore.escapes.store(std::move(restore_esc))) { ec = ansipp_error::already_initialized; return; }
+}
+
+void init_non_restorable(std::error_code& ec, const config& cfg) {
+    if (!is_terminal()) { ec = ansipp_error::not_terminal; return; }
+    if (cfg.enable_utf8 && (enable_utf8(ec), ec)) { return; }
+    if (cfg.disable_stdio_sync) { disable_stdio_sync(); }
+}
+
+void init_restorable(std::error_code& ec, const config& cfg) {
+    if (configure_mode(ec, cfg), ec) return;
+    if (configure_escapes(cfg, ec), ec) return;
+    if (cfg.enable_exit_restore && (atexit_restore(ec), ec)) return;
+    if (cfg.enable_signal_restore && (enable_signal_restore(ec), ec)) return;
 }
 
 void init(std::error_code& ec, const config& cfg) {
-    if (!__ansipp_restore.init_config.store(cfg)) { ec = ansipp_error::already_initialized; return; }
-    if (!is_terminal()) { ec = ansipp_error::not_terminal; return; }
-    if (cfg.enable_exit_restore && std::atexit(&restore) != 0) { ec = ansipp_error::at_exit_failure; return; }
-    if (cfg.enable_signal_restore && (enable_signal_restore(ec), ec)) { return; }
-    if (cfg.enable_utf8 && (enable_utf8(ec), ec)) { return; }
-    if (cfg.disable_stdio_sync) { disable_stdio_sync(); }
-    if (configure_mode(ec, cfg), ec) { return; }
-    if (configure_escapes(cfg, ec), ec) { return; }
+    if (init_non_restorable(ec, cfg), ec) return; // nothing to restore if any of these will fail
+    if (init_restorable(ec, cfg), ec) restore();
 }
 
 }

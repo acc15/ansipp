@@ -18,7 +18,7 @@ struct restore_data {
 #else // posix
     ts_opt<tcflag_t> lflag;
 #endif
-    ts_opt<config> init_config;
+    ts_opt<std::string> escapes;
 };
 
 extern restore_data __ansipp_restore;

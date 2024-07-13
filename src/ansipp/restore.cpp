@@ -38,13 +38,7 @@ void restore_mode() {
 }
 
 void restore() {
-    __ansipp_restore.init_config.restore([](const config& cfg) {
-        std::string esc;
-        if (cfg.reset_attrs_on_restore) esc += attrs().str();
-        if (cfg.use_alternate_screen_buffer) esc += disable_alternate_buffer();
-        if (cfg.hide_cursor) esc += show_cursor();
-        terminal_write(esc);
-    });
+    __ansipp_restore.escapes.restore([](const std::string& esc) { terminal_write(esc); });
     restore_mode();
 }
 

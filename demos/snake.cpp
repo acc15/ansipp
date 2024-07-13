@@ -107,13 +107,7 @@ public:
     static const char* get_snake_symbol(direction p, direction n, bool head) {
         using enum direction;
         if (head) {
-            switch (n) {
-            default:    
-            case UP:    return "▲";
-            case DOWN:  return "▼";
-            case LEFT:  return "◀︎";
-            case RIGHT: return "▶︎";
-            }
+            return "●";
         }
 
         if ((p == LEFT  || p == RIGHT)  && (n == LEFT   || n == RIGHT)) return "━";
