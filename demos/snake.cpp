@@ -227,7 +227,7 @@ public:
 
         o   << attrs().bg(WHITE).fg(BLACK) 
             << make_border_str(border_size.x, (std::stringstream() 
-                << "frame = " << std::chrono::duration_cast<std::chrono::microseconds>(last_frame_duration).count()
+                << "frame = " << std::chrono::duration_cast<std::chrono::nanoseconds>(last_frame_duration).count() << "ns"
                 << " head = " << head
                 << " tail = " << tail
                 << " game_over = " << game_over 
