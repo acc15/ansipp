@@ -42,7 +42,7 @@ int main() {
 
 
     HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
-    SetConsoleMode(in, ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT); // 
+    SetConsoleMode(in, ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT); // ENABLE_WINDOW_INPUT is disabled
     
     HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleMode(out, ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
@@ -65,7 +65,7 @@ int main() {
     std::this_thread::sleep_for(std::chrono::seconds(5));
     std::cout << "after sleep" << std::endl;
 
-    // WaitForSingleObject react on events (terminal window resize) which can't be read with ReadFile(...)
+    // WaitForSingleObject react on (DISABLED!!!) events (terminal window resize) and they can't be read with ReadFile(...)
     DWORD dwResult = WaitForSingleObject(in, 0); 
     std::cout << "WaitForSingleObject done with " << dwResult << std::endl;
 
