@@ -63,7 +63,8 @@ class snake_game {
 public:
     static constexpr vec grid_size = { 120, 40 };
     static constexpr vec border_size = grid_size + 2;
-    static constexpr unsigned int initial_snake_length = 5;
+    static constexpr vec min_terminal_size = { border_size.x, border_size.y + 1}; // + 1 for blank line with cursor
+    static constexpr unsigned int initial_snake_length = 5; 
 
     cell grid[grid_size.y][grid_size.x] = {};
 
@@ -275,9 +276,9 @@ public:
         o << move(CURSOR_UP, draw_rows) << move(CURSOR_TO_COLUMN, 0) << erase(SCREEN, TO_END);
  
         vec td = get_terminal_dimension();
-        if (td.y < border_size.y || td.x < border_size.x) {
+        if (td.y < min_terminal_size.y || td.x < min_terminal_size.x) {
             o   << "not enough room to render game, current size " << td 
-                << " required " << border_size.x << "x" << border_size.y << '\n' << std::flush;
+                << " required " << min_terminal_size << '\n' << std::flush;
             draw_rows = 1;
             return;
         }
