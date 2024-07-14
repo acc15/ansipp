@@ -18,7 +18,7 @@ bool is_terminal() {
 #endif
 }
 
-vec get_terminal_dimension() {
+vec get_terminal_size() {
 #ifdef _WIN32
     HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
     if (out == INVALID_HANDLE_VALUE) return vec {};

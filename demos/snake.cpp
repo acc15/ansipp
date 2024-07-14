@@ -68,11 +68,15 @@ public:
 
     cell grid[grid_size.y][grid_size.x] = {};
 
+    bool initializing = true;
     bool game_over = false;
     direction dir = direction::RIGHT;
     
     vec tail = { 0, 0 };
     vec head = { initial_snake_length - 1, 0 };
+    vec terminal_size = {};
+    bool undersize = false;
+
     unsigned int length = initial_snake_length;
     unsigned int frames_till_apple = 0;
     unsigned int grow_frames = 0;
@@ -174,8 +178,10 @@ public:
     }
 
     void process() {
-        if (game_over || draw_rows != static_cast<unsigned int>(grid_size.y + 2)) { 
-            return; 
+        terminal_size = get_terminal_size();
+        undersize = terminal_size.y < min_terminal_size.y || terminal_size.x < min_terminal_size.x;
+        if (game_over || undersize || initializing) {
+            return;
         }
 
         if (!input_queue.empty()) {
@@ -217,10 +223,10 @@ public:
         o   << attrs().bg(WHITE).fg(BLACK)
             << make_border_str(border_size.x, "press q to exit, <arrows> to move") 
             << attrs() << '\n';
-                
+
         for (int y = 0; y < grid_size.y; y++) {
             o   << attrs().bg(WHITE) << " " << attrs() 
-                << move(CURSOR_TO_COLUMN, grid_size.x + 2) 
+                << move(CURSOR_TO_COLUMN, border_size.x) 
                 << attrs().bg(WHITE) << " " << attrs() 
                 << '\n';
         }
@@ -261,7 +267,7 @@ public:
     }
 
     void draw_apples(std::ostream& o) const {
-        o << store_cursor() << attrs().fg(color::RED);
+        o << attrs().fg(color::RED);
         for (const apple& apple: apples) {
             o   << store_cursor() 
                 << move_rel(apple.pos)
@@ -272,12 +278,10 @@ public:
     }
 
     void draw(std::ostream& o) {
-
-        o << move(CURSOR_UP, draw_rows) << move(CURSOR_TO_COLUMN, 0) << erase(SCREEN, TO_END);
- 
-        vec td = get_terminal_dimension();
-        if (td.y < min_terminal_size.y || td.x < min_terminal_size.x) {
-            o   << "not enough room to render game, current size " << td 
+        o << move(CURSOR_TO_COLUMN, 0) << move(CURSOR_UP, draw_rows) << erase(SCREEN, TO_END);
+        
+        if (undersize) {
+            o   << "not enough room to render game, current size " << terminal_size
                 << " required " << min_terminal_size << '\n' << std::flush;
             draw_rows = 1;
             return;
@@ -286,6 +290,7 @@ public:
         draw_border(o);
         draw_snake(o);
         draw_apples(o);
+        
         if (game_over) {
             static const std::string game_over_text =  "GAME IS OVER";
             o   << store_cursor() 
@@ -295,30 +300,27 @@ public:
                 )
                 << attrs().bg(WHITE).fg(BLACK) << game_over_text << attrs() << restore_cursor();
         }
+
         o << move(CURSOR_DOWN, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 0)  << std::flush;
         draw_rows = border_size.y;
     }
 
     void loop(std::ostream& out) {
-        draw(out);
         while (!game_over) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(80));
             hr_clock::time_point t1 = hr_clock::now();
             if (!input()) break;
             process();
             draw(out);
+            initializing = false;
             last_frame_duration = hr_clock::now() - t1;
+            std::this_thread::sleep_for(std::chrono::milliseconds(80));
         }
     }
 
 };
 
 int main() {
-    const config c = {
-        .hide_cursor = true,
-
-    };
-    if (std::error_code ec; init(ec, c), ec) {
+    if (std::error_code ec; init(ec, { .hide_cursor = true }), ec) {
         std::cerr << "can't init: " << ec.message() << std::endl;
         return EXIT_FAILURE;
     }

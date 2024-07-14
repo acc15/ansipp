@@ -54,6 +54,7 @@ if(BUILD_DEMOS)
     add_demo(dead_pixels)
     if (WIN32)
         add_demo(windows_bug)
+        add_demo(windows_terminal_performance)
     endif()
 
 endif()

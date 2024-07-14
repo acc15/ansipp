@@ -67,7 +67,7 @@ struct dead_pixels {
     }
 
     void loop(std::ostream& out) {
-        dim = get_terminal_dimension();
+        dim = get_terminal_size();
         draw(out);
 
         char buf[20];

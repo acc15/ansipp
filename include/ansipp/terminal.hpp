@@ -10,7 +10,7 @@ namespace ansipp {
  */
 bool is_terminal();
 
-vec get_terminal_dimension();
+vec get_terminal_size();
 
 inline std::string store_screen() { return "\33" "[?47h"; }
 inline std::string restore_screen() { return "\33" "[?47l"; }
