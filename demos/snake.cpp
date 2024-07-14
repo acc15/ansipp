@@ -273,7 +273,7 @@ public:
     void draw(std::ostream& o) {
 
         o << move(CURSOR_UP, draw_rows) << move(CURSOR_TO_COLUMN, 0) << erase(SCREEN, TO_END);
-
+ 
         vec td = get_terminal_dimension();
         if (td.y < border_size.y || td.x < border_size.x) {
             o   << "not enough room to render game, current size " << td 
@@ -300,7 +300,6 @@ public:
 
     void loop(std::ostream& out) {
         draw(out);
-
         while (!game_over) {
             std::this_thread::sleep_for(std::chrono::milliseconds(80));
             hr_clock::time_point t1 = hr_clock::now();

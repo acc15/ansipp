@@ -65,6 +65,8 @@ void configure_mode(std::error_code& ec, const config& cfg) {
     if (!__ansipp_restore.in_modes.store(in_modes)) { ec = ansipp_error::already_initialized; return; }
     if (cfg.disable_input_echo) {
         in_modes = 0;
+    } else {
+        in_modes &= ~(ENABLE_WINDOW_INPUT);
     }
     in_modes |= (ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT);
     if (!SetConsoleMode(in, in_modes)) { ec = last_error(); return; }

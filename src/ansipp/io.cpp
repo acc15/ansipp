@@ -10,12 +10,13 @@
 namespace ansipp {
 
 std::streamsize terminal_write(const void* buf, std::size_t sz) {
-    if (sz == 0) {
-        return 0; // fast return to avoid syscall
-    }
+    if (sz == 0) return 0; // fast return to avoid syscall
 #ifdef _WIN32
+    HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (out == INVALID_HANDLE_VALUE) return -1;
+    
     DWORD result;
-    return WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buf, static_cast<DWORD>(sz), &result, nullptr) ? result : -1;
+    return WriteFile(out, buf, static_cast<DWORD>(sz), &result, nullptr) ? result : -1;
 #else
     return write(STDOUT_FILENO, buf, sz);
 #endif
@@ -23,8 +24,11 @@ std::streamsize terminal_write(const void* buf, std::size_t sz) {
 
 std::streamsize terminal_read(void* buf, std::size_t sz) {
 #ifdef _WIN32
+    HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
+    if (in == INVALID_HANDLE_VALUE) return -1;
+    
     DWORD result;
-    return ReadFile(GetStdHandle(STD_INPUT_HANDLE), buf, static_cast<DWORD>(sz), &result, nullptr) ? result : -1;
+    return ReadFile(in, buf, static_cast<DWORD>(sz), &result, nullptr) ? result : -1;
 #else
     return read(STDIN_FILENO, buf, sz);
 #endif
@@ -46,14 +50,17 @@ int terminal_getch(int timeout) {
 
 int terminal_read_ready(int timeout) {
 #ifdef _WIN32
-    DWORD result = WaitForSingleObject(
-        GetStdHandle(STD_INPUT_HANDLE), 
-        timeout < 0 ? INFINITE : static_cast<DWORD>(timeout));
+    
+    HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
+    if (in == INVALID_HANDLE_VALUE) return -1;
+
+    DWORD result = WaitForSingleObject(in, timeout < 0 ? INFINITE : static_cast<DWORD>(timeout));
     switch (result) {
     case WAIT_OBJECT_0: return 1;
     case WAIT_FAILED: return -1;
     default: return 0;
     }
+
 #else
     static pollfd stdin_pollfd = { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 };
     return poll(&stdin_pollfd, 1, timeout);
