@@ -21,7 +21,7 @@ int main() {
     std::cout << attrs().fg(RED) << "i'm red" << attrs() << std::endl;
     std::cout << attrs().fg(WHITE).bg(GREEN) << "i'm white on green bg" << attrs() << std::endl;
 
-    terminal_dimension dw = get_terminal_dimension();
+    vec dw = get_terminal_dimension();
     std::cout << "terminal dimension = " << dw << std::endl;
 
     std::cout << "next line must draw gradient using rgb escape codes: " << std::endl;

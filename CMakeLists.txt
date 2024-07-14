@@ -18,6 +18,7 @@ target_sources(ansipp PRIVATE
 )
 
 target_sources(ansipp PUBLIC FILE_SET HEADERS BASE_DIRS ${INC} FILES
+    ${INC}/ansipp/vec.hpp
     ${INC}/ansipp/error.hpp
     ${INC}/ansipp/io.hpp
     ${INC}/ansipp/stream.hpp
@@ -34,6 +35,7 @@ target_sources(ansipp PUBLIC FILE_SET HEADERS BASE_DIRS ${INC} FILES
 testing(TARGETS ansipp SOURCES 
     ${TEST}/ansipp/attrs.cpp
     ${TEST}/ansipp/cursor.cpp
+    ${TEST}/ansipp/vec.cpp
 )
 
 option(BUILD_DEMOS "Build demo programs" ${PROJECT_IS_TOP_LEVEL})

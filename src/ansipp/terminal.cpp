@@ -18,19 +18,19 @@ bool is_terminal() {
 #endif
 }
 
-terminal_dimension get_terminal_dimension() {
+vec get_terminal_dimension() {
 #ifdef _WIN32
     CONSOLE_SCREEN_BUFFER_INFO ws;
     return GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ws) 
-        ? terminal_dimension {
-            static_cast<unsigned short>(ws.srWindow.Bottom - ws.srWindow.Top + 1),
-            static_cast<unsigned short>(ws.srWindow.Right - ws.srWindow.Left + 1)
-        } : terminal_dimension {};
+        ? vec {
+            static_cast<int>(ws.srWindow.Right - ws.srWindow.Left + 1),
+            static_cast<int>(ws.srWindow.Bottom - ws.srWindow.Top + 1)
+        } : vec {};
 #else
     winsize ws;
     return ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) != -1 
-        ? terminal_dimension { ws.ws_row, ws.ws_col }
-        : terminal_dimension {};
+        ? vec { ws.ws_col, ws.ws_row }
+        : vec {};
 #endif
 }
 

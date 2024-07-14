@@ -10,7 +10,8 @@ using namespace ansipp;
 struct dead_pixel {
     constexpr static unsigned int max_frame = 256 * 2;
 
-    unsigned int x, y, frame;
+    vec pos;
+    unsigned int frame;
 
     bool process() {
         frame += 8;
@@ -21,7 +22,7 @@ struct dead_pixel {
         unsigned char v = frame < 256 
             ? static_cast<unsigned char>(frame) 
             : static_cast<unsigned char>(255 - (frame - 256)); 
-        out << move(y, x) << attrs().bg(rgb { v, v, v }).fg(BLACK) << ' ' << attrs();
+        out << move_abs(pos) << attrs().bg(rgb { v, v, v }).fg(BLACK) << ' ' << attrs();
     }
 
 };
@@ -30,7 +31,7 @@ struct dead_pixels {
     unsigned int next_frames = 10;
 
     std::vector<dead_pixel> pixels;
-    terminal_dimension dim;
+    vec dim;
 
     void process() {
         auto it = pixels.begin();
@@ -48,9 +49,11 @@ struct dead_pixels {
         }
 
         next_frames = 2;
-        pixels.push_back(dead_pixel{ 
-            .x = static_cast<unsigned int>(std::rand() % dim.cols), 
-            .y = static_cast<unsigned int>(std::rand() % dim.rows), 
+        pixels.push_back(dead_pixel { 
+            .pos = vec(
+                static_cast<unsigned int>(std::rand() % dim.x), 
+                static_cast<unsigned int>(std::rand() % dim.y)
+            ),
             .frame = 0 
         });
     }

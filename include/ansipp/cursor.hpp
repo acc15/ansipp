@@ -2,19 +2,14 @@
 
 #include <string>
 #include <ostream>
+#include <ansipp/vec.hpp>
 
 namespace ansipp {
 
-struct cursor_position {
-    unsigned short row;
-    unsigned short col;
-};
-inline std::ostream& operator<<(std::ostream& o, const cursor_position& p) {
-    return o << p.col << "," << p.row;
-}
 
-cursor_position parse_cursor_position_escape(std::string_view v);
-cursor_position get_cursor_position();
+
+vec parse_cursor_position_escape(std::string_view v);
+vec get_cursor_position();
 
 inline std::string show_cursor() { return "\33" "[?25h"; }
 inline std::string hide_cursor() { return "\33" "[?25l"; }
@@ -67,12 +62,11 @@ enum move_mode: char {
 };
 
 std::string move(move_mode mode, unsigned int value = 1);
-std::string move(unsigned short row, unsigned short col);
-inline std::string move(const cursor_position& p) { return move(p.row, p.col); }
+std::string move_abs(int x, int y);
+std::string move_rel(int x, int y);
 
-std::string move_x(int x);
-std::string move_y(int y);
-std::string move_xy(int x, int y);
+inline std::string move_abs(const vec& v) { return move_abs(v.x, v.y); }
+inline std::string move_rel(const vec& v) { return move_rel(v.x, v.y); }
 
 inline std::string store_cursor() { return "\33" "7"; }
 inline std::string restore_cursor() { return "\33" "8"; }

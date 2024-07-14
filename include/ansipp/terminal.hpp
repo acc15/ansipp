@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ostream>
+#include <ansipp/vec.hpp>
 
 namespace ansipp {
 
@@ -9,14 +10,7 @@ namespace ansipp {
  */
 bool is_terminal();
 
-struct terminal_dimension {
-    unsigned short rows;
-    unsigned short cols;
-};
-inline std::ostream& operator<<(std::ostream& o, const terminal_dimension& d) {
-    return o << d.cols << "x" << d.rows;
-}
-terminal_dimension get_terminal_dimension();
+vec get_terminal_dimension();
 
 inline std::string store_screen() { return "\33" "[?47h"; }
 inline std::string restore_screen() { return "\33" "[?47l"; }

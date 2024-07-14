@@ -14,17 +14,6 @@
 
 using namespace ansipp;
 
-struct vec { 
-    int x;
-    int y; 
-    constexpr vec& operator+=(const vec& b) { x += b.x; y += b.y; return *this; }
-    constexpr vec& operator+=(const int& v) { x += v; y += v; return *this; }
-    constexpr vec operator+(const vec& b) const { return vec{x,y} += b; }
-    constexpr vec operator+(const int& b) const { return vec{x,y} += b; }
-    constexpr bool operator==(const vec& b) const { return x == b.x && y == b.y; }
-};
-std::ostream& operator<<(std::ostream& o, const vec& v) { return o << v.x << "," << v.y; }
-
 enum class object_type: unsigned char { EMPTY, APPLE, SNAKE };
 enum class direction: unsigned char { UP, DOWN, LEFT, RIGHT };
 
@@ -252,7 +241,7 @@ public:
 
     void draw_snake(std::ostream& o) const {
         o   << store_cursor() 
-            << move_xy(tail.x, tail.y)
+            << move_rel(tail)
             << attrs().fg(color::GREEN);
 
         vec cur = tail;
@@ -262,7 +251,7 @@ public:
             direction next_dir = cell->dir;
             vec v = dir_to_vec(next_dir);
             o   << get_snake_symbol(prev_dir, next_dir, false) 
-                << move_xy(v.x - 1, v.y);
+                << move_rel(v.x - 1, v.y);
             cur += v;
             cell = &grid_cell(cur);
             prev_dir = next_dir;
@@ -274,7 +263,7 @@ public:
         o << store_cursor() << attrs().fg(color::RED);
         for (const apple& apple: apples) {
             o   << store_cursor() 
-                << move_xy(apple.pos.x, apple.pos.y)
+                << move_rel(apple.pos)
                 << (apple.type == apple_type::SMALL ? "•" : "●")
                 << restore_cursor();
         }
@@ -285,8 +274,8 @@ public:
 
         o << move(CURSOR_UP, draw_rows) << move(CURSOR_TO_COLUMN, 0) << erase(SCREEN, TO_END);
 
-        terminal_dimension td = get_terminal_dimension();
-        if (td.rows < border_size.y || td.cols < border_size.x) {
+        vec td = get_terminal_dimension();
+        if (td.y < border_size.y || td.x < border_size.x) {
             o   << "not enough room to render game, current size " << td 
                 << " required " << border_size.x << "x" << border_size.y << '\n' << std::flush;
             draw_rows = 1;
@@ -299,7 +288,7 @@ public:
         if (game_over) {
             static const std::string game_over_text =  "GAME IS OVER";
             o   << store_cursor() 
-                << move_xy(
+                << move_rel(
                     align(CENTER, grid_size.x, static_cast<int>(game_over_text.size())), 
                     align(CENTER, grid_size.y, 1)
                 )
