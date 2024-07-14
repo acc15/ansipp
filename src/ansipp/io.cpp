@@ -55,12 +55,38 @@ int terminal_read_ready(int timeout) {
     if (in == INVALID_HANDLE_VALUE) return -1;
 
     DWORD result = WaitForSingleObject(in, timeout < 0 ? INFINITE : static_cast<DWORD>(timeout));
-    switch (result) {
-    case WAIT_OBJECT_0: return 1;
-    case WAIT_FAILED: return -1;
-    default: return 0;
+    if (result == WAIT_FAILED) {
+        return -1;
+    } else if (result != WAIT_OBJECT_0) {
+        return 0;
     }
+    
+    // STD_INPUT_HANDLE will be signaled on ANY terminal event.
+    // Even with DISABLED ENABLE_WINDOW_INPUT flag - SetConsoleMode(modes & (~ENABLE_WINDOW_INPUT))
+    // ReadFile unable to read WINDOW_BUFFER_SIZE_EVENT 
+    // and therefore it will block if all events of WINDOW_BUFFER_SIZE_EVENT type.
+    // So the next is workaround: 
+    // * check that input buffer has at least one KEY_EVENT or MOUSE_EVENT
+    // * if not - consume all pending events and report as empty input
 
+    static constexpr DWORD max_record_count = 1024;
+    static INPUT_RECORD records[max_record_count];
+
+    DWORD record_count;
+    do {
+        if (!PeekConsoleInput(in, records, max_record_count, &record_count)) return -1;
+        if (record_count == 0) return 0;
+        for (DWORD i = 0; i < record_count; i++) {
+            switch (records[i].EventType) {
+                case KEY_EVENT: case MOUSE_EVENT: return 1;
+                default: continue;
+            }
+        }
+        // didn't find neither KEY_EVENT nor MOUSE_EVENT - consume all events
+        if (!ReadConsoleInput(in, records, max_record_count, &record_count)) return -1;
+    } while (record_count == max_record_count);
+
+    return result == WAIT_FAILED ? -1 : 0;
 #else
     static pollfd stdin_pollfd = { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 };
     return poll(&stdin_pollfd, 1, timeout);

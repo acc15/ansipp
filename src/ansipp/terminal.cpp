@@ -25,8 +25,8 @@ vec get_terminal_dimension() {
     CONSOLE_SCREEN_BUFFER_INFO ws;
     if (!GetConsoleScreenBufferInfo(out, &ws)) return vec{};
     return vec(
-        static_cast<int>(ws.srWindow.Right - ws.srWindow.Left),
-        static_cast<int>(ws.srWindow.Bottom - ws.srWindow.Top)
+        static_cast<int>(ws.srWindow.Right - ws.srWindow.Left + 1),
+        static_cast<int>(ws.srWindow.Bottom - ws.srWindow.Top + 1)
     );
 #else
     winsize ws;

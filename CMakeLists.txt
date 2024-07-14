@@ -52,5 +52,8 @@ if(BUILD_DEMOS)
     add_demo(nonblock)
     add_demo(resize)
     add_demo(dead_pixels)
+    if (WIN32)
+        add_demo(windows_bug)
+    endif()
 
 endif()
