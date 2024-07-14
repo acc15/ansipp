@@ -65,7 +65,8 @@ int main() {
     std::this_thread::sleep_for(std::chrono::seconds(5));
     std::cout << "after sleep" << std::endl;
 
-    DWORD dwResult = WaitForSingleObject(in, 0);
+    // WaitForSingleObject react on events (terminal window resize) which can't be read with ReadFile(...)
+    DWORD dwResult = WaitForSingleObject(in, 0); 
     std::cout << "WaitForSingleObject done with " << dwResult << std::endl;
 
     if (dwResult == WAIT_OBJECT_0) {
