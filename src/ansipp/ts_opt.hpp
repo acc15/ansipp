@@ -29,8 +29,8 @@ public:
 
     bool store(const T& v) { return store(T(v)); }
 
-    template <std::regular_invocable<T> Callback>
-    void restore(const Callback& v) { if (set.exchange(false)) v(static_cast<const T&>(value)); }
+    template <typename Callback>
+    void restore(const Callback& v) { if (set.exchange(false)) v(value); }
 };
 
 }
