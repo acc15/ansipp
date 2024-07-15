@@ -11,9 +11,9 @@ class ts_opt {
     std::atomic_bool is_set = false;
 public:
     bool store(T&& v) {
-        if (is_set.load()) { return false; }
+        if (is_set.load()) return false;
         value = std::move(v);
-        if (is_set.exchange(true) == true) { return false; }
+        if (is_set.exchange(true) == true) return false;
         return true;
     }
 
@@ -23,7 +23,7 @@ public:
 
     template <std::regular_invocable<T> Callback>
     void restore(const Callback& v) {
-        if (is_set.exchange(false)) { v(value); }
+        if (is_set.exchange(false)) v(value);
     }
 };
 
