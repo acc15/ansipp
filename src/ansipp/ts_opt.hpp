@@ -2,6 +2,7 @@
 
 #include <concepts>
 #include <atomic>
+#include <cstdlib>
 
 namespace ansipp {
 
@@ -20,8 +21,9 @@ public:
         // when both threads set this value
         value = std::move(v); 
 
-        // but 2nd will fail here, value may contain illegal data (from 2nd thread)
-        if (set.exchange(true) == true) return false;
+        // but 2nd will fail here, and value may hold corrupted data, 
+        // the best decision is to abort early than catch very strange bugs
+        if (set.exchange(true) == true) std::abort();
 
         // generally init() shouldn't be used from multiple threads, so it's not a problem for now
         return true;

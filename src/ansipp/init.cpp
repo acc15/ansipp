@@ -139,7 +139,15 @@ void init_restorable(std::error_code& ec, const config& cfg) {
     if (cfg.enable_signal_restore && (enable_signal_restore(ec), ec)) return;
 }
 
+struct init_guard {
+    bool other_thread_init;
+    init_guard(): other_thread_init(__ansipp_restore.initializing.exchange(true)) {}
+    ~init_guard() { if (!other_thread_init) __ansipp_restore.initializing.store(false); }
+};
+
 void init(std::error_code& ec, const config& cfg) {
+    init_guard g; 
+    if (g.other_thread_init) { ec = ansipp_error::initializing; return; }
     if (init_non_restorable(ec, cfg), ec) return; // nothing to restore if any of these will fail
     if (init_restorable(ec, cfg), ec) restore();
 }

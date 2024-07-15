@@ -1,8 +1,6 @@
 #pragma once
 
-#include <ansipp/config.hpp>
-#include "ts_opt.hpp"
-
+#include <atomic>
 #ifdef _WIN32
 #   include <windows.h>
 #else
@@ -10,9 +8,13 @@
 #   include <signal.h>
 #endif
 
+#include <ansipp/config.hpp>
+#include "ts_opt.hpp"
+
 namespace ansipp {
 
 struct restore_data {
+    std::atomic_bool initializing;
 #ifdef _WIN32 // windows
     ts_opt<DWORD> in_modes;
     ts_opt<DWORD> out_modes;

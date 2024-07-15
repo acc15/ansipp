@@ -76,6 +76,7 @@ public:
     vec head = { initial_snake_length - 1, 0 };
     vec terminal_size = {};
     bool undersize = false;
+    bool paused = false;
 
     unsigned int length = initial_snake_length;
     unsigned int frames_till_apple = 0;
@@ -162,27 +163,32 @@ public:
 
     bool input() {
         std::string_view rd;
-        if (!terminal_read(input_buffer, rd, 0)) { 
-            std::cerr << "can't read stdin: " << last_error().message() << std::endl; 
-            return false;
-        }
-        while (!rd.empty()) {
-            if      (remove_prefix(rd, "q")) return false;
-            else if (remove_prefix(rd, "\33" "[A")) queue_dir(direction::UP);
-            else if (remove_prefix(rd, "\33" "[B")) queue_dir(direction::DOWN);
-            else if (remove_prefix(rd, "\33" "[C")) queue_dir(direction::RIGHT);
-            else if (remove_prefix(rd, "\33" "[D")) queue_dir(direction::LEFT);
-            else rd.remove_prefix(1);
-        }
+        do {
+            if (!terminal_read(input_buffer, rd, 0)) { 
+                std::cerr << "can't read stdin: " << last_error().message() << std::endl; 
+                return false;
+            }
+            if (rd.empty()) break;
+
+            std::string_view remaining = rd;
+            while (!remaining.empty()) {
+                if (remove_prefix(remaining, "q")) return false;
+                if (!undersize && remove_prefix(remaining, " ")) { paused = !paused; continue; }
+                if (!paused && remove_prefix(remaining, "\33" "[A")) { queue_dir(direction::UP); continue; };
+                if (!paused && remove_prefix(remaining, "\33" "[B")) { queue_dir(direction::DOWN); continue; }
+                if (!paused && remove_prefix(remaining, "\33" "[C")) { queue_dir(direction::RIGHT); continue; }
+                if (!paused && remove_prefix(remaining, "\33" "[D")) { queue_dir(direction::LEFT); continue; }
+                remaining.remove_prefix(1); // drop unhandled char
+            }
+        } while (rd.size() == std::size(input_buffer));
         return true;
     }
 
     void process() {
         terminal_size = get_terminal_size();
         undersize = terminal_size.y < min_terminal_size.y || terminal_size.x < min_terminal_size.x;
-        if (game_over || undersize || initializing) {
-            return;
-        }
+        if (undersize) paused = true;
+        if (initializing || paused) return;
 
         if (!input_queue.empty()) {
             dir = input_queue.front();
@@ -277,6 +283,15 @@ public:
         o << attrs();
     }
 
+    void draw_center_text(std::ostream& o, std::string_view str) {
+        o   << store_cursor() 
+            << move_rel(
+                align(CENTER, grid_size.x, static_cast<int>(str.size())), 
+                align(CENTER, grid_size.y, 1)
+            )
+            << attrs().bg(WHITE).fg(BLACK) << str << attrs() << restore_cursor();
+    }
+
     void draw(std::ostream& o) {
         o << move(CURSOR_TO_COLUMN, 0) << move(CURSOR_UP, draw_rows) << erase(SCREEN, TO_END);
         
@@ -292,13 +307,9 @@ public:
         draw_apples(o);
         
         if (game_over) {
-            static const std::string game_over_text =  "GAME IS OVER";
-            o   << store_cursor() 
-                << move_rel(
-                    align(CENTER, grid_size.x, static_cast<int>(game_over_text.size())), 
-                    align(CENTER, grid_size.y, 1)
-                )
-                << attrs().bg(WHITE).fg(BLACK) << game_over_text << attrs() << restore_cursor();
+            draw_center_text(o, "GAME IS OVER");
+        } else if (paused) {
+            draw_center_text(o, "PAUSE");
         }
 
         o << move(CURSOR_DOWN, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 0)  << std::flush;
@@ -306,13 +317,14 @@ public:
     }
 
     void loop(std::ostream& out) {
-        while (!game_over) {
+        while (true) {
             hr_clock::time_point t1 = hr_clock::now();
             if (!input()) break;
             process();
             draw(out);
             initializing = false;
             last_frame_duration = hr_clock::now() - t1;
+            if (game_over) break;
             std::this_thread::sleep_for(std::chrono::milliseconds(80));
         }
     }

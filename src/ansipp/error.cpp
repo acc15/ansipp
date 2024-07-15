@@ -31,6 +31,8 @@ std::string ansipp_category_impl::message(int code) const {
         return "ansipp already initialized, call restore() before calling init(ec) again";
     case at_exit_failure:
         return "unable to set std::atexit handler";
+    case initializing:
+        return "ansipp init() currently initializing, never call init() from multiple threads";
     default:
         return "unknown error";
     }

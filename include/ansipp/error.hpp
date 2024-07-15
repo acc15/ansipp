@@ -13,7 +13,8 @@ std::error_code last_error();
 enum class ansipp_error {
     not_terminal,
     at_exit_failure,
-    already_initialized
+    already_initialized,
+    initializing
 };
 
 class ansipp_category_impl: public std::error_category {
