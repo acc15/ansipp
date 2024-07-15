@@ -14,8 +14,8 @@ public:
     
     bool store(T&& v) {
         // there is possible race condition when 2 (or more) parallel init are running
-        // the statement below makes it occur less frequently, but doesn't solve it completely.
-        if (set.load()) return false; 
+        // check below makes occur it less frequently, but doesn't solve it completely.
+        if (set.load()) return false;
         
         // when both threads set this value
         value = std::move(v); 
