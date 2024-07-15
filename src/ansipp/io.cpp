@@ -90,7 +90,7 @@ int terminal_read_ready(int timeout) {
     // we consumed all ConsoleInput events and didn't find any KEY_EVENT or MOUSE_EVENT, returning 0 (no data to read)
     return 0;
 #else
-    static pollfd stdin_pollfd = { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 };
+    pollfd stdin_pollfd = { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 };
     return poll(&stdin_pollfd, 1, timeout);
 #endif
 }
