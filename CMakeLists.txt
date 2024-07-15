@@ -38,7 +38,9 @@ testing(TARGETS ansipp SOURCES
     ${TEST}/ansipp/vec.cpp
 )
 
-option(BUILD_DEMOS "Build demo programs" ${PROJECT_IS_TOP_LEVEL})
+configure_install(ansipp)
+
+option(BUILD_DEMOS "Build demo programs" OFF)
 if(BUILD_DEMOS)
 
     function(add_demo name)
