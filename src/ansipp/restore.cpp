@@ -43,8 +43,11 @@ void restore_signal() {
         SetConsoleCtrlHandler(callback, false);
     });
 #else
-    __ansipp_restore.signal_handler.restore([](const struct sigaction& signal_handler) {
-        sigaction(SIGINT, &signal_handler, nullptr);
+    __ansipp_restore.sigint.restore([](const struct sigaction& sigint) {
+        sigaction(SIGINT, &sigint, nullptr);
+    });
+    __ansipp_restore.sigterm.restore([](const struct sigaction& sigterm) {
+        sigaction(SIGINT, &sigterm, nullptr);
     });
 #endif
 }

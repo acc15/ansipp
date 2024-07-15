@@ -19,7 +19,8 @@ struct restore_data {
     ts_opt<PHANDLER_ROUTINE> ctrl_handler;
 #else // posix
     ts_opt<tcflag_t> lflag;
-    ts_opt<struct sigaction> signal_handler;
+    ts_opt<struct sigaction> sigint;
+    ts_opt<struct sigaction> sigterm;
 #endif
     ts_opt<std::string> escapes;
 };

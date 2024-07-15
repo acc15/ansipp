@@ -30,9 +30,9 @@ void enable_utf8([[maybe_unused]] std::error_code& ec) {
 #endif
 }
 
-void signal_restore(int code) {
+void signal_restore(int signal) {
     restore();
-    std::_Exit(0x80 + code);
+    std::_Exit(0x80 + signal);
 }
 
 #ifdef _WIN32
@@ -42,6 +42,14 @@ int signal_control_handler(DWORD ctrl_code) {
     }
     return false;
 }
+#else
+void signal_handler(std::error_code& ec, int sig, ts_opt<struct sigaction>& restore) {
+    struct sigaction sa, sa_old;
+    sa.sa_handler = &signal_restore;
+    if (restore.is_set()) { ec = ansipp_error::already_initialized; return; }
+    if (sigaction(sig, &sa, &sa_old) == -1) { ec = last_error(); return; }
+    if (!restore.store(sa_old)) { ec = ansipp_error::already_initialized; return; }
+}
 #endif
 
 void enable_signal_restore(std::error_code& ec) {
@@ -49,11 +57,8 @@ void enable_signal_restore(std::error_code& ec) {
     if (!__ansipp_restore.ctrl_handler.store(&signal_control_handler)) { ec = ansipp_error::already_initialized; return; }
     if (!SetConsoleCtrlHandler(&signal_control_handler, true)) { ec = last_error(); return; }
 #else
-    struct sigaction sa, sa_old;
-    sa.sa_handler = &signal_restore;
-    if (__ansipp_restore.signal_handler.is_set()) { ec = ansipp_error::already_initialized; return; }
-    if (sigaction(SIGINT, &sa, &sa_old) == -1) { ec = last_error(); return; }
-    if (!__ansipp_restore.signal_handler.store(sa_old)) { ec = ansipp_error::already_initialized; return; }
+    if (signal_handler(ec, SIGINT, __ansipp_restore.sigint), ec) { return; }
+    if (signal_handler(ec, SIGTERM, __ansipp_restore.sigterm), ec) { return; }
 #endif
 }
 
