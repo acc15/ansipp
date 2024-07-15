@@ -7,7 +7,7 @@ namespace ansipp {
 
 template <typename T>
 class ts_opt {
-    T value;
+    T value = {};
     std::atomic_bool set = false;
 public:
     bool is_set() const { return set.load(); }
