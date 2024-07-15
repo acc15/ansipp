@@ -37,6 +37,10 @@ void restore_mode() {
 #endif
 }
 
+void restore_terminal_state() {
+    __ansipp_restore.escapes.restore([](const std::string& esc) { terminal_write(esc); });
+}
+
 void restore_signal() {
 #ifdef _WIN32 // windows
     __ansipp_restore.ctrl_handler.restore([](PHANDLER_ROUTINE callback) {
@@ -53,9 +57,9 @@ void restore_signal() {
 }
 
 void restore() {
-    __ansipp_restore.escapes.restore([](const std::string& esc) { terminal_write(esc); });
-    restore_mode();
     restore_signal();
+    restore_terminal_state();
+    restore_mode();
 }
 
 }
