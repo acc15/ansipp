@@ -7,12 +7,10 @@ namespace ansipp {
 
 template <typename T>
 class ts_opt {
-    T value = {};
+    T value;
     std::atomic_bool set = false;
 public:
-    bool is_set() const {
-        return set.load();
-    }
+    bool is_set() const { return set.load(); }
     
     bool store(T&& v) {
         if (set.load()) return false;
@@ -21,14 +19,10 @@ public:
         return true;
     }
 
-    bool store(const T& v) {
-        return store(T(v));
-    }
+    bool store(const T& v) { return store(T(v)); }
 
     template <std::regular_invocable<T> Callback>
-    void restore(const Callback& v) {
-        if (set.exchange(false)) v(value);
-    }
+    void restore(const Callback& v) { if (set.exchange(false)) v(value); }
 };
 
 }
