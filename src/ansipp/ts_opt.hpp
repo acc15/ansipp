@@ -8,12 +8,16 @@ namespace ansipp {
 template <typename T>
 class ts_opt {
     T value = {};
-    std::atomic_bool is_set = false;
+    std::atomic_bool set = false;
 public:
+    bool is_set() const {
+        return set.load();
+    }
+    
     bool store(T&& v) {
-        if (is_set.load()) return false;
+        if (set.load()) return false;
         value = std::move(v);
-        if (is_set.exchange(true) == true) return false;
+        if (set.exchange(true) == true) return false;
         return true;
     }
 
@@ -23,7 +27,7 @@ public:
 
     template <std::regular_invocable<T> Callback>
     void restore(const Callback& v) {
-        if (is_set.exchange(false)) v(value);
+        if (set.exchange(false)) v(value);
     }
 };
 

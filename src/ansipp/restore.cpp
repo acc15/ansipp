@@ -37,9 +37,22 @@ void restore_mode() {
 #endif
 }
 
+void restore_signal() {
+#ifdef _WIN32 // windows
+    __ansipp_restore.ctrl_handler.restore([](PHANDLER_ROUTINE callback) {
+        SetConsoleCtrlHandler(callback, false);
+    });
+#else
+    __ansipp_restore.signal_handler.restore([](const struct sigaction& signal_handler) {
+        sigaction(SIGINT, &signal_handler, nullptr);
+    });
+#endif
+}
+
 void restore() {
     __ansipp_restore.escapes.restore([](const std::string& esc) { terminal_write(esc); });
     restore_mode();
+    restore_signal();
 }
 
 }

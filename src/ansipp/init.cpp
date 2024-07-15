@@ -46,11 +46,14 @@ int signal_control_handler(DWORD ctrl_code) {
 
 void enable_signal_restore(std::error_code& ec) {
 #ifdef _WIN32 
+    if (!__ansipp_restore.ctrl_handler.store(&signal_control_handler)) { ec = ansipp_error::already_initialized; return; }
     if (!SetConsoleCtrlHandler(&signal_control_handler, true)) { ec = last_error(); return; }
 #else
-    struct sigaction sa;
+    struct sigaction sa, sa_old;
     sa.sa_handler = &signal_restore;
-    if (sigaction(SIGINT, &sa, nullptr) == -1) { ec = last_error(); return; }
+    if (__ansipp_restore.signal_handler.is_set()) { ec = ansipp_error::already_initialized; return; }
+    if (sigaction(SIGINT, &sa, &sa_old) == -1) { ec = last_error(); return; }
+    if (!__ansipp_restore.signal_handler.store(sa_old)) { ec = ansipp_error::already_initialized; return; }
 #endif
 }
 
