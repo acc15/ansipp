@@ -69,19 +69,20 @@ int terminal_read_ready(int timeout) {
     // * check that input buffer has at least one KEY_EVENT or MOUSE_EVENT
     // * if not - consume all pending events and report as empty input
 
-    static constexpr DWORD max_record_count = 1024;
-    static INPUT_RECORD records[max_record_count];
-
+    static constexpr DWORD max_record_count = 32;
+    INPUT_RECORD records[max_record_count];
     DWORD record_count;
     do {
         if (!PeekConsoleInput(in, records, max_record_count, &record_count)) return -1;
         if (record_count == 0) return 0;
-        for (DWORD i = 0; i < record_count; i++) {
+
+        for (DWORD i = 0; i < record_count; ++i) {
             switch (records[i].EventType) {
                 case KEY_EVENT: case MOUSE_EVENT: return 1;
                 default: continue;
             }
         }
+
         // didn't find neither KEY_EVENT nor MOUSE_EVENT - consume all events
         if (!ReadConsoleInput(in, records, max_record_count, &record_count)) return -1;
     } while (record_count == max_record_count);
