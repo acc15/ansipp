@@ -69,7 +69,7 @@ int terminal_read_ready(int timeout) {
     // * check that input buffer has at least one KEY_EVENT or MOUSE_EVENT
     // * if not - consume all pending events and report as empty input
 
-    static constexpr DWORD max_record_count = 32;
+    const DWORD max_record_count = 32;
     INPUT_RECORD records[max_record_count];
     DWORD record_count;
     do {
