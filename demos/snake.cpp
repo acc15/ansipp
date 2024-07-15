@@ -155,6 +155,7 @@ public:
     }
 
     void queue_dir(direction input_dir) {
+        if (paused) return;
         direction last_dir = input_queue.empty() ? dir : input_queue.back();
         if (input_dir != last_dir) {
             input_queue.push_back(input_dir);
@@ -173,11 +174,11 @@ public:
             std::string_view remaining = rd;
             while (!remaining.empty()) {
                 if (remove_prefix(remaining, "q")) return false;
-                if (!undersize && remove_prefix(remaining, " ")) { paused = !paused; continue; }
-                if (!paused && remove_prefix(remaining, "\33" "[A")) { queue_dir(direction::UP); continue; };
-                if (!paused && remove_prefix(remaining, "\33" "[B")) { queue_dir(direction::DOWN); continue; }
-                if (!paused && remove_prefix(remaining, "\33" "[C")) { queue_dir(direction::RIGHT); continue; }
-                if (!paused && remove_prefix(remaining, "\33" "[D")) { queue_dir(direction::LEFT); continue; }
+                if (remove_prefix(remaining, " ")) { if (!undersize) paused = !paused; continue; }
+                if (remove_prefix(remaining, "\33" "[A")) { queue_dir(direction::UP); continue; };
+                if (remove_prefix(remaining, "\33" "[B")) { queue_dir(direction::DOWN); continue; }
+                if (remove_prefix(remaining, "\33" "[C")) { queue_dir(direction::RIGHT); continue; }
+                if (remove_prefix(remaining, "\33" "[D")) { queue_dir(direction::LEFT); continue; }
                 remaining.remove_prefix(1); // drop unhandled char
             }
         } while (rd.size() == std::size(input_buffer));
