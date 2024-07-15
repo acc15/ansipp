@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include <ansipp\vec.hpp>
+#include <ansipp/vec.hpp>
 
 using namespace ansipp;
 
