@@ -3,6 +3,8 @@
 #include <ostream>
 #include <string>
 
+#include <ansipp/esc.hpp>
+
 namespace ansipp {
 
 enum style {
@@ -82,7 +84,7 @@ struct rgb {
  */
 class attrs {
 
-    std::string value = "\033[";
+    std::string value = csi;
 
     attrs& a(unsigned int param);
     inline unsigned int cb(bool bg, unsigned int base = 38) { return base + (bg ? 10 : 0); }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ostream>
+#include <ansipp/esc.hpp>
 #include <ansipp/vec.hpp>
 
 namespace ansipp {
@@ -12,17 +13,17 @@ bool is_terminal();
 
 vec get_terminal_size();
 
-inline std::string store_screen() { return "\33" "[?47h"; }
-inline std::string restore_screen() { return "\33" "[?47l"; }
+inline std::string hard_reset() { return esc + 'c'; }
+inline std::string soft_reset() { return csi + "!p"; }
 
-inline std::string enable_line_wrap() { return "\33" "[?7h"; }
-inline std::string disable_line_wrap() { return "\33" "[?7l"; }
+inline std::string enable_line_wrap() { return decset + "7h"; }
+inline std::string disable_line_wrap() { return decset + "7l"; }
 
-inline std::string enable_alternate_buffer() { return "\33" "[?1049h"; }
-inline std::string disable_alternate_buffer() { return "\33" "[?1049l"; }
+inline std::string enable_alternate_buffer() { return decset + "1049h"; }
+inline std::string disable_alternate_buffer() { return decset + "1049l"; }
 
-inline std::string enable_focus_reporting() { return "\33" "[?1004h"; }
-inline std::string disable_focus_reporting() { return "\33" "[?1004l"; }
+inline std::string enable_focus_reporting() { return decset + "1004h"; }
+inline std::string disable_focus_reporting() { return decset + "1004l"; }
 
 enum erase_target: char {
     SCREEN = 'J',
@@ -36,9 +37,7 @@ enum erase_mode: char {
 };
 
 inline std::string erase(erase_target target, erase_mode mode) {
-    return std::string("\33" "[")
-        .append(1, static_cast<char>(mode))
-        .append(1, static_cast<char>(target));
+    return std::string(csi).append(1, static_cast<char>(mode)).append(1, static_cast<char>(target));
 }
 
 }
