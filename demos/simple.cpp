@@ -30,8 +30,8 @@ int main() {
     gradient({ 0, 255, 0 }, { 0, 0, 255 }, 40);
     std::cout << attrs() << std::endl;
 
-    std::cout << "press " << attrs().on(BOLD).fg(GREEN) << "q" << attrs() << " to exit" << std::endl;
-    std::cout << "type something" << std::endl;
+    std::cout << "press " << attrs().on(BOLD).on(BLINK).fg(GREEN) << "q" << attrs() << " to exit" << std::endl;
+    std::cout << attrs().on(INVERSE) << "type something" << attrs() << std::endl;
 
     std::string seq_buf(20, '\0');
     std::string_view rd;

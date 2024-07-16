@@ -11,6 +11,7 @@ enum style {
     ITALIC,
     UNDERLINE,
     BLINK,
+    BLINK_FAST,
     INVERSE,
     HIDDEN,
     STRIKETHROUGH

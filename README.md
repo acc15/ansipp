@@ -7,7 +7,7 @@ It doesn't store terminal screen in memory.
 
 ## Cross platform
 
-It's works on 
+It works on 
 
 * Linux (ArchLinux)
 * MacOS (Sonoma) 14.5 
@@ -26,7 +26,7 @@ target_link_libraries(your_executable PRIVATE ansipp::ansipp)
 
 Code:
 
-```cpp
+```c++
 #include <iostream>
 #include <ansipp.hpp>
 
@@ -47,13 +47,25 @@ int main() {
 
 ## Features
 
+* No extra dependencies (only `libc` and `stdlib++`)
 * CMake support
 * Colors (including 8bit and RGB)
 * A lot of helpful ANSI escapes 
-* Fast I/O routines (direct syscall, no stdio) with non-blocking reading support
+* Fast terminal I/O routines (direct sys calls, no stdio) with non-blocking reading support
 * Terminal stream to buffer all output to send it in one-shot directly to OS
-* Automatically restores terminal mode on `exit`, `SIGINT` (Ctrl+C), `SIGTERM` (excluding Windows)
+* Automatic restore of terminal modes on `exit`, `SIGINT` (Ctrl+C), `SIGTERM` (excluding Windows)
 
 ## Demos
 
-### Snake game
+### Snake
+
+![snake](images/ansipp_demo_snake.gif)
+
+### Dead pixels
+
+![dead pixels](images/ansipp_demo_dead_pixels.gif)
+
+### Simple gradient and colors
+
+![simple](images/ansipp_demo_simple.png)
+

@@ -228,7 +228,7 @@ public:
 
     void draw_border(std::ostream& o) const {
         o   << attrs().bg(WHITE).fg(BLACK)
-            << make_border_str(border_size.x, "press q to exit, <arrows> to move") 
+            << make_border_str(border_size.x, "press q to exit, <arrows> to move, <space> to pause/unpause") 
             << attrs() << '\n';
 
         for (int y = 0; y < grid_size.y; y++) {
