@@ -37,12 +37,12 @@ vec get_cursor_position() {
 std::string move(move_mode mode, unsigned int value) {
     if (mode == CURSOR_TO_COLUMN && value < 2) return "\r";
     return value > 0 
-        ? std::string("\33" "[").append(std::to_string(value)).append(1, static_cast<char>(mode))
+        ? std::string(csi).append(std::to_string(value)).append(1, static_cast<char>(mode))
         : std::string();
 }
 
 std::string move_abs(int x, int y) {
-    return std::string("\33" "[").append(std::to_string(y)).append(1, ';').append(std::to_string(x)).append(1, 'H');
+    return std::string(csi).append(std::to_string(y)).append(1, ';').append(std::to_string(x)).append(1, 'H');
 }
 
 std::string move_x(int x) {

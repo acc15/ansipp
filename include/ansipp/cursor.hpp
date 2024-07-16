@@ -3,14 +3,15 @@
 #include <string>
 #include <ostream>
 #include <ansipp/vec.hpp>
+#include <ansipp/esc.hpp>
 
 namespace ansipp {
 
 vec parse_cursor_position_escape(std::string_view v);
 vec get_cursor_position();
 
-inline std::string show_cursor() { return "\33" "[?25h"; }
-inline std::string hide_cursor() { return "\33" "[?25l"; }
+inline std::string show_cursor() { return decset + "25h"; }
+inline std::string hide_cursor() { return decset + "25l"; }
 
 enum move_mode: char {
     /**
@@ -66,9 +67,9 @@ std::string move_rel(int x, int y);
 inline std::string move_abs(const vec& v) { return move_abs(v.x, v.y); }
 inline std::string move_rel(const vec& v) { return move_rel(v.x, v.y); }
 
-inline std::string store_cursor() { return "\33" "7"; }
-inline std::string restore_cursor() { return "\33" "8"; }
-inline std::string request_cursor() { return "\33" "[6n"; }
+inline std::string store_cursor() { return esc + "7"; }
+inline std::string restore_cursor() { return esc + "8"; }
+inline std::string request_cursor() { return csi + "6n"; }
 
 enum cursor_shape: char {
     SHAPE_DEFAULT = '0',
@@ -81,7 +82,7 @@ enum cursor_shape: char {
 };
 
 inline std::string change_cursor_shape(cursor_shape shape) { 
-    return std::string("\33" "[").append(1, static_cast<char>(shape)).append(" q");
+    return std::string(csi).append(1, static_cast<char>(shape)).append(" q");
 }
 
 }

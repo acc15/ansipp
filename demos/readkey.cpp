@@ -42,22 +42,22 @@ Ps = 1 0 1 5  -> Enable urxvt Mouse Mode.
 */
 
 struct mode_switch {
-    const char* const name;
-    const char* const esc_prefix;
+    const std::string name;
+    const std::string esc_prefix;
     const bool initial_value = false;
     bool value = initial_value;
 };
 
 mode_switch modes[] {
-    mode_switch { .name = "X&Y",            .esc_prefix = "\33" "[?9" },
-    mode_switch { .name = "X&Y (1000)",     .esc_prefix = "\33" "[?1000" },
-    mode_switch { .name = "Cell",           .esc_prefix = "\33" "[?1002" },
-    mode_switch { .name = "All",            .esc_prefix = "\33" "[?1003" },
-    mode_switch { .name = "Focus",          .esc_prefix = "\33" "[?1004" },
-    mode_switch { .name = "UTF-8",          .esc_prefix = "\33" "[?1005" },
-    mode_switch { .name = "SGR",            .esc_prefix = "\33" "[?1006" },
-    mode_switch { .name = "urxvt",          .esc_prefix = "\33" "[?1015" },
-    mode_switch { .name = "Show Cursor",    .esc_prefix = "\33" "[?25", .initial_value = true },
+    mode_switch { .name = "X&Y",            .esc_prefix = decset + "9" },
+    mode_switch { .name = "X&Y (1000)",     .esc_prefix = decset + "1000" },
+    mode_switch { .name = "Cell",           .esc_prefix = decset + "1002" },
+    mode_switch { .name = "All",            .esc_prefix = decset + "1003" },
+    mode_switch { .name = "Focus",          .esc_prefix = decset + "1004" },
+    mode_switch { .name = "UTF-8",          .esc_prefix = decset + "1005" },
+    mode_switch { .name = "SGR",            .esc_prefix = decset + "1006" },
+    mode_switch { .name = "urxvt",          .esc_prefix = decset + "1015" },
+    mode_switch { .name = "Show Cursor",    .esc_prefix = decset + "25", .initial_value = true },
 };
 
 void mode_line(std::ostream& out) {
@@ -76,7 +76,7 @@ void parse_input(std::ostream& out, std::string_view str) {
     while (!str.empty()) {
         char ch = str[0];
         str.remove_prefix(1);
-        if (ch == '\33') {
+        if (ch == esc[0]) {
             next_esc = true;
             continue;
         }
