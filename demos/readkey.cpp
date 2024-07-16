@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include <format>
+#include <thread>
 #include <ansipp.hpp>
 
 using namespace ansipp;
@@ -60,7 +61,7 @@ mode_switch modes[] {
     mode_switch { .name = "Show Cursor",    .esc_prefix = "\33" "[?25", .initial_value = true },
 };
 
-void status_line(std::ostream& out) {
+void mode_line(std::ostream& out) {
     out << store_cursor() << move_abs(1, 1) << attrs().bg(WHITE).fg(BLACK) << erase(LINE, TO_END) << "<alt> modifiers ";
     for (std::size_t i = 0; i < std::size(modes); i++) {
         const mode_switch& m = modes[i];
@@ -104,8 +105,7 @@ int main() {
     terminal_stream out;
     
     char buf[512];
-
-    status_line(out);
+    mode_line(out);
     out << std::flush;
 
     while (true) {
@@ -116,12 +116,16 @@ int main() {
         }
 
         parse_input(out, rd);
-        
         out << attrs().fg(GREEN) << "HEX: " << attrs() << encode_bytes(rd) 
             << attrs().fg(BLUE) << " CHARS: " << attrs() << encode_string(rd) 
-            << '\n';
-        status_line(out);
+            << '\n' << std::flush;
+        
+        // Allow Windows Terminal to update current line... otherwise mode_line sometimes won't draw 
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
+        mode_line(out);
         out << std::flush;
+
     }
     return EXIT_SUCCESS;
 }
