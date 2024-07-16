@@ -86,7 +86,14 @@ void parse_input(std::ostream& out, std::string_view str) {
 
 int main() {
 
-    if (std::error_code ec; init(ec, config { .disable_input_echo=true }), ec) {
+    std::string additional_restore_esc;
+    for (const mode_switch& m: modes) {
+        additional_restore_esc.append(m.esc_prefix).append(1, 'l');
+    }
+
+    const config cfg = { .restore_esc = additional_restore_esc };
+
+    if (std::error_code ec; init(ec, cfg), ec) {
         std::cerr << "can't init: " << ec.message() << std::endl;
         return EXIT_FAILURE;
     }

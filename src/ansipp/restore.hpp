@@ -23,6 +23,7 @@ struct restore_data {
     ts_opt<tcflag_t> lflag;
     ts_opt<struct sigaction> sigint;
     ts_opt<struct sigaction> sigterm;
+    ts_opt<struct sigaction> sigquit;
 #endif
     ts_opt<std::string> escapes;
 };

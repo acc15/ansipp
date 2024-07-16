@@ -47,12 +47,9 @@ void restore_signal() {
         SetConsoleCtrlHandler(callback, false);
     });
 #else
-    __ansipp_restore.sigint.restore([](const struct sigaction& sigint) {
-        sigaction(SIGINT, &sigint, nullptr);
-    });
-    __ansipp_restore.sigterm.restore([](const struct sigaction& sigterm) {
-        sigaction(SIGINT, &sigterm, nullptr);
-    });
+    __ansipp_restore.sigint.restore([](const struct sigaction& old_sa) { sigaction(SIGINT, &old_sa, nullptr); });
+    __ansipp_restore.sigterm.restore([](const struct sigaction& old_sa) { sigaction(SIGTERM, &old_sa, nullptr); });
+    __ansipp_restore.sigquit.restore([](const struct sigaction& old_sa) { sigaction(SIGQUIT, &old_sa, nullptr); });
 #endif
 }
 

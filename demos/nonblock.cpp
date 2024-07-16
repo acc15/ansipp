@@ -15,8 +15,6 @@
 
 using namespace ansipp;
 
-// mouse tracking linux https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Functions-using-CSI-_-ordered-by-the-final-character_s_
-
 int main() {
 
     if (std::error_code ec; init(ec), ec) {

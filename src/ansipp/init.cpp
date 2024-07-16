@@ -31,19 +31,21 @@ void enable_utf8([[maybe_unused]] std::error_code& ec) {
 }
 
 void signal_restore(int signal) {
-    restore();
-    std::_Exit(0x80 + signal);
+    restore(); // restore will also restore old sigactions
+#ifndef _WIN32
+    raise(signal); // original signal handler was restored - just re-raising signal
+#endif
 }
 
 #ifdef _WIN32
-int signal_control_handler(DWORD ctrl_code) {
+int signal_ctrl_handler(DWORD ctrl_code) {
     if (ctrl_code == CTRL_C_EVENT) {
         signal_restore(2);
     }
     return false;
 }
 #else
-void signal_handler(std::error_code& ec, int sig, ts_opt<struct sigaction>& restore) {
+void init_signal_handler(std::error_code& ec, int sig, ts_opt<struct sigaction>& restore) {
     struct sigaction sa, sa_old;
     sa.sa_handler = &signal_restore;
     if (restore.is_set()) { ec = ansipp_error::already_initialized; return; }
@@ -54,11 +56,12 @@ void signal_handler(std::error_code& ec, int sig, ts_opt<struct sigaction>& rest
 
 void enable_signal_restore(std::error_code& ec) {
 #ifdef _WIN32 
-    if (!__ansipp_restore.ctrl_handler.store(&signal_control_handler)) { ec = ansipp_error::already_initialized; return; }
-    if (!SetConsoleCtrlHandler(&signal_control_handler, true)) { ec = last_error(); return; }
+    if (!__ansipp_restore.ctrl_handler.store(&signal_ctrl_handler)) { ec = ansipp_error::already_initialized; return; }
+    if (!SetConsoleCtrlHandler(&signal_ctrl_handler, true)) { ec = last_error(); return; }
 #else
-    if (signal_handler(ec, SIGINT, __ansipp_restore.sigint), ec) { return; }
-    if (signal_handler(ec, SIGTERM, __ansipp_restore.sigterm), ec) { return; }
+    if (init_signal_handler(ec, SIGINT, __ansipp_restore.sigint), ec) { return; }
+    if (init_signal_handler(ec, SIGTERM, __ansipp_restore.sigterm), ec) { return; }
+    if (init_signal_handler(ec, SIGQUIT, __ansipp_restore.sigquit), ec) { return; }
 #endif
 }
 
@@ -128,7 +131,10 @@ void configure_escapes(const config& cfg, std::error_code& ec) {
         init_esc    += enable_mouse_reporting();
         restore_esc += disable_mouse_reporting();
     }
+    init_esc += cfg.init_esc;
     if (terminal_write(init_esc) < 0) { ec = last_error(); return; }
+
+    restore_esc += cfg.restore_esc;
     if (!__ansipp_restore.escapes.store(std::move(restore_esc))) { ec = ansipp_error::already_initialized; return; }
 }
 
