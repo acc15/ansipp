@@ -333,7 +333,7 @@ public:
 };
 
 int main() {
-    if (std::error_code ec; init(ec, { .hide_cursor = true }), ec) {
+    if (std::error_code ec; init(ec, config { .disable_input_signal = true, .hide_cursor = true }), ec) {
         std::cerr << "can't init: " << ec.message() << std::endl;
         return EXIT_FAILURE;
     }

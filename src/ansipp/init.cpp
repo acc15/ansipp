@@ -73,10 +73,11 @@ void configure_mode(std::error_code& ec, const config& cfg) {
     if (!__ansipp_restore.in_modes.store(in_modes)) { ec = ansipp_error::already_initialized; return; }
     if (cfg.disable_input_echo) {
         in_modes = 0;
-    } else {
-        in_modes &= ~(ENABLE_WINDOW_INPUT);
     }
-    in_modes |= (ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT);
+    if (!cfg.disable_input_signal) {
+        in_modes |= ENABLE_PROCESSED_INPUT;
+    }
+    in_modes |= ENABLE_VIRTUAL_TERMINAL_INPUT;
     if (!SetConsoleMode(in, in_modes)) { ec = last_error(); return; }
     
     HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -90,11 +91,12 @@ void configure_mode(std::error_code& ec, const config& cfg) {
     if (!SetConsoleMode(out, out_modes)) { ec = last_error(); return; }
 
 #else // posix
-    if (cfg.disable_input_echo) {
+    if (cfg.disable_input_echo || cfg.disable_input_signal) {
         termios p; 
         if (tcgetattr(STDOUT_FILENO, &p) == -1) { ec = last_error(); return; }
         if (!__ansipp_restore.lflag.store(p.c_lflag)) { ec = ansipp_error::already_initialized; return; }
-        p.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL); 
+        if (cfg.disable_input_echo) p.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL);
+        if (cfg.disable_input_signal) p.c_lflag &= ~ISIG;
         if (tcsetattr(STDOUT_FILENO, TCSAFLUSH, &p) == -1) { ec = last_error(); return; }
     }
 #endif
@@ -121,6 +123,10 @@ void configure_escapes(const config& cfg, std::error_code& ec) {
     if (cfg.use_alternate_screen_buffer) { 
         init_esc    += enable_alternate_buffer(); 
         restore_esc += disable_alternate_buffer(); 
+    }
+    if (cfg.enable_mouse_reporting) {
+        init_esc    += enable_mouse_reporting();
+        restore_esc += disable_mouse_reporting();
     }
     if (terminal_write(init_esc) < 0) { ec = last_error(); return; }
     if (!__ansipp_restore.escapes.store(std::move(restore_esc))) { ec = ansipp_error::already_initialized; return; }

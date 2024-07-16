@@ -10,12 +10,19 @@ struct config {
     bool disable_input_echo = true;
 
     /**
-     * @brief enables signal handler which call restore()
+     * @brief disables generation of signals on corresponding keys (`Ctrl+C` - SIGINT, `Ctrl+\`, `Ctrl+4` - SIGQUIT, etc)
+     * @see `man termios`, `ISIG` on linux
+     * @see `ENABLE_PROCESSED_INPUT` on Windows
+     */
+    bool disable_input_signal = false;
+
+    /**
+     * @brief enables signal handler which calls restore()
      */
     bool enable_signal_restore = true;
 
     /**
-     * @brief enables exit handler which calls restore()
+     * @brief enables `std::atexit` handler which calls restore()
      */
     bool enable_exit_restore = true;
 
@@ -43,6 +50,11 @@ struct config {
      * @brief switches to alternate screen buffer (ncurses like), switches back on restore()
      */
     bool use_alternate_screen_buffer = false;
+
+    /**
+     * @brief enables mouse reporting
+     */
+    bool enable_mouse_reporting = false;
 
 };
 

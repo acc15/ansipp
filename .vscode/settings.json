@@ -4,7 +4,7 @@
     ],
     "cmake.debugConfig": {
         "args": [],
-        "console": "integratedTerminal"
+        "externalConsole": true
     },
     "files.associations": {
         "*.cppm": "cpp",
@@ -91,6 +91,33 @@
         "cstdarg": "cpp",
         "cwctype": "cpp",
         "execution": "cpp",
-        "mutex": "cpp"
+        "mutex": "cpp",
+        "any": "cpp",
+        "hash_map": "cpp",
+        "strstream": "cpp",
+        "*.tcc": "cpp",
+        "cfenv": "cpp",
+        "codecvt": "cpp",
+        "condition_variable": "cpp",
+        "coroutine": "cpp",
+        "map": "cpp",
+        "set": "cpp",
+        "unordered_set": "cpp",
+        "functional": "cpp",
+        "memory_resource": "cpp",
+        "numeric": "cpp",
+        "random": "cpp",
+        "source_location": "cpp",
+        "fstream": "cpp",
+        "future": "cpp",
+        "numbers": "cpp",
+        "semaphore": "cpp",
+        "shared_mutex": "cpp",
+        "span": "cpp",
+        "stdfloat": "cpp",
+        "text_encoding": "cpp",
+        "cinttypes": "cpp",
+        "typeindex": "cpp",
+        "valarray": "cpp"
     }
 }
