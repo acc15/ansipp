@@ -49,10 +49,13 @@ struct mode_switch {
 
 mode_switch modes[] {
     mode_switch { .name = "X&Y",            .esc_prefix = "\33" "[?9" },
+    mode_switch { .name = "X&Y (1000)",     .esc_prefix = "\33" "[?1000" },
     mode_switch { .name = "Hilite",         .esc_prefix = "\33" "[?1001" },
     mode_switch { .name = "Cell",           .esc_prefix = "\33" "[?1002" },
     mode_switch { .name = "All",            .esc_prefix = "\33" "[?1003" },
     mode_switch { .name = "Focus",          .esc_prefix = "\33" "[?1004" },
+    mode_switch { .name = "UTF-8",          .esc_prefix = "\33" "[?1005" },
+    mode_switch { .name = "SGR",            .esc_prefix = "\33" "[?1006" },
     mode_switch { .name = "urxvt",          .esc_prefix = "\33" "[?1015" },
     mode_switch { .name = "Show Cursor",    .esc_prefix = "\33" "[?25", .initial_value = true },
 };
@@ -61,7 +64,7 @@ void status_line(std::ostream& out) {
     out << store_cursor() << move_abs(1, 1) << attrs().bg(WHITE).fg(BLACK) << erase(LINE, TO_END) << "<alt> modifiers ";
     for (std::size_t i = 0; i < std::size(modes); i++) {
         const mode_switch& m = modes[i];
-        out << ' ' << i+1 << ':' << m.name << '=' << m.value;
+        out << ' ' << static_cast<char>('a' + i) << ':' << m.name << '=' << m.value;
     }
     out << attrs() << restore_cursor();
 }
@@ -75,8 +78,8 @@ void parse_input(std::ostream& out, std::string_view str) {
             next_esc = true;
             continue;
         }
-        if (next_esc && ch >= '1' && ch <= '1' + static_cast<char>(std::size(modes))) {
-            mode_switch& mode = modes[ch - '1'];
+        if (next_esc && ch >= 'a' && ch <= 'a' + static_cast<char>(std::size(modes) - 1)) {
+            mode_switch& mode = modes[ch - 'a'];
             mode.value = !mode.value;
             out << mode.esc_prefix << (mode.value ? 'h' : 'l');
         }
