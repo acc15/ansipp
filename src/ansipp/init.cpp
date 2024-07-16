@@ -30,7 +30,7 @@ void enable_utf8([[maybe_unused]] std::error_code& ec) {
 #endif
 }
 
-void signal_restore(int signal) {
+void signal_restore([[maybe_unused]] int signal) {
     restore(); // restore will also restore old sigactions
 #ifndef _WIN32
     raise(signal); // original signal handler was restored - just re-raising signal
