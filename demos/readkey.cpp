@@ -51,7 +51,6 @@ struct mode_switch {
 mode_switch modes[] {
     mode_switch { .name = "X&Y",            .esc_prefix = "\33" "[?9" },
     mode_switch { .name = "X&Y (1000)",     .esc_prefix = "\33" "[?1000" },
-    mode_switch { .name = "Hilite",         .esc_prefix = "\33" "[?1001" },
     mode_switch { .name = "Cell",           .esc_prefix = "\33" "[?1002" },
     mode_switch { .name = "All",            .esc_prefix = "\33" "[?1003" },
     mode_switch { .name = "Focus",          .esc_prefix = "\33" "[?1004" },
@@ -62,12 +61,14 @@ mode_switch modes[] {
 };
 
 void mode_line(std::ostream& out) {
-    out << store_cursor() << move_abs(1, 1) << attrs().bg(WHITE).fg(BLACK) << erase(LINE, TO_END) << "<alt> modifiers ";
+    out << store_cursor() << move_abs(1, 1) << attrs().bg(WHITE).fg(BLACK) << "<alt>";
     for (std::size_t i = 0; i < std::size(modes); i++) {
         const mode_switch& m = modes[i];
-        out << ' ' << static_cast<char>('a' + i) << ':' << m.name << '=' << m.value;
+        out << ' ' << attrs().fg(RED) << static_cast<char>('a' + i) << attrs().fg(BLACK)
+            << ':' << m.name 
+            << '=' << attrs().fg(GREEN) << m.value << attrs().fg();
     }
-    out << attrs() << restore_cursor();
+    out << erase(LINE, TO_END) << attrs() << restore_cursor();
 }
 
 void parse_input(std::ostream& out, std::string_view str) {
@@ -118,10 +119,13 @@ int main() {
         parse_input(out, rd);
         out << attrs().fg(GREEN) << "HEX: " << attrs() << encode_bytes(rd) 
             << attrs().fg(BLUE) << " CHARS: " << attrs() << encode_string(rd) 
-            << '\n' << std::flush;
-        
+            << '\n';
+
+#ifdef _WIN32 
+        out << std::flush;
         // Allow Windows Terminal to update current line... otherwise mode_line sometimes won't draw 
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
+#endif
 
         mode_line(out);
         out << std::flush;

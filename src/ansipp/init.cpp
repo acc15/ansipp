@@ -15,6 +15,7 @@
 #include <ansipp/io.hpp>
 #include <ansipp/cursor.hpp>
 #include <ansipp/attrs.hpp>
+#include <ansipp/mouse.hpp>
 
 #include "restore.hpp"
 
@@ -128,8 +129,8 @@ void configure_escapes(const config& cfg, std::error_code& ec) {
         restore_esc += disable_alternate_buffer(); 
     }
     if (cfg.enable_mouse_reporting) {
-        init_esc    += enable_mouse_reporting();
-        restore_esc += disable_mouse_reporting();
+        init_esc    += enable_mouse_all();
+        restore_esc += disable_mouse_all();
     }
     init_esc += cfg.init_esc;
     if (terminal_write(init_esc) < 0) { ec = last_error(); return; }

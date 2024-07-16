@@ -42,7 +42,7 @@ struct config {
     bool reset_attrs_on_restore = true;
 
     /**
-     * @brief hides cursor on init(std::error_code&, const config&), show on restore()
+     * @brief hides cursor on init(std::error_code&, const config&), shows on restore()
      */
     bool hide_cursor = false;
 
@@ -57,15 +57,14 @@ struct config {
     bool enable_mouse_reporting = false;
 
     /**
-     * @brief dditional custom init string, can be useful to initialize some additional modes using raw escape sequences
-     * @details note that after init(std::error_code, config) call any modification to this string don't be applied
+     * @brief additional custom init string, useful to initialize some additional modes using raw escape sequences
+     * @details note that after init(std::error_code, config) call any modifications to this string will be ignored
      */
     std::string init_esc = {};
 
     /**
      * @brief additional custom restore string, useful to restore some additional modes using raw escape sequences
-     * @details note that after init(std::error_code, config) 
-     *  call any modification to this string wont't be used
+     * @details note that after init(std::error_code, config) call any modifications to this string will be ignored
      */
     std::string restore_esc = {};
 

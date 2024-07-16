@@ -21,8 +21,8 @@ inline std::string disable_line_wrap() { return "\33" "[?7l"; }
 inline std::string enable_alternate_buffer() { return "\33" "[?1049h"; }
 inline std::string disable_alternate_buffer() { return "\33" "[?1049l"; }
 
-inline std::string enable_mouse_reporting() { return "\33" "[?1003h"; }
-inline std::string disable_mouse_reporting() { return "\33" "[?1003l"; }
+inline std::string enable_focus_reporting() { return "\33" "[?1004h"; }
+inline std::string disable_focus_reporting() { return "\33" "[?1004l"; }
 
 enum erase_target: char {
     SCREEN = 'J',
@@ -40,7 +40,5 @@ inline std::string erase(erase_target target, erase_mode mode) {
         .append(1, static_cast<char>(mode))
         .append(1, static_cast<char>(target));
 }
-
-
 
 }

@@ -29,6 +29,7 @@ target_sources(ansipp PUBLIC FILE_SET HEADERS BASE_DIRS ${INC} FILES
     ${INC}/ansipp/restore.hpp
     ${INC}/ansipp/init.hpp
     ${INC}/ansipp/util.hpp
+    ${INC}/ansipp/mouse.hpp
     ${INC}/ansipp.hpp
 )
 
