@@ -29,21 +29,26 @@ TEST_CASE("cursor: move format", "[cursor][!benchmark]") {
     char printf_buf[20];
 
     BENCHMARK("format") {
-        return std::format("\33[{};{}H", p.y, p.x);
+        return std::format("{}{};{}H", csi, p.y, p.x);
     };
     BENCHMARK("append") {
-        return std::string("\33[")
+        return std::string(csi)
             .append(std::to_string(p.y)).append(1, ';')
             .append(std::to_string(p.x)).append(1, 'H');
     };
     BENCHMARK("append_shared") {
-        return shared_str.assign("\33[")
+        return shared_str.assign(csi)
             .append(std::to_string(p.y)).append(1, ';')
             .append(std::to_string(p.x)).append(1, 'H');
     };
+    BENCHMARK("stringstream") {
+        std::stringstream ss;
+        ss << csi << p.y << ';' << p.x << 'H';
+        return ss.view();
+    };
     BENCHMARK("snprintf") {
-        return snprintf(printf_buf, sizeof(printf_buf), "\33[%u;%uH", 
-            static_cast<unsigned int>(p.y), static_cast<unsigned int>(p.x));
+        return snprintf(printf_buf, sizeof(printf_buf), "%s%u;%uH", 
+            csi.c_str(), static_cast<unsigned int>(p.y), static_cast<unsigned int>(p.x));
     };
     BENCHMARK("impl") {
         return move_abs(p);
