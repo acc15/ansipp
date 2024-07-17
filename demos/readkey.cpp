@@ -49,15 +49,14 @@ struct mode_switch {
 };
 
 mode_switch modes[] {
-    mode_switch { .name = "X&Y",            .esc_prefix = decset + "9" },
-    mode_switch { .name = "X&Y (1000)",     .esc_prefix = decset + "1000" },
-    mode_switch { .name = "Cell",           .esc_prefix = decset + "1002" },
-    mode_switch { .name = "All",            .esc_prefix = decset + "1003" },
-    mode_switch { .name = "Focus",          .esc_prefix = decset + "1004" },
-    mode_switch { .name = "UTF-8",          .esc_prefix = decset + "1005" },
-    mode_switch { .name = "SGR",            .esc_prefix = decset + "1006" },
+    mode_switch { .name = "X&Y",            .esc_prefix = mouse_click.esc_prefix() },
+    mode_switch { .name = "Cell",           .esc_prefix = mouse_cell.esc_prefix() },
+    mode_switch { .name = "All",            .esc_prefix = mouse_all.esc_prefix() },
+    mode_switch { .name = "Focus",          .esc_prefix = focus_reporting.esc_prefix() },
+    mode_switch { .name = "UTF-8",          .esc_prefix = mouse_utf8.esc_prefix() },
+    mode_switch { .name = "SGR",            .esc_prefix = mouse_sgr.esc_prefix() },
     mode_switch { .name = "urxvt",          .esc_prefix = decset + "1015" },
-    mode_switch { .name = "Show Cursor",    .esc_prefix = decset + "25", .initial_value = true },
+    mode_switch { .name = "Show Cursor",    .esc_prefix = cursor_visibility.esc_prefix(), .initial_value = true },
 };
 
 void mode_line(std::ostream& out) {
@@ -66,7 +65,7 @@ void mode_line(std::ostream& out) {
         const mode_switch& m = modes[i];
         out << ' ' << attrs().fg(RED) << static_cast<char>('a' + i) << attrs().fg(BLACK)
             << ':' << m.name 
-            << '=' << attrs().fg(GREEN) << m.value << attrs().fg();
+            << '=' << attrs().on(BOLD) << m.value << attrs().off(BOLD);
     }
     out << erase(LINE, TO_END) << attrs() << restore_cursor();
 }

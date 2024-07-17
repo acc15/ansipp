@@ -10,8 +10,7 @@ namespace ansipp {
 vec parse_cursor_position_escape(std::string_view v);
 vec get_cursor_position();
 
-inline std::string show_cursor() { return decset + "25h"; }
-inline std::string hide_cursor() { return decset + "25l"; }
+const decset_mode cursor_visibility = 25;
 
 enum move_mode: char {
     /**

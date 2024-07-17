@@ -14,8 +14,8 @@ TEST_CASE("cursor: position escapes") {
     REQUIRE( move(CURSOR_UP, 0) == "" );
     REQUIRE( move(CURSOR_UP, 5) == "\33" "[5A" );
     REQUIRE( move_abs(10, 5) == "\33" "[5;10H" );
-    REQUIRE( show_cursor() == "\33" "[?25h" );
-    REQUIRE( hide_cursor() == "\33" "[?25l" );
+    REQUIRE( cursor_visibility.on() == "\33" "[?25h" );
+    REQUIRE( cursor_visibility.off() == "\33" "[?25l" );
     REQUIRE( store_cursor() == "\33" "7" );
     REQUIRE( restore_cursor() == "\33" "8" );
 }

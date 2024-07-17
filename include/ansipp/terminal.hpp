@@ -16,14 +16,9 @@ vec get_terminal_size();
 inline std::string hard_reset() { return esc + 'c'; }
 inline std::string soft_reset() { return csi + "!p"; }
 
-inline std::string enable_line_wrap() { return decset + "7h"; }
-inline std::string disable_line_wrap() { return decset + "7l"; }
-
-inline std::string enable_alternate_buffer() { return decset + "1049h"; }
-inline std::string disable_alternate_buffer() { return decset + "1049l"; }
-
-inline std::string enable_focus_reporting() { return decset + "1004h"; }
-inline std::string disable_focus_reporting() { return decset + "1004l"; }
+const decset_mode line_wrap = 7;
+const decset_mode alternate_buffer = 1049;
+const decset_mode focus_reporting = 1004;
 
 enum erase_target: char {
     SCREEN = 'J',

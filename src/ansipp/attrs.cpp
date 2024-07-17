@@ -13,7 +13,7 @@ rgb rgb::lerp(const rgb& a, const rgb& b, float factor) {
 }
 
 attrs& attrs::a(unsigned int param) {
-    if (value.size() > 2) {
+    if (!value.empty()) {
         value.append(1, ';');
     }
     value.append(std::to_string(param));

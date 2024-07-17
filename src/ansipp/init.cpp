@@ -121,16 +121,16 @@ void configure_escapes(const config& cfg, std::error_code& ec) {
         restore_esc += attrs().str();
     }
     if (cfg.hide_cursor) {
-        init_esc    += hide_cursor();
-        restore_esc += show_cursor();
+        init_esc    += cursor_visibility.off();
+        restore_esc += cursor_visibility.on();
     }
     if (cfg.use_alternate_screen_buffer) { 
-        init_esc    += enable_alternate_buffer(); 
-        restore_esc += disable_alternate_buffer(); 
+        init_esc    += alternate_buffer.on(); 
+        restore_esc += alternate_buffer.off(); 
     }
     if (cfg.enable_mouse_reporting) {
-        init_esc    += enable_mouse_all();
-        restore_esc += disable_mouse_all();
+        init_esc    += mouse_all.on();
+        restore_esc += mouse_all.off();
     }
     init_esc += cfg.init_esc;
     if (terminal_write(init_esc) < 0) { ec = last_error(); return; }

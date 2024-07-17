@@ -84,7 +84,7 @@ struct rgb {
  */
 class attrs {
 
-    std::string value = csi;
+    std::string value;
 
     attrs& a(unsigned int param);
     inline unsigned int cb(bool bg, unsigned int base = 38) { return base + (bg ? 10 : 0); }
@@ -203,16 +203,15 @@ public:
      * @brief builds ansi sequence
      * @return ansi sequence 
      */
-    inline const std::string& str() { return value.append(1, 'm'); }
+    inline std::string str() const { return std::string(csi).append(value).append(1, 'm'); }
     
     /**
      * @brief builds ansi sequence
      * @return ansi sequence 
      */
-    inline operator const std::string&() { return str(); }
+    inline operator std::string() { return str(); }
 
 };
-inline std::ostream& operator<<(std::ostream& s, attrs&& a) { return s << a.str(); }
-inline std::ostream& operator<<(std::ostream& s, attrs& a) { return s << a.str(); }
+inline std::ostream& operator<<(std::ostream& s, const attrs& a) { return s << a.str(); }
 
 }

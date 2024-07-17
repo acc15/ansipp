@@ -9,3 +9,4 @@
 #include <ansipp/restore.hpp>
 #include <ansipp/init.hpp>
 #include <ansipp/util.hpp>
+#include <ansipp/mouse.hpp>
