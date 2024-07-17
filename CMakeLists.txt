@@ -42,7 +42,7 @@ testing(TARGETS ansipp SOURCES
 
 configure_install(ansipp)
 
-option(BUILD_DEMOS "Build demo programs" OFF)
+option(BUILD_DEMOS "Build demo programs" ${PROJECT_IS_TOP_LEVEL})
 if(BUILD_DEMOS)
 
     function(add_demo name)
