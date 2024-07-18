@@ -38,7 +38,7 @@ void restore_mode() {
 }
 
 void restore_terminal_state() {
-    __ansipp_restore.escapes.restore([](const std::string& restore_esc) { terminal_write(restore_esc); });
+    __ansipp_restore.escapes.restore([](const charbuf& restore_esc) { terminal_write(restore_esc.view()); });
 }
 
 void restore_signal() {

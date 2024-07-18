@@ -1,12 +1,20 @@
 #pragma once
 
 #include <string>
+#include <ansipp/charbuf.hpp>
 
 namespace ansipp {
 
 const std::string esc(1, '\x1b');
 const std::string csi = esc + '[';
 const std::string decset = csi + '?';
+
+template <typename Esc>
+std::string esc_str(const Esc& esc) {
+    charbuf cb(16);
+    cb << esc;
+    return cb.str();
+}
 
 class decset_mode {
     unsigned int code;

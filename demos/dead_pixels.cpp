@@ -59,11 +59,11 @@ struct dead_pixels {
     }
 
     void draw(std::ostream& out) const {
-        out << store_cursor();
+        out << store_cursor;
         for (const dead_pixel& p: pixels) {
             p.draw(out);
         }
-        out << restore_cursor() << std::flush;
+        out << restore_cursor << std::flush;
     }
 
     void loop(std::ostream& out) {

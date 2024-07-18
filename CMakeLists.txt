@@ -18,6 +18,7 @@ target_sources(ansipp PRIVATE
 )
 
 target_sources(ansipp PUBLIC FILE_SET HEADERS BASE_DIRS ${INC} FILES
+    ${INC}/ansipp/charbuf.hpp
     ${INC}/ansipp/esc.hpp    
     ${INC}/ansipp/vec.hpp
     ${INC}/ansipp/error.hpp
@@ -39,6 +40,7 @@ testing(TARGETS ansipp SOURCES
     ${TEST}/ansipp/cursor.cpp
     ${TEST}/ansipp/vec.cpp
     ${TEST}/ansipp/format.cpp
+    ${TEST}/ansipp/charbuf.cpp
 )
 
 configure_install(ansipp)

@@ -116,26 +116,26 @@ void atexit_restore(std::error_code& ec) {
 }
 
 void configure_escapes(const config& cfg, std::error_code& ec) {
-    std::string init_esc, restore_esc;
+    charbuf init_esc(32), restore_esc(32);
     if (cfg.reset_attrs_on_restore) {
-        restore_esc += attrs().str();
+        restore_esc << attrs();
     }
     if (cfg.hide_cursor) {
-        init_esc    += cursor_visibility.off();
-        restore_esc += cursor_visibility.on();
+        init_esc    << cursor_visibility.off();
+        restore_esc << cursor_visibility.on();
     }
     if (cfg.use_alternate_screen_buffer) { 
-        init_esc    += alternate_buffer.on(); 
-        restore_esc += alternate_buffer.off(); 
+        init_esc    << alternate_buffer.on(); 
+        restore_esc << alternate_buffer.off(); 
     }
     if (cfg.enable_mouse_reporting) {
-        init_esc    += mouse_all.on();
-        restore_esc += mouse_all.off();
+        init_esc    << mouse_all.on();
+        restore_esc << mouse_all.off();
     }
-    init_esc += cfg.init_esc;
-    if (terminal_write(init_esc) < 0) { ec = last_error(); return; }
+    init_esc << cfg.init_esc;
+    if (terminal_write(init_esc.view()) < 0) { ec = last_error(); return; }
 
-    restore_esc += cfg.restore_esc;
+    restore_esc << cfg.restore_esc;
     if (!__ansipp_restore.escapes.store(std::move(restore_esc))) { ec = ansipp_error::already_initialized; return; }
 }
 

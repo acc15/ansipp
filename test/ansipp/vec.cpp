@@ -24,18 +24,18 @@ TEST_CASE("vec: add", "[vec]") {
 }
 
 TEST_CASE("vec: int assignment", "[vec]") {
-    vec v = 11;
-    v = 9;
+    vec v(11);
+    v = vec(9);
     REQUIRE(v == vec { 9, 9 });
 }
 
 TEST_CASE("vec: int initialization", "[vec]") {
-    vec v = 11;
+    vec v(11);
     REQUIRE(v == vec { 11, 11 });
 }
 
 TEST_CASE("vec: int initialization in increment", "[vec]") {
-    vec v = 11;
-    v += 12;
+    vec v(11);
+    v += vec(12);
     REQUIRE(v == vec { 23, 23 });
 }

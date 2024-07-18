@@ -9,6 +9,7 @@
 #endif
 
 #include <ansipp/config.hpp>
+#include <ansipp/charbuf.hpp>
 #include "ts_opt.hpp"
 
 namespace ansipp {
@@ -25,7 +26,7 @@ struct restore_data {
     ts_opt<struct sigaction> sigterm;
     ts_opt<struct sigaction> sigquit;
 #endif
-    ts_opt<std::string> escapes;
+    ts_opt<charbuf> escapes;
 };
 
 extern restore_data __ansipp_restore;

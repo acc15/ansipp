@@ -2,8 +2,10 @@
 
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include <ansipp/esc.hpp>
+#include <ansipp/charbuf.hpp>
 
 namespace ansipp {
 
@@ -84,12 +86,11 @@ struct rgb {
  */
 class attrs {
 
-    std::string value;
-
-    attrs& a(unsigned int param);
-    unsigned int cb(bool bg, unsigned int base = 38) { return base + (bg ? 10 : 0); }
+    attrs& a(unsigned char param) { params.push_back(param); return *this; }
+    unsigned char cb(bool bg, unsigned char base = 38) { return base + (bg ? 10 : 0); }
 
 public:
+    std::vector<unsigned char> params;
 
     /**
      * @brief sets specified foreground/background color
@@ -199,19 +200,25 @@ public:
      */
     attrs& off() { return a(0); }
 
-    /**
-     * @brief builds ansi sequence
-     * @return ansi sequence 
-     */
-    std::string str() const { return std::string(csi).append(value).append(1, 'm'); }
-    
-    /**
-     * @brief builds ansi sequence
-     * @return ansi sequence 
-     */
-    operator std::string() { return str(); }
+    template <typename Stream>
+    Stream& out(Stream& s) const {
+        s << csi;
+
+        auto it = params.begin();
+        const auto end = params.end();
+        if (it != end) {
+            s << static_cast<unsigned int>(*it);
+            ++it;
+            for (; it != end; ++it) s << ';' << static_cast<unsigned int>(*it);
+        } 
+        s << 'm';
+        return s;
+    }
 
 };
-inline std::ostream& operator<<(std::ostream& s, const attrs& a) { return s << a.str(); }
+template <typename Stream>
+inline Stream& operator<<(Stream& s, const attrs& a) { 
+    return a.out(s);
+}
 
 }

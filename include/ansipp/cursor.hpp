@@ -59,16 +59,41 @@ enum move_mode: char {
     SCROLL_DOWN = 'T'
 };
 
-std::string move(move_mode mode, unsigned int value = 1);
-std::string move_abs(int x, int y);
-std::string move_rel(int x, int y);
+struct move_esc { move_mode mode; unsigned int value; };
+template <typename Stream>
+Stream& operator<<(Stream& s, const move_esc& op) {
+    if (op.mode == CURSOR_TO_COLUMN && op.value < 2) return s << '\r';
+    if (op.value > 0) s << csi << op.value << static_cast<char>(op.mode);
+    return s;
+}
+inline move_esc move(move_mode mode, unsigned int value = 1) { return move_esc { mode, value }; }
 
-inline std::string move_abs(const vec& v) { return move_abs(v.x, v.y); }
-inline std::string move_rel(const vec& v) { return move_rel(v.x, v.y); }
 
-inline std::string store_cursor() { return esc + "7"; }
-inline std::string restore_cursor() { return esc + "8"; }
-inline std::string request_cursor() { return csi + "6n"; }
+struct move_rel_esc { int x, y; };
+template <typename Stream>
+Stream& operator<<(Stream& s, const move_rel_esc& op) {
+    s << (op.x < 0 
+        ? move(CURSOR_LEFT, static_cast<unsigned int>(-op.x)) 
+        : move(CURSOR_RIGHT, static_cast<unsigned int>(op.x)));
+    s << (op.y < 0 
+        ? move(CURSOR_UP, static_cast<unsigned int>(-op.y))
+        : move(CURSOR_DOWN, static_cast<unsigned int>(op.y)));
+    return s;
+}
+inline move_rel_esc move_rel(int x, int y) { return move_rel_esc { x, y }; }
+inline move_rel_esc move_rel(const vec& v) { return move_rel_esc { v.x, v.y }; }
+
+
+struct move_abs_esc { int x, y; };
+template <typename Stream>
+Stream& operator<<(Stream& s, const move_abs_esc& op) { return s << csi << op.y << ';' << op.x << 'H'; }
+inline move_abs_esc move_abs(int x, int y) { return move_abs_esc { x, y }; }
+inline move_abs_esc move_abs(const vec& v) { return move_abs_esc { v.x, v.y }; }
+
+
+const std::string store_cursor = esc + "7";
+const std::string restore_cursor = esc + "8";
+const std::string request_cursor = csi + "6n";
 
 enum cursor_shape: char {
     SHAPE_DEFAULT = '0',

@@ -60,14 +60,14 @@ mode_switch modes[] {
 };
 
 void mode_line(std::ostream& out) {
-    out << store_cursor() << move_abs(1, 1) << attrs().bg(WHITE).fg(BLACK) << "<alt>";
+    out << store_cursor << move_abs(1, 1) << attrs().bg(WHITE).fg(BLACK) << "<alt>";
     for (std::size_t i = 0; i < std::size(modes); i++) {
         const mode_switch& m = modes[i];
         out << ' ' << attrs().fg(RED) << static_cast<char>('a' + i) << attrs().fg(BLACK)
             << ':' << m.name 
             << '=' << attrs().on(BOLD) << m.value << attrs().off(BOLD);
     }
-    out << erase(LINE, TO_END) << attrs() << restore_cursor();
+    out << erase(LINE, TO_END) << attrs() << restore_cursor;
 }
 
 void parse_input(std::ostream& out, std::string_view str) {

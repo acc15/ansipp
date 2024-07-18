@@ -13,8 +13,8 @@ bool is_terminal();
 
 vec get_terminal_size();
 
-inline std::string hard_reset() { return esc + 'c'; }
-inline std::string soft_reset() { return csi + "!p"; }
+const std::string hard_reset = esc + 'c'; 
+const std::string soft_reset = csi + "!p";
 
 const decset_mode line_wrap = 7;
 const decset_mode alternate_buffer = 1049;
@@ -31,8 +31,14 @@ enum erase_mode: char {
     ALL = '2'
 };
 
-inline std::string erase(erase_target target, erase_mode mode) {
-    return std::string(csi).append(1, static_cast<char>(mode)).append(1, static_cast<char>(target));
+struct erase_esc {
+    erase_target target;
+    erase_mode mode;
+};
+template <typename Stream>
+Stream& operator<<(Stream& s, const erase_esc& esc) {
+    return s << csi << static_cast<char>(esc.mode) << static_cast<char>(esc.target);
 }
+inline erase_esc erase(erase_target target, erase_mode mode) { return erase_esc { target, mode }; }
 
 }

@@ -9,7 +9,7 @@ using namespace ansipp;
 TEST_CASE("attrs: format", "[attrs][!benchmark]") {
     rgb c = { 127, 0, 127 };
     BENCHMARK("impl") {
-        return attrs().fg(c).str();
+        return esc_str(attrs().fg(c));
     };
     BENCHMARK("format") {
         return std::format("\33[{};{};{};{};{}m", 38, 5, c.r, c.g, c.b);
@@ -17,10 +17,10 @@ TEST_CASE("attrs: format", "[attrs][!benchmark]") {
 }
 
 TEST_CASE("attrs: colors", "[attrs]") {
-    REQUIRE( attrs().str() == "\33" "[m" );
-    REQUIRE( attrs().fg(RED).bg(BLUE).on(BOLD).str() == "\33" "[31;44;1m" );
-    REQUIRE( attrs().off().str() == "\33" "[0m" );
-    REQUIRE( attrs().off(BOLD).str() == "\33" "[22m" );
+    REQUIRE( esc_str(attrs()) == "\33" "[m" );
+    REQUIRE( esc_str(attrs().fg(RED).bg(BLUE).on(BOLD)) == "\33" "[31;44;1m" );
+    REQUIRE( esc_str(attrs().off()) == "\33" "[0m" );
+    REQUIRE( esc_str(attrs().off(BOLD)) == "\33" "[22m" );
     std::cout << attrs().off();
 }
 
