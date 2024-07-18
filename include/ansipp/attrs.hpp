@@ -87,7 +87,7 @@ class attrs {
     std::string value;
 
     attrs& a(unsigned int param);
-    inline unsigned int cb(bool bg, unsigned int base = 38) { return base + (bg ? 10 : 0); }
+    unsigned int cb(bool bg, unsigned int base = 38) { return base + (bg ? 10 : 0); }
 
 public:
 
@@ -98,7 +98,7 @@ public:
      * @param bright bright mode (odd terminal support)
      * @return self
      */
-    inline attrs& c(bool bg, color v, bool bright) { return a(cb(bg, 30) + (bright ? 90 : 0) + v); }
+    attrs& c(bool bg, color v, bool bright) { return a(cb(bg, 30) + (bright ? 90 : 0) + v); }
     
     /**
      * @brief sets specified foreground/background RGB color
@@ -106,7 +106,7 @@ public:
      * @param v color to set
      * @return self
      */
-    inline attrs& c(bool bg, const rgb& v) { return a(cb(bg)).a(2).a(v.r).a(v.g).a(v.b); }
+    attrs& c(bool bg, const rgb& v) { return a(cb(bg)).a(2).a(v.r).a(v.g).a(v.b); }
     
     /**
      * @brief sets specified foreground/background 8-bit color
@@ -114,14 +114,14 @@ public:
      * @param v color to set
      * @return self
      */
-    inline attrs& c(bool bg, unsigned char v) { return a(cb(bg)).a(5).a(v); }
+    attrs& c(bool bg, unsigned char v) { return a(cb(bg)).a(5).a(v); }
     
     /**
      * @brief sets default foreground/background color
      * @param bg `false` - foreground, `true` - background
      * @return self
      */
-    inline attrs& c(bool bg) { return a(cb(bg, 39)); }
+    attrs& c(bool bg) { return a(cb(bg, 39)); }
 
     /**
      * @brief sets specified foreground color
@@ -129,27 +129,27 @@ public:
      * @param bright bright mode (odd terminal support)
      * @return self
      */
-    inline attrs& fg(color v, bool bright = false) { return c(false, v, bright); }
+    attrs& fg(color v, bool bright = false) { return c(false, v, bright); }
     
     /**
      * @brief sets specified foreground RGB color
      * @param v color to set
      * @return self
      */
-    inline attrs& fg(const rgb& v) { return c(false, v); }
+    attrs& fg(const rgb& v) { return c(false, v); }
 
     /**
      * @brief sets specified foreground 8-bit color
      * @param v color to set
      * @return self
      */
-    inline attrs& fg(unsigned char v) { return c(false, v); }
+    attrs& fg(unsigned char v) { return c(false, v); }
     
     /**
      * @brief sets default foreground color
      * @return self
      */
-    inline attrs& fg() { return c(false); }
+    attrs& fg() { return c(false); }
 
     /**
      * @brief sets specified background color
@@ -157,59 +157,59 @@ public:
      * @param bright bright mode (odd terminal support)
      * @return self
      */
-    inline attrs& bg(color v, bool bright = false) { return c(true, v, bright); }
+    attrs& bg(color v, bool bright = false) { return c(true, v, bright); }
     
     /**
      * @brief sets specified background RGB color
      * @param v color to set
      * @return self
      */
-    inline attrs& bg(const rgb& v) { return c(true, v); }
+    attrs& bg(const rgb& v) { return c(true, v); }
     
     /**
      * @brief sets specified background 8-bit color
      * @param v color to set
      * @return self
      */
-    inline attrs& bg(unsigned char v) { return c(true, v); }
+    attrs& bg(unsigned char v) { return c(true, v); }
     
     /**
      * @brief sets default background color
      * @return self
      */
-    inline attrs& bg() { return c(true); }
+    attrs& bg() { return c(true); }
 
     /**
      * @brief enables specified style
      * @param s style to enable
      * @return self
      */
-    inline attrs& on(style s) { return a(static_cast<unsigned int>(s)); }
+    attrs& on(style s) { return a(static_cast<unsigned int>(s)); }
     
     /**
      * @brief disables specified style
      * @param s style to disable
      * @return self
      */
-    inline attrs& off(style s) { return a(20 + static_cast<unsigned int>(s == style::BOLD ? style::DIM : s)); }
+    attrs& off(style s) { return a(20 + static_cast<unsigned int>(s == style::BOLD ? style::DIM : s)); }
 
     /**
      * @brief disables all styles and colors
      * @return self
      */
-    inline attrs& off() { return a(0); }
+    attrs& off() { return a(0); }
 
     /**
      * @brief builds ansi sequence
      * @return ansi sequence 
      */
-    inline std::string str() const { return std::string(csi).append(value).append(1, 'm'); }
+    std::string str() const { return std::string(csi).append(value).append(1, 'm'); }
     
     /**
      * @brief builds ansi sequence
      * @return ansi sequence 
      */
-    inline operator std::string() { return str(); }
+    operator std::string() { return str(); }
 
 };
 inline std::ostream& operator<<(std::ostream& s, const attrs& a) { return s << a.str(); }

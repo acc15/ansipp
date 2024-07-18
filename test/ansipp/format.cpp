@@ -8,14 +8,13 @@
 
 using namespace ansipp;
 
-inline std::size_t uint_len(unsigned int value) {
+std::size_t uint_len(unsigned int value) {
     return value < 100000 
         ? value < 1000       ? value < 10      ? 1 : value < 100      ? 2 : 3 : value < 10000       ? 4 : 5
         : value < 100000000  ? value < 1000000 ? 6 : value < 10000000 ? 7 : 8 : value < 1000000000  ? 9 : 10;
 }
 
-inline char to_digit(unsigned int v, bool upper) { return v < 10 ? '0' + v : (upper ? 'A' : 'a') + v; }
-
+char to_digit(unsigned int v, bool upper) { return v < 10 ? '0' + v : (upper ? 'A' : 'a') + v; }
 void uint_puts(char* buf, size_t len, unsigned int v, unsigned int base, bool upper) {
     for (std::size_t i = len - 1; v > 0; --i, v /= base) {
         buf[i] = to_digit(v % base, upper);
@@ -55,16 +54,16 @@ public:
         return buf;
     }
 
-    inline charbuf& clear() { off = 0; return *this; }
-    inline char* data() { return ptr; }
-    inline const char* data() const { return ptr; }
-    inline std::size_t capacity() const { return sz; }
-    inline std::size_t offset() const { return off; }
-    inline std::string_view view() const { return std::string_view(ptr, off); }
-
-    inline charbuf& put(const void* data, std::size_t size) { std::memcpy(reserve(size), data, size); return *this; }
-    inline charbuf& put(std::string_view str) { return put(str.data(), str.size()); }
-    inline charbuf& put(char ch) { return put(&ch, 1); }
+    charbuf& clear() { off = 0; return *this; }
+    char* data() { return ptr; }
+    const char* data() const { return ptr; }
+    std::size_t capacity() const { return sz; }
+    std::size_t offset() const { return off; }
+    std::string_view view() const { return std::string_view(ptr, off); }
+    std::string str() const { return std::string(ptr, off); }
+    charbuf& put(const void* data, std::size_t size) { std::memcpy(reserve(size), data, size); return *this; }
+    charbuf& put(std::string_view str) { return put(str.data(), str.size()); }
+    charbuf& put(char ch) { return put(&ch, 1); }
 };
 
 charbuf& operator<<(charbuf& buf, std::string_view sv) { return buf.put(sv); }
@@ -73,7 +72,7 @@ charbuf& operator<<(charbuf& buf, unsigned int v) {
     if (v < 10) { return buf.put('0' + v); }
     std::size_t len = uint_len(v);
     char* data = buf.reserve(len);
-    for (std::size_t i = len - 1; v > 0; --i, v /= 10) data[i] = '0' + (v % 10);
+    uint_puts(data, len, v, 10, false);
     return buf;
 }
 
@@ -99,47 +98,89 @@ TEST_CASE("format: uint_puts", "[format]") {
     REQUIRE( buf[3] == '3' );
 }
 
-TEST_CASE("format: cursor position", "[format][!benchmark]") {
-    
-    unsigned int x = 5, y = 10;
+struct format_benchmark {
 
-    std::string shared_str;
-    char printf_buf[20];
-    shared_str.reserve(20);
+    const unsigned int x = 5;
+    const unsigned int y = 10;
+    const std::string expected_esc = "\33" "[10;5H";
 
-    charbuf shared_cb(16);
+    char snprintf_buf[20];
+    std::string shared_str = std::string(20, 0);
+    charbuf shared_cb = charbuf(20);
+    std::stringstream shared_ss;
 
-    BENCHMARK("std::format") {
-        return std::format("{}{};{}H", csi, y, x);
-    };
-    BENCHMARK("std::string.append") {
+    std::string std_format() { 
+        return std::format("{}{};{}H", csi, y, x); 
+    }
+
+    std::string std_string_append() { 
         return std::string(csi)
             .append(std::to_string(y)).append(1, ';')
-            .append(std::to_string(x)).append(1, 'H');
-    };
-    BENCHMARK("std::string.append shared") {
+            .append(std::to_string(x)).append(1, 'H');  
+    }
+
+    std::string std_string_append_shared() { 
         return shared_str.assign(csi)
             .append(std::to_string(y)).append(1, ';')
-            .append(std::to_string(x)).append(1, 'H');
-    };
-    BENCHMARK("std::stringstream") {
+            .append(std::to_string(x)).append(1, 'H'); 
+    }
+
+    std::string std_stringstream() { 
         std::stringstream ss;
         ss << csi << y << ';' << x << 'H';
         return ss.str();
-    };
-    BENCHMARK("snprintf") {
-        return snprintf(printf_buf, sizeof(printf_buf), "%s%u;%uH", csi.c_str(), y, x);
-    };
-    BENCHMARK("charbuf") {
+    }
+
+    std::string std_stringstream_shared() { 
+        shared_ss.str("");
+        shared_ss << csi << y << ';' << x << 'H';
+        return shared_ss.str();
+    }
+    std::string snprintf_shared() {
+        int len = snprintf(snprintf_buf, sizeof(snprintf_buf), "%s%u;%uH", csi.c_str(), y, x);
+        return std::string(snprintf_buf, len);
+    }
+
+    std::string charbuf_alloc() {
         charbuf cb(16);
         cb << csi << y << ';' << x << 'H';
-        return cb.view();
-    };
-    BENCHMARK("charbuf shared") {
+        return cb.str();
+    }
+
+    std::string charbuf_shared() {
         shared_cb.clear() << csi << y << ';' << x << 'H';
-        return shared_cb.view();
-    };
-    BENCHMARK("current impl") {
+        return shared_cb.str();
+    }
+
+    std::string current_impl() {
         return move_abs(x, y);
-    };
+    }
+    
+};
+
+
+TEST_CASE("format: benchmark", "[format][!benchmark]") {
+    
+    format_benchmark fb;
+    
+    REQUIRE( fb.std_format() == fb.expected_esc );
+    REQUIRE( fb.std_string_append() == fb.expected_esc );
+    REQUIRE( fb.std_string_append_shared() == fb.expected_esc );
+    REQUIRE( fb.std_stringstream() == fb.expected_esc );
+    REQUIRE( fb.std_stringstream_shared() == fb.expected_esc );
+    REQUIRE( fb.snprintf_shared() == fb.expected_esc );
+    REQUIRE( fb.charbuf_alloc() == fb.expected_esc );
+    REQUIRE( fb.charbuf_shared () == fb.expected_esc );
+    REQUIRE( fb.current_impl() == fb.expected_esc ); 
+
+    BENCHMARK("std_format") { return fb.std_format(); }; 
+    BENCHMARK("std_string_append") { return fb.std_string_append(); };
+    BENCHMARK("std_string_append_shared") { return fb.std_string_append_shared(); };
+    BENCHMARK("std_stringstream") { return fb.std_stringstream(); };
+    BENCHMARK("std_stringstream_shared") { return fb.std_stringstream_shared(); };
+    BENCHMARK("snprintf_shared") { return fb.snprintf_shared(); };
+    BENCHMARK("charbuf") { return fb.charbuf_alloc(); };
+    BENCHMARK("charbuf_shared") { return fb.charbuf_shared(); };
+    BENCHMARK("current_impl") { return fb.current_impl(); };
+
 }

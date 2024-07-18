@@ -3,7 +3,7 @@
         "ansipp"
     ],
     "cmake.debugConfig": {
-        "args": ["format"]
+        "args": ["format: cursor position"]
     },
     "files.associations": {
         "*.cppm": "cpp",
