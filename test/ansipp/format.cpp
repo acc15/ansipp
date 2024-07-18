@@ -5,6 +5,7 @@
 #include <bit>
 #include <new>
 #include <cstdlib>
+#include <limits>
 
 using namespace ansipp;
 
@@ -12,6 +13,43 @@ std::size_t uint_len(unsigned int value) {
     return value < 100000 
         ? value < 1000       ? value < 10      ? 1 : value < 100      ? 2 : 3 : value < 10000       ? 4 : 5
         : value < 100000000  ? value < 1000000 ? 6 : value < 10000000 ? 7 : 8 : value < 1000000000  ? 9 : 10;
+}
+
+template <typename T>
+struct base_info {
+    T value;
+    T pow;
+    
+    bool operator==(const base_info& o) const { return value == o.value && pow == o.pow; }
+
+    static base_info get(T base) {
+        base_info r = { base, 1 };
+        for (T next = r.value * base; next / base == r.value; next *= base) { 
+            r.value = next;
+            ++r.pow;
+        }
+        return r;
+    }
+};
+
+template <typename T>
+std::size_t unsigned_len(T value, T base) {
+    if (value < base) return 1;
+    const auto bi = base_info<T>::get(base);
+    if (value >= bi.value) return bi.pow + 1;
+    T mid = bi.pow / 2;
+    return value < 100000 
+        ? value < 1000       ? value < 10      ? 1 : value < 100      ? 2 : 3 : value < 10000       ? 4 : 5
+        : value < 100000000  ? value < 1000000 ? 6 : value < 10000000 ? 7 : 8 : value < 1000000000  ? 9 : 10;
+}
+
+TEST_CASE("format: max_unsigned_base_value", "[format]") {
+    REQUIRE( base_info<unsigned int>::get(10) == base_info<unsigned int> { 1000000000, 9 } );
+    REQUIRE( base_info<unsigned short>::get(10) == base_info<unsigned short> { 10000, 4 });
+    REQUIRE( base_info<unsigned char>::get(10) == base_info<unsigned char> { 100, 2 });
+    REQUIRE( base_info<unsigned char>::get(2) == base_info<unsigned char> { 128, 7 });
+    //REQUIRE( base_info<unsigned char>::get(16) == base_info<unsigned char> { 16, 2 });
+    // REQUIRE( base_info<unsigned long>::get(10) == base_info<unsigned long> { 10000000000000000000UL );
 }
 
 char to_digit(unsigned int v, bool upper) { return v < 10 ? '0' + v : (upper ? 'A' : 'a') + v; }
@@ -66,13 +104,27 @@ public:
     charbuf& put(char ch) { return put(&ch, 1); }
 };
 
+
+void uint_puts_forward(charbuf& buf, unsigned int v, bool upper) {
+    unsigned int div = 1000000000;
+    for (; div != 1 && v / div == 0; div /= 10);
+    for (; div != 0; div /= 10) { 
+        buf.put(to_digit(v/div, upper)); 
+        v %= div; 
+    }
+}
+
+void uint_puts_backward(charbuf& buf, unsigned int v, bool upper) {
+    if (v < 10) { buf.put('0' + v); return; }
+    std::size_t len = uint_len(v);
+    char* data = buf.reserve(len);
+    uint_puts(data, len, v, 10, upper);
+}
+
 charbuf& operator<<(charbuf& buf, std::string_view sv) { return buf.put(sv); }
 charbuf& operator<<(charbuf& buf, char c) { return buf.put(c); }
 charbuf& operator<<(charbuf& buf, unsigned int v) {
-    if (v < 10) { return buf.put('0' + v); }
-    std::size_t len = uint_len(v);
-    char* data = buf.reserve(len);
-    uint_puts(data, len, v, 10, false);
+    uint_puts_backward(buf, v, true);
     return buf;
 }
 
@@ -89,13 +141,33 @@ TEST_CASE("format: uint_len", "[format]") {
     REQUIRE( uint_len(1111111111) == 10 );
 }
 
-TEST_CASE("format: uint_puts", "[format]") {
-    char buf[10];
-    uint_puts(buf, uint_len(1553), 1553, 10, false);
-    REQUIRE( buf[0] == '1' );
-    REQUIRE( buf[1] == '5' );
-    REQUIRE( buf[2] == '5' );
-    REQUIRE( buf[3] == '3' );
+TEST_CASE("uint_puts: backward", "[uint_puts]") {
+    charbuf cb(16);
+    uint_puts_backward(cb, 1553, false);
+    REQUIRE( cb.view() == "1553" );
+}
+
+TEST_CASE("uint_puts: forward", "[uint_puts]") {
+    charbuf cb(16);
+    uint_puts_forward(cb, 1553, false);
+    REQUIRE( cb.view() == "1553" );
+}
+
+TEST_CASE("uint_puts: benchmark", "[uint_puts][!benchmark]") {
+    charbuf cb(16);
+    
+    BENCHMARK("backward") {
+        cb.clear();
+        uint_puts_backward(cb, 1553, false);
+        return cb.view();
+    };
+
+    BENCHMARK("forward") {
+        cb.clear();
+        uint_puts_forward(cb, 1553, false);
+        return cb.view();
+    };
+
 }
 
 struct format_benchmark {
@@ -155,7 +227,7 @@ struct format_benchmark {
     std::string current_impl() {
         return move_abs(x, y);
     }
-    
+
 };
 
 

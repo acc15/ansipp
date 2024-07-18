@@ -8,6 +8,7 @@ rm -rf "$BINARY_DIR"
 mkdir -p "$BINARY_DIR"
 cmake -S . -B "$BINARY_DIR" -G "$GENERATOR" \
     --toolchain "$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+    -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_TESTING=ON \
     -DBUILD_DEMOS=ON 
 cmake --build "$BINARY_DIR"

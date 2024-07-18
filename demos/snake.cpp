@@ -1,13 +1,10 @@
 #include <iostream>
 #include <thread>
-#include <atomic>
 #include <algorithm>
 #include <vector>
 #include <deque>
-#include <csignal>
-#include <cstdlib>
-#include <sstream>
 #include <chrono>
+#include <format>
 
 #include <ansipp.hpp>
 #include <unordered_map>
@@ -226,37 +223,43 @@ public:
         process_apples();
     }
 
-    void draw_border(std::ostream& o) const {
-        o   << attrs().bg(WHITE).fg(BLACK)
-            << make_border_str(border_size.x, "press q to exit, <arrows> to move, <space> to pause/unpause") 
-            << attrs() << '\n';
+    void draw_border(std::string& out) const {
+        out += attrs().bg(WHITE).fg(BLACK);
+        out += make_border_str(border_size.x, "press q to exit, <arrows> to move, <space> to pause/unpause");
+        out += attrs();
+        out += '\n';
 
         for (int y = 0; y < grid_size.y; y++) {
-            o   << attrs().bg(WHITE) << " " << attrs() 
-                << move(CURSOR_TO_COLUMN, border_size.x) 
-                << attrs().bg(WHITE) << " " << attrs() 
-                << '\n';
+            out += attrs().bg(WHITE);
+            out += ' ';
+            out += attrs();
+            out += move(CURSOR_TO_COLUMN, border_size.x);
+            out += attrs().bg(WHITE);
+            out += ' ';
+            out += attrs();
+            out += '\n';
         }
 
-        o   << attrs().bg(WHITE).fg(BLACK) 
-            << make_border_str(border_size.x, (std::stringstream() 
-                << "frame = " << std::chrono::duration_cast<std::chrono::nanoseconds>(last_frame_duration).count() << "ns"
-                << " head = " << head
-                << " tail = " << tail
-                << " game_over = " << game_over 
-                << " apples = " << apples.size()
-                << " length = " << length
-            ).view())
-            << attrs() << '\n';
+        out += attrs().bg(WHITE).fg(BLACK);
+        out += make_border_str(border_size.x, std::format(
+                "frame = {} head = {},{} tail = {},{} game_over = {} apples = {} length = {}", 
+                std::chrono::duration_cast<std::chrono::nanoseconds>(last_frame_duration).count(),
+                head.x, head.y,
+                tail.x, tail.y,
+                game_over,
+                apples.size(), 
+                length));
+        out += attrs();
+        out += '\n';
 
-        o   << move(CURSOR_UP, grid_size.y + 1)
-            << move(CURSOR_TO_COLUMN, 2);
+        out += move(CURSOR_UP, grid_size.y + 1);
+        out += move(CURSOR_TO_COLUMN, 2);
     }
 
-    void draw_snake(std::ostream& o) const {
-        o   << store_cursor() 
-            << move_rel(tail)
-            << attrs().fg(color::GREEN);
+    void draw_snake(std::string& out) const {
+        out += store_cursor();
+        out += move_rel(tail);
+        out += attrs().fg(color::GREEN);
 
         vec cur = tail;
         const cell* cell = &grid_cell(cur);
@@ -264,65 +267,70 @@ public:
         while (cur != head) {
             direction next_dir = cell->dir;
             vec v = dir_to_vec(next_dir);
-            o   << get_snake_symbol(prev_dir, next_dir, false) 
-                << move_rel(v.x - 1, v.y);
+            out += get_snake_symbol(prev_dir, next_dir, false);
+            out += move_rel(v.x - 1, v.y);
             cur += v;
             cell = &grid_cell(cur);
             prev_dir = next_dir;
         }
-        o << get_snake_symbol(prev_dir, cell->dir, true) << attrs() << restore_cursor();
+        out += get_snake_symbol(prev_dir, cell->dir, true);
+        out += attrs();
+        out += restore_cursor();
     }
 
-    void draw_apples(std::ostream& o) const {
-        o << attrs().fg(color::RED);
+    void draw_apples(std::string& o) const {
+        o += attrs().fg(color::RED);
         for (const apple& apple: apples) {
-            o   << store_cursor() 
-                << move_rel(apple.pos)
-                << (apple.type == apple_type::SMALL ? "•" : "●")
-                << restore_cursor();
+            o += store_cursor();
+            o += move_rel(apple.pos);
+            o += (apple.type == apple_type::SMALL ? "•" : "●");
+            o += restore_cursor();
         }
-        o << attrs();
+        o += attrs();
     }
 
-    void draw_center_text(std::ostream& o, std::string_view str) {
-        o   << store_cursor() 
-            << move_rel(
-                align(CENTER, grid_size.x, static_cast<int>(str.size())), 
-                align(CENTER, grid_size.y, 1)
-            )
-            << attrs().bg(WHITE).fg(BLACK) << str << attrs() << restore_cursor();
+    void draw_center_text(std::string& out, std::string_view str) {
+        out += store_cursor();
+        out += move_rel(align(CENTER, grid_size.x, static_cast<int>(str.size())), align(CENTER, grid_size.y, 1));
+        out += attrs().bg(WHITE).fg(BLACK);
+        out += str;
+        out += attrs().str() + restore_cursor();
     }
 
-    void draw(std::ostream& o) {
-        o << move(CURSOR_TO_COLUMN, 0) << move(CURSOR_UP, draw_rows) << erase(SCREEN, TO_END);
+    void draw(std::string& out) {
+        out += move(CURSOR_TO_COLUMN, 0);
+        out += move(CURSOR_UP, draw_rows);
+        out += erase(SCREEN, TO_END);
         
         if (undersize) {
-            o   << "not enough room to render game, current size " << terminal_size
-                << " required " << min_terminal_size << '\n' << std::flush;
+            out += std::format("not enough room to render game, current size {}x{} required {}x{}\n", terminal_size.x, terminal_size.y, min_terminal_size.x, min_terminal_size.y);
             draw_rows = 1;
             return;
         }
 
-        draw_border(o);
-        draw_snake(o);
-        draw_apples(o);
+        draw_border(out);
+        draw_snake(out);
+        draw_apples(out);
         
         if (game_over) {
-            draw_center_text(o, "GAME IS OVER");
+            draw_center_text(out, "GAME IS OVER");
         } else if (paused) {
-            draw_center_text(o, "PAUSE");
+            draw_center_text(out, "PAUSE");
         }
-
-        o << move(CURSOR_DOWN, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 0)  << std::flush;
+        out += move(CURSOR_DOWN, grid_size.y + 1);
+        out += move(CURSOR_TO_COLUMN, 0);
         draw_rows = border_size.y;
     }
 
-    void loop(std::ostream& out) {
+    void loop(std::string& out) {
         while (true) {
             hr_clock::time_point t1 = hr_clock::now();
             if (!input()) break;
             process();
             draw(out);
+            terminal_write(out);
+            out.clear();
+
             initializing = false;
             last_frame_duration = hr_clock::now() - t1;
             if (game_over) break;
@@ -340,7 +348,7 @@ int main() {
 
     snake_game g;
 
-    terminal_stream out;
+    std::string out;
     g.loop(out);
     return 0;
 }
