@@ -38,6 +38,7 @@ testing(TARGETS ansipp SOURCES
     ${TEST}/ansipp/attrs.cpp
     ${TEST}/ansipp/cursor.cpp
     ${TEST}/ansipp/vec.cpp
+    ${TEST}/ansipp/format.cpp
 )
 
 configure_install(ansipp)

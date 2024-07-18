@@ -3,8 +3,7 @@
         "ansipp"
     ],
     "cmake.debugConfig": {
-        "args": [],
-        "externalConsole": true
+        "args": ["format"]
     },
     "files.associations": {
         "*.cppm": "cpp",
