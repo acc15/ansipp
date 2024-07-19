@@ -8,13 +8,15 @@ using namespace ansipp;
 
 struct format_benchmark {
 
-    const unsigned int x = 5;
-    const unsigned int y = 10;
-    const std::string expected_esc = "\33" "[10;5H";
+    static constexpr unsigned int x = 5;
+    static constexpr unsigned int y = 10;
+    static constexpr char expected_esc[] = "\33" "[10;5H";
+    static constexpr std::size_t min_buf_size = std::size(expected_esc);
 
-    char snprintf_buf[20];
-    std::string shared_str = std::string(20, 0);
-    charbuf shared_cb = charbuf(20);
+    char snprintf_buf[min_buf_size];
+    char to_chars_buf[min_buf_size];
+    std::string shared_str = std::string(min_buf_size, 0);
+    charbuf shared_cb = charbuf(min_buf_size);
     std::stringstream shared_ss;
 
     std::string std_format() { 
@@ -61,13 +63,24 @@ struct format_benchmark {
         return shared_cb.str();
     }
 
+    std::string std_to_chars() {
+        char* ptr = to_chars_buf;
+        ptr += csi.copy(ptr, csi.size());
+        ptr = std::to_chars(ptr, std::end(to_chars_buf), y).ptr;
+        *ptr++ = ';';
+        ptr = std::to_chars(ptr, std::end(to_chars_buf), x).ptr;
+        *ptr++ = 'H';
+        return std::string(to_chars_buf, ptr);
+    }
+
     std::string current_impl() {
         return esc_str( move_abs(x, y) );
     }
 
 };
 
-
+// Main benchmark for escape codes format decisions
+// it compares different formatting methods
 TEST_CASE("format: benchmark", "[format][!benchmark]") {
     
     format_benchmark fb;
@@ -78,8 +91,9 @@ TEST_CASE("format: benchmark", "[format][!benchmark]") {
     REQUIRE( fb.std_stringstream() == fb.expected_esc );
     REQUIRE( fb.std_stringstream_shared() == fb.expected_esc );
     REQUIRE( fb.snprintf_shared() == fb.expected_esc );
+    REQUIRE( fb.std_to_chars() == fb.expected_esc );
     REQUIRE( fb.charbuf_alloc() == fb.expected_esc );
-    REQUIRE( fb.charbuf_shared () == fb.expected_esc );
+    REQUIRE( fb.charbuf_shared() == fb.expected_esc );
     REQUIRE( fb.current_impl() == fb.expected_esc ); 
 
     BENCHMARK("std_format") { return fb.std_format(); }; 
@@ -88,6 +102,7 @@ TEST_CASE("format: benchmark", "[format][!benchmark]") {
     BENCHMARK("std_stringstream") { return fb.std_stringstream(); };
     BENCHMARK("std_stringstream_shared") { return fb.std_stringstream_shared(); };
     BENCHMARK("snprintf_shared") { return fb.snprintf_shared(); };
+    BENCHMARK("std_to_chars") { return fb.std_to_chars(); };
     BENCHMARK("charbuf") { return fb.charbuf_alloc(); };
     BENCHMARK("charbuf_shared") { return fb.charbuf_shared(); };
     BENCHMARK("current_impl") { return fb.current_impl(); };

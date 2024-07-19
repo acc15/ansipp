@@ -18,8 +18,9 @@ target_sources(ansipp PRIVATE
 )
 
 target_sources(ansipp PUBLIC FILE_SET HEADERS BASE_DIRS ${INC} FILES
+    ${INC}/ansipp/integral.hpp
     ${INC}/ansipp/charbuf.hpp
-    ${INC}/ansipp/esc.hpp    
+    ${INC}/ansipp/esc.hpp 
     ${INC}/ansipp/vec.hpp
     ${INC}/ansipp/error.hpp
     ${INC}/ansipp/io.hpp

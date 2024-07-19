@@ -5,6 +5,19 @@
 
 using namespace ansipp;
 
+TEST_CASE("empty to string", "[charbuf]") {
+    charbuf cb;
+    REQUIRE( cb.str() == "" );
+    REQUIRE( cb.view() == "" );
+}
+
+TEST_CASE("string", "[charbuf]") {
+    charbuf cb;
+    std::string str = "123";
+    cb << str;
+    REQUIRE( cb.view() == "123" );
+}
+
 TEST_CASE("integral", "[charbuf]") {
     charbuf cb;
     unsigned int uint_max = std::numeric_limits<unsigned int>::max();
