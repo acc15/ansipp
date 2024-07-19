@@ -13,7 +13,7 @@ namespace ansipp {
 
 class charbuf {
     
-    static constexpr std::size_t min_alloc_sz = 16;
+    static constexpr std::size_t min_alloc_sz = 32;
 
     char* b;
     char* e;
