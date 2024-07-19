@@ -86,7 +86,7 @@ struct rgb {
  */
 class attrs {
 
-    attrs& a(unsigned char param) { params.push_back(param); return *this; }
+    attrs& a(unsigned int param) { params.push_back(static_cast<unsigned char>(param)); return *this; }
     unsigned char cb(bool bg, unsigned char base = 38) { return base + (bg ? 10 : 0); }
 
 public:

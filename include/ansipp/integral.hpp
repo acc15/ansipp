@@ -5,7 +5,7 @@
 
 namespace ansipp {
 
-inline char to_digit(unsigned int v, bool upper) { return (v < 10 ? '0' : upper ? 'A' : 'a') + v; }
+inline char to_digit(unsigned int v, bool upper) { return static_cast<char>((v < 10 ? '0' : upper ? 'A' : 'a') + v); }
 
 template <std::unsigned_integral T>
 void unsigned_integral_chars(char* buf, unsigned int digits, T v, unsigned int base, bool upper) {
