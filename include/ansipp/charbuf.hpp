@@ -12,60 +12,66 @@
 namespace ansipp {
 
 class charbuf {
-    std::size_t sz;
-    std::size_t off;
+    
+    static constexpr std::size_t min_alloc_sz = 16;
+
+    char* begin;
+    char* end;
     char* ptr;
 
     void resize(std::size_t new_sz) {
-        new_sz = std::bit_ceil(new_sz);
-        void* new_ptr = std::realloc(ptr, new_sz);
-        if (new_ptr == nullptr) [[unlikely]] throw std::bad_alloc();
-        ptr = static_cast<char*>(new_ptr);
-        sz = new_sz;
+        new_sz = new_sz < min_alloc_sz ? min_alloc_sz : std::bit_ceil(new_sz);
+        char* new_begin = static_cast<char*>(std::realloc(begin, new_sz));
+        if (new_begin == nullptr) [[unlikely]] throw std::bad_alloc();
+        ptr = new_begin + (ptr - begin);
+        begin = new_begin;
+        end = begin + new_sz;
     }
 
 public:
-    charbuf(): sz(0), off(0), ptr(nullptr) {}
+    charbuf(): begin(nullptr), end(nullptr), ptr(nullptr) {}
 
-    charbuf(std::size_t initial_size): 
-        sz(std::bit_ceil(initial_size)), off(0), ptr(static_cast<char*>(std::malloc(sz))) 
-    { if (ptr == nullptr) throw std::bad_alloc(); }
+    charbuf(std::size_t initial_size) {
+        std::size_t sz = initial_size < min_alloc_sz ? min_alloc_sz : std::bit_ceil(initial_size);
+        begin = static_cast<char*>(std::malloc(sz));
+        if (begin == nullptr) throw std::bad_alloc();
+        end = begin + sz;
+        ptr = begin;
+    }
 
-    charbuf(charbuf&& mv): sz(mv.sz), off(mv.off), ptr(mv.ptr) { mv.sz = 0; mv.off = 0; mv.ptr = nullptr; }
-    ~charbuf() { std::free(ptr); }
+    charbuf(charbuf&& mv): begin(mv.begin), end(mv.end), ptr(mv.ptr) { mv.begin = mv.end = mv.ptr = nullptr; }
+    ~charbuf() { std::free(begin); }
 
     char* reserve(std::size_t size) {
-        std::size_t new_off = off + size;
-        if (new_off > sz) [[unlikely]] resize(new_off);
-        char* buf = ptr + off;
-        off = new_off;
+        if (char* new_ptr = ptr + size; new_ptr > end) [[unlikely]] resize(new_ptr - begin);
+        char* buf = ptr;
+        ptr += size;
         return buf;
     }
 
     charbuf& operator=(charbuf&& mv) {
         std::free(ptr);
-        sz = mv.sz; off = mv.off; ptr = mv.ptr;
-        mv.sz = 0; mv.off = 0; mv.ptr = nullptr;
+        begin = mv.begin; end = mv.end; ptr = mv.ptr;
+        mv.begin = mv.end = mv.ptr = nullptr;
         return *this;
     }
 
-    charbuf& clear() { off = 0; return *this; }
+    charbuf& clear() { ptr = begin; return *this; }
     char* data() { return ptr; }
     const char* data() const { return ptr; }
-    std::size_t capacity() const { return sz; }
-    std::size_t offset() const { return off; }
-    std::string_view view() const { return std::string_view(ptr, off); }
-    std::string str() const  { return std::string(ptr, off); }
+    std::size_t capacity() const { return end - begin; }
+    std::size_t offset() const { return ptr - begin; }
+    std::string_view view() const { return std::string_view(begin, ptr); }
+    std::string str() const  { return std::string(begin, ptr); }
     
-    charbuf& put(const void* data, std::size_t size) { 
+    charbuf& put(const void* data, std::size_t size) {
         std::memcpy(reserve(size), data, size); 
-        return *this;    
+        return *this;
     }
 
-    charbuf& put(char ch) { 
-        if (off + 1 > sz) [[unlikely]] resize(off + 1);
-        *(ptr + off) = ch;
-        ++off;
+    charbuf& put(char ch) {
+        if (ptr + 1 > end) [[unlikely]] resize(ptr - begin + 1);
+        *ptr++ = ch;
         return *this;
     }
 

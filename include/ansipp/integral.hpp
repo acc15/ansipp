@@ -22,7 +22,7 @@ unsigned int unsigned_digit_count(T value, unsigned int base) {
 template <std::integral T>
 std::make_unsigned_t<T> unsigned_abs(T v) {
     if constexpr (std::is_signed_v<T>) {
-        const auto uv = static_cast<std::make_unsigned_t<T>>(v);
+        const auto uv = std::make_unsigned_t<T>(v);
         return v < 0 ? -uv : uv;
     } else {
         return v;

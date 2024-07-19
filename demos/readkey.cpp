@@ -43,20 +43,19 @@ Ps = 1 0 1 5  -> Enable urxvt Mouse Mode.
 
 struct mode_switch {
     const std::string name;
-    const std::string esc_prefix;
+    const decset_mode& decset;
     const bool initial_value = false;
     bool value = initial_value;
 };
 
 mode_switch modes[] {
-    mode_switch { .name = "X&Y",            .esc_prefix = mouse_click.esc_prefix() },
-    mode_switch { .name = "Cell",           .esc_prefix = mouse_cell.esc_prefix() },
-    mode_switch { .name = "All",            .esc_prefix = mouse_all.esc_prefix() },
-    mode_switch { .name = "Focus",          .esc_prefix = focus_reporting.esc_prefix() },
-    mode_switch { .name = "UTF-8",          .esc_prefix = mouse_utf8.esc_prefix() },
-    mode_switch { .name = "SGR",            .esc_prefix = mouse_sgr.esc_prefix() },
-    mode_switch { .name = "urxvt",          .esc_prefix = decset + "1015" },
-    mode_switch { .name = "Show Cursor",    .esc_prefix = cursor_visibility.esc_prefix(), .initial_value = true },
+    mode_switch { .name = "X&Y",            .decset = mouse_click },
+    mode_switch { .name = "Cell",           .decset = mouse_cell },
+    mode_switch { .name = "All",            .decset = mouse_all },
+    mode_switch { .name = "Focus",          .decset = focus_reporting },
+    mode_switch { .name = "UTF-8",          .decset = mouse_utf8 },
+    mode_switch { .name = "SGR",            .decset = mouse_sgr },
+    mode_switch { .name = "Show Cursor",    .decset = cursor_visibility, .initial_value = true },
 };
 
 void mode_line(std::ostream& out) {
@@ -82,7 +81,7 @@ void parse_input(std::ostream& out, std::string_view str) {
         if (next_esc && ch >= 'a' && ch <= 'a' + static_cast<char>(std::size(modes) - 1)) {
             mode_switch& mode = modes[ch - 'a'];
             mode.value = !mode.value;
-            out << mode.esc_prefix << (mode.value ? 'h' : 'l');
+            out << (mode.value ? mode.decset.on() : mode.decset.off());
         }
         next_esc = false;
     }
@@ -92,7 +91,7 @@ int main() {
 
     std::string additional_restore_esc;
     for (const mode_switch& m: modes) {
-        additional_restore_esc.append(m.esc_prefix).append(1, m.initial_value ? 'h' : 'l');
+        additional_restore_esc.append(esc_str( m.initial_value ? m.decset.on() : m.decset.off() ));
     }
 
     const config cfg = { .restore_esc = additional_restore_esc };

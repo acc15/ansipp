@@ -28,7 +28,6 @@ class decset_mode {
 public:
     constexpr decset_mode(unsigned int code): code(code) {}
     constexpr unsigned int get_code() const { return code; }
-    constexpr std::string esc_prefix() const { return decset + std::to_string(code); }
     constexpr decset_esc on() const { return decset_esc { code, 'h' }; }
     constexpr decset_esc off() const { return decset_esc { code, 'l' }; }
     
