@@ -55,11 +55,22 @@ public:
     std::size_t offset() const { return off; }
     std::string_view view() const { return std::string_view(ptr, off); }
     std::string str() const  { return std::string(ptr, off); }
-    void put(const void* data, std::size_t size) { std::memcpy(reserve(size), data, size); }
-    void put(char ch) { 
+    
+    charbuf& put(const void* data, std::size_t size) { 
+        std::memcpy(reserve(size), data, size); 
+        return *this;    
+    }
+
+    charbuf& put(char ch) { 
         if (off + 1 > sz) [[unlikely]] resize(off + 1);
         *(ptr + off) = ch;
         ++off;
+        return *this;
+    }
+
+    charbuf& fill(std::size_t count, char ch) { 
+        std::memset(reserve(count), ch, count);
+        return *this;
     }
 
 };

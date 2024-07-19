@@ -52,11 +52,6 @@ bool remove_prefix(std::string_view& view, std::string_view prefix) {
     return true;
 }
 
-std::string make_border_str(unsigned int width, std::string_view indicators) {
-    std::string result(width, ' ');
-    return result.replace(1, std::min(result.size(), indicators.size()), indicators);
-}
-
 class snake_game {
 public:
     static constexpr vec grid_size = { 120, 40 };
@@ -226,7 +221,11 @@ public:
 
     void draw_border(charbuf& out) const {
         out << attrs().bg(WHITE).fg(BLACK);
-        out << make_border_str(border_size.x, "press q to exit, <arrows> to move, <space> to pause/unpause");
+
+        std::size_t top_offset = out.offset();
+        out << " press q to exit, <arrows> to move, <space> to pause/unpause";
+        out.fill(border_size.x - (out.offset() - top_offset), ' ');
+        
         out << attrs();
         out << '\n';
 
@@ -243,27 +242,22 @@ public:
 
         out << attrs().bg(WHITE).fg(BLACK);
         
-        charbuf status_buf(128);
-        status_buf 
-            << "frame=" << std::chrono::duration_cast<std::chrono::nanoseconds>(last_frame_duration).count()
+        std::size_t bottom_offset = out.offset();
+        out << " frame=" << std::chrono::duration_cast<std::chrono::nanoseconds>(last_frame_duration).count()
             << " head=" << head
             << " tail=" << tail
             << " game_over=" << static_cast<unsigned int>(game_over)
             << " apples=" << apples.size()
             << " length=" << length;
+        out.fill(border_size.x - (out.offset() - bottom_offset), ' ');
         
-        out << make_border_str(border_size.x, status_buf.view());
-        out << attrs();
-        out << '\n';
+        out << attrs() << '\n';
 
-        out << move(CURSOR_UP, grid_size.y + 1);
-        out << move(CURSOR_TO_COLUMN, 2);
+        out << move(CURSOR_UP, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 2);
     }
 
     void draw_snake(charbuf& out) const {
-        out << store_cursor;
-        out << move_rel(tail);
-        out << attrs().fg(color::GREEN);
+        out << store_cursor << move_rel(tail) << attrs().fg(color::GREEN);
 
         vec cur = tail;
         const cell* cell = &grid_cell(cur);
@@ -271,42 +265,35 @@ public:
         while (cur != head) {
             direction next_dir = cell->dir;
             vec v = dir_to_vec(next_dir);
-            out << get_snake_symbol(prev_dir, next_dir, false);
-            out << move_rel(v.x - 1, v.y);
+            out << get_snake_symbol(prev_dir, next_dir, false) 
+                << move_rel(v.x - 1, v.y);
             cur += v;
             cell = &grid_cell(cur);
             prev_dir = next_dir;
         }
-        out << get_snake_symbol(prev_dir, cell->dir, true);
-        out << attrs();
-        out << restore_cursor;
+        out << get_snake_symbol(prev_dir, cell->dir, true) << attrs() << restore_cursor;
     }
 
     void draw_apples(charbuf& out) const {
         out << attrs().fg(color::RED);
         for (const apple& apple: apples) {
-            out << store_cursor;
-            out << move_rel(apple.pos);
-            out << (apple.type == apple_type::SMALL ? "•" : "●");
-            out << restore_cursor;
+            out << store_cursor
+                << move_rel(apple.pos)
+                << (apple.type == apple_type::SMALL ? "•" : "●")
+                << restore_cursor;
         }
         out << attrs();
     }
 
     void draw_center_text(charbuf& out, std::string_view str) {
-        out << store_cursor;
-        out << move_rel(align(CENTER, grid_size.x, static_cast<int>(str.size())), align(CENTER, grid_size.y, 1));
-        out << attrs().bg(WHITE).fg(BLACK);
-        out << str;
-        out << attrs();
-        out << restore_cursor;
+        out << store_cursor
+            << move_rel(align(CENTER, grid_size.x, static_cast<int>(str.size())), align(CENTER, grid_size.y, 1))
+            << attrs().bg(WHITE).fg(BLACK) << str << attrs() 
+            << restore_cursor;
     }
 
     void draw(charbuf& out) {
-        out << move(CURSOR_TO_COLUMN, 0);
-        out << move(CURSOR_UP, draw_rows);
-        out << erase(SCREEN, TO_END);
-        
+        out << move(CURSOR_TO_COLUMN, 0) << move(CURSOR_UP, draw_rows) << erase(SCREEN, TO_END);
         if (undersize) {
             out << "not enough room to render game, current size " 
                 << terminal_size << " required " << min_terminal_size << '\n';
@@ -323,8 +310,7 @@ public:
         } else if (paused) {
             draw_center_text(out, "PAUSE");
         }
-        out << move(CURSOR_DOWN, grid_size.y + 1);
-        out << move(CURSOR_TO_COLUMN, 0);
+        out << move(CURSOR_DOWN, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 0);
         draw_rows = border_size.y;
     }
 
@@ -354,7 +340,7 @@ int main() {
 
     snake_game g;
 
-    charbuf out;
+    charbuf out(4096);
     g.loop(out);
     return 0;
 }
