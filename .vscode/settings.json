@@ -3,7 +3,7 @@
         "ansipp"
     ],
     "cmake.debugConfig": {
-        "args": ["[charbuf]"]
+        "args": []
     },
     "files.associations": {
         "*.cppm": "cpp",
