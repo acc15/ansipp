@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ansipp/charbuf.hpp>
+
 namespace ansipp {
 
 struct config {
@@ -60,13 +62,13 @@ struct config {
      * @brief additional custom init string, useful to initialize some additional modes using raw escape sequences
      * @details note that after init(std::error_code, config) call any modifications to this string will be ignored
      */
-    std::string init_esc = {};
+    charbuf init_esc;
 
     /**
      * @brief additional custom restore string, useful to restore some additional modes using raw escape sequences
      * @details note that after init(std::error_code, config) call any modifications to this string will be ignored
      */
-    std::string restore_esc = {};
+    charbuf restore_esc;
 
 };
 

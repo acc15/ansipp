@@ -59,7 +59,7 @@ struct format_benchmark {
     }
 
     std::string charbuf_shared() {
-        shared_cb.clear() << csi << y << ';' << x << 'H';
+        shared_cb.reset() << csi << y << ';' << x << 'H';
         return shared_cb.str();
     }
 

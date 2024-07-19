@@ -21,12 +21,12 @@ TEST_CASE("string", "[charbuf]") {
 TEST_CASE("integral", "[charbuf]") {
     charbuf cb;
     unsigned int uint_max = std::numeric_limits<unsigned int>::max();
-    REQUIRE( (cb.clear() << -123).view() == "-123" );
-    REQUIRE( (cb.clear() << uint_max).view() == std::to_string(uint_max) );
+    REQUIRE( (cb.reset() << -123).view() == "-123" );
+    REQUIRE( (cb.reset() << uint_max).view() == std::to_string(uint_max) );
 }
 
 TEST_CASE("bool", "[charbuf]") {
     charbuf cb;
-    REQUIRE( (cb.clear() << false).view() == "0" );
-    REQUIRE( (cb.clear() << true).view() == "1" );
+    REQUIRE( (cb.reset() << false).view() == "0" );
+    REQUIRE( (cb.reset() << true).view() == "1" );
 }

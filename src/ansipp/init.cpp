@@ -116,7 +116,8 @@ void atexit_restore(std::error_code& ec) {
 }
 
 void configure_escapes(const config& cfg, std::error_code& ec) {
-    charbuf init_esc(32), restore_esc(32);
+    charbuf init_esc(32 + cfg.init_esc.size());
+    charbuf restore_esc(32 + cfg.restore_esc.size());
     if (cfg.reset_attrs_on_restore) {
         restore_esc << attrs();
     }
@@ -132,10 +133,10 @@ void configure_escapes(const config& cfg, std::error_code& ec) {
         init_esc    << mouse_all.on();
         restore_esc << mouse_all.off();
     }
-    init_esc << cfg.init_esc;
+    init_esc << cfg.init_esc.view();
     if (terminal_write(init_esc.view()) < 0) { ec = last_error(); return; }
 
-    restore_esc << cfg.restore_esc;
+    restore_esc << cfg.restore_esc.view();
     if (!__ansipp_restore.escapes.store(std::move(restore_esc))) { ec = ansipp_error::already_initialized; return; }
 }
 

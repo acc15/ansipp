@@ -89,12 +89,10 @@ void parse_input(std::ostream& out, std::string_view str) {
 
 int main() {
 
-    std::string additional_restore_esc;
+    config cfg = {};
     for (const mode_switch& m: modes) {
-        additional_restore_esc.append(esc_str( m.initial_value ? m.decset.on() : m.decset.off() ));
+        cfg.restore_esc << (m.initial_value ? m.decset.on() : m.decset.off());
     }
-
-    const config cfg = { .restore_esc = additional_restore_esc };
 
     if (std::error_code ec; init(ec, cfg), ec) {
         std::cerr << "can't init: " << ec.message() << std::endl;

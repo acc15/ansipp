@@ -78,7 +78,11 @@ public:
     unsigned int draw_rows = 0;
 
     using hr_clock = std::chrono::high_resolution_clock;
-    hr_clock::duration last_frame_duration;
+    /*std::size_t input_ns;
+    std::size_t process_ns;
+    std::size_t draw_ns;
+    std::size_t print_ns;*/
+    std::size_t frame_ns;
     
     char input_buffer[512];
     std::deque<direction> input_queue;
@@ -150,9 +154,7 @@ public:
     void queue_dir(direction input_dir) {
         if (paused) return;
         direction last_dir = input_queue.empty() ? dir : input_queue.back();
-        if (input_dir != last_dir) {
-            input_queue.push_back(input_dir);
-        }
+        if (input_dir != last_dir) input_queue.push_back(input_dir);
     }
 
     bool input() {
@@ -230,20 +232,20 @@ public:
         out << '\n';
 
         for (int y = 0; y < grid_size.y; y++) {
-            out << attrs().bg(WHITE);
-            out << ' ';
-            out << attrs();
-            out << move(CURSOR_TO_COLUMN, border_size.x);
-            out << attrs().bg(WHITE);
-            out << ' ';
-            out << attrs();
-            out << '\n';
+            out << attrs().bg(WHITE) << ' ' << attrs() 
+                << move(CURSOR_TO_COLUMN, border_size.x) 
+                << attrs().bg(WHITE) << ' ' << attrs() 
+                << '\n';
         }
 
         out << attrs().bg(WHITE).fg(BLACK);
         
         std::size_t bottom_offset = out.offset();
-        out << " frame=" << std::chrono::duration_cast<std::chrono::nanoseconds>(last_frame_duration).count()
+        out /*<< " input=" << input_ns
+            << " process=" << process_ns
+            << " draw=" << draw_ns
+            << " print=" << print_ns*/
+            << " frame=" << frame_ns
             << " head=" << head
             << " tail=" << tail
             << " game_over=" << static_cast<unsigned int>(game_over)
@@ -251,9 +253,7 @@ public:
             << " length=" << length;
         out.fill(border_size.x - (out.offset() - bottom_offset), ' ');
         
-        out << attrs() << '\n';
-
-        out << move(CURSOR_UP, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 2);
+        out << attrs() << '\n' << move(CURSOR_UP, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 2);
     }
 
     void draw_snake(charbuf& out) const {
@@ -314,17 +314,28 @@ public:
         draw_rows = border_size.y;
     }
 
-    void loop(charbuf& out) {
+    void loop() {
+        charbuf out(4096);
         while (true) {
             hr_clock::time_point t1 = hr_clock::now();
             if (!input()) break;
+            // hr_clock::time_point t2 = hr_clock::now();
             process();
+            // hr_clock::time_point t3 = hr_clock::now();
             draw(out);
+            // hr_clock::time_point t4 = hr_clock::now();
             terminal_write(out.view());
-            out.clear();
+            out.reset();
+            hr_clock::time_point t5 = hr_clock::now();
+
+            // input_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
+            // process_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t3 - t2).count();
+            // draw_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t4 - t3).count();
+            // print_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t5 - t4).count();
+            frame_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t5 - t1).count();
 
             initializing = false;
-            last_frame_duration = hr_clock::now() - t1;
+            
             if (game_over) break;
             std::this_thread::sleep_for(std::chrono::milliseconds(80));
         }
@@ -337,10 +348,6 @@ int main() {
         std::cerr << "can't init: " << ec.message() << std::endl;
         return EXIT_FAILURE;
     }
-
-    snake_game g;
-
-    charbuf out(4096);
-    g.loop(out);
+    snake_game().loop();
     return 0;
 }
