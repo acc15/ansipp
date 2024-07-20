@@ -60,4 +60,11 @@ if(BUILD_DEMOS)
     add_demo(nonblock)
     add_demo(dead_pixels)
 
+    #set(CURSES_NEED_WIDE TRUE)
+    set(CURSES_NEED_NCURSES TRUE)
+    find_package(Curses REQUIRED)
+    add_executable(ansipp_demo_snake_ncurses demos/snake_ncurses.cpp)
+    target_include_directories(ansipp_demo_snake_ncurses PRIVATE ${CURSES_INCLUDE_DIRS})
+    target_link_libraries(ansipp_demo_snake_ncurses ${CURSES_LIBRARIES})
+
 endif()
