@@ -272,7 +272,7 @@ public:
             draw_rows = border_size.y;
         }
         terminal_write(out.view());
-        out.clear();
+        out.reset();
     }
 
     void loop() {
