@@ -5,6 +5,7 @@
 #include <deque>
 #include <chrono>
 #include <format>
+#include <bit>
 
 #include <ansipp.hpp>
 #include <unordered_map>
@@ -12,9 +13,7 @@
 
 using namespace ansipp;
 
-enum class object_type: unsigned char { EMPTY, APPLE, SNAKE };
 enum class direction: unsigned char { UP, DOWN, LEFT, RIGHT };
-
 vec dir_to_vec(direction d) {
     using enum direction;
     switch (d) {
@@ -26,25 +25,18 @@ vec dir_to_vec(direction d) {
     }
 }
 
-struct cell {
-    object_type type : 2;
-    direction dir : 2;
+template <>
+struct std::hash<vec> {
+    std::size_t operator()(const vec& v) const {
+        return std::hash<int>{}(v.x) ^ std::rotl(std::hash<int>{}(v.y), CHAR_BIT*sizeof(std::size_t)/2);
+    }
 };
 
 enum class apple_type { SMALL, BIG };
 struct apple {
-    vec pos;
     unsigned int ttl; // in frame count
     apple_type type;
 };
-
-template <typename Collection, typename Predicate>
-void erase_if(Collection& coll, Predicate pred) {
-    auto it = coll.begin();
-    while (it != coll.end()) {
-        if (pred(*it)) it = coll.erase(it); else ++it;
-    }
-}
 
 bool remove_prefix(std::string_view& view, std::string_view prefix) {
     if (!view.starts_with(prefix)) return false;
@@ -59,7 +51,11 @@ public:
     static constexpr vec min_terminal_size = { border_size.x, border_size.y + 1}; // + 1 for blank line with cursor
     static constexpr unsigned int initial_snake_length = 5; 
 
-    cell grid[grid_size.y][grid_size.x] = {};
+    using snake_map = std::unordered_map<vec, direction>;
+    using apple_map = std::unordered_map<vec, apple>;
+
+    snake_map snake;
+    apple_map apples;
 
     bool initializing = true;
     bool game_over = false;
@@ -74,7 +70,6 @@ public:
     unsigned int length = initial_snake_length;
     unsigned int frames_till_apple = 0;
     unsigned int grow_frames = 0;
-    std::vector<apple> apples;
     unsigned int draw_rows = 0;
 
     using hr_clock = std::chrono::high_resolution_clock;
@@ -85,19 +80,12 @@ public:
 
     snake_game() {
         for (unsigned int i = 0; i < initial_snake_length; i++) {
-            grid[0][i] = cell { object_type::SNAKE, direction::RIGHT };
+            snake[vec(i, 0)] = direction::RIGHT;
         }
     }
 
-    const cell& grid_cell(const vec& v) const { return grid[v.y][v.x]; }
-    cell& grid_cell(const vec& v) { return grid[v.y][v.x]; }
-
-    static const char* get_snake_symbol(direction p, direction n, bool head) {
+    static const char* get_snake_symbol(direction p, direction n) {
         using enum direction;
-        if (head) {
-            return "●";
-        }
-
         if ((p == LEFT  || p == RIGHT)  && (n == LEFT   || n == RIGHT)) return "━";
         if ((p == UP    || p == DOWN)   && (n == UP     || n == DOWN))  return "┃";
         if ((p == RIGHT && n == UP)     || (p == DOWN   && n == LEFT))  return "┛";
@@ -106,45 +94,25 @@ public:
         return "┏";
     }
 
+    vec rnd_vec() const { 
+        return vec { std::rand() % grid_size.x, std::rand() % grid_size.y }; 
+    }
+
     void process_apples() {
-
-        erase_if(apples, [this](apple& a) {
-            if (--a.ttl > 0) return false;
-            grid_cell(a.pos).type = object_type::EMPTY;
-            return true;
-        });
-
+        std::erase_if(apples, [](apple_map::value_type& a) { return --a.second.ttl == 0; });
         if (frames_till_apple > 0) {
             --frames_till_apple;
             return;
         }
 
         frames_till_apple = 10 + std::rand() % 91;
-        while (true) {
-            vec pos = { std::rand() % grid_size.x, std::rand() % grid_size.y };
-            auto& cell = grid_cell(pos);
-            if (cell.type == object_type::EMPTY) {
-                cell.type = object_type::APPLE;
-                apples.emplace_back(apple { 
-                    pos, 
-                    static_cast<unsigned int>(100 + std::rand() % 900), 
-                    static_cast<apple_type>(std::rand() % 2) 
-                });
-                break;
-            }
-        }
-        
-    }
 
-    void process_grow() {
-        if (grow_frames > 0) {
-            --grow_frames;
-            ++length;
-            return;
-        }
-        cell& otc = grid_cell(tail);
-        otc.type = object_type::EMPTY;
-        tail += dir_to_vec(otc.dir);
+        vec pos = rnd_vec();
+        for (; snake.contains(pos) || apples.contains(pos); pos = rnd_vec());
+        apples[pos] = apple { 
+            static_cast<unsigned int>(100 + std::rand() % 900), 
+            static_cast<apple_type>(std::rand() % 2) 
+        };
     }
 
     void queue_dir(direction input_dir) {
@@ -190,32 +158,31 @@ public:
         }
         
         vec next_head = head + dir_to_vec(dir);
-        if (next_head.x < 0 || next_head.x >= grid_size.x || next_head.y < 0 || next_head.y >= grid_size.y) {
+        if (next_head.x < 0 || next_head.x >= grid_size.x || 
+            next_head.y < 0 || next_head.y >= grid_size.y || 
+            snake.contains(next_head)) 
+        {
             game_over = true;
             return;
         }
 
-        cell& nhc = grid_cell(next_head);
-        if (nhc.type == object_type::SNAKE) {
-            game_over = true;
-            return;
-        }
-
-        grid_cell(head).dir = dir;
+        snake[head] = dir;
         head = next_head;
 
-        if (nhc.type == object_type::APPLE) {
-            const auto it = std::find_if(apples.begin(), apples.end(), 
-                [this](const apple& a) { return a.pos == head; });
-            if (it != apples.end()) {
-                grow_frames += it->type == apple_type::SMALL ? 1 : 5;
-                apples.erase(it);
-            }
+        if (apples.contains(head)) {
+            grow_frames += apples[head].type == apple_type::SMALL ? 1 : 5;
+            apples.erase(head);
         }
 
-        nhc = cell { object_type::SNAKE, dir };
-
-        process_grow();
+        snake[head] = dir;
+        if (grow_frames > 0) {
+            --grow_frames;
+            ++length;
+        } else {
+            direction dir = snake[tail];
+            snake.erase(tail);
+            tail += dir_to_vec(dir);
+        }
         process_apples();
     }
 
@@ -259,27 +226,23 @@ public:
     void draw_snake(charbuf& out) const {
         out << store_cursor << move_rel(tail) << attrs().fg(color::GREEN);
 
-        vec cur = tail;
-        const cell* cell = &grid_cell(cur);
-        direction prev_dir = cell->dir;
-        while (cur != head) {
-            direction next_dir = cell->dir;
+        direction prev_dir = snake.at(tail);
+        for (vec cur = tail; cur != head;) {
+            direction next_dir = snake.at(cur);
             vec v = dir_to_vec(next_dir);
-            out << get_snake_symbol(prev_dir, next_dir, false) 
-                << move_rel(v.x - 1, v.y);
+            out << get_snake_symbol(prev_dir, next_dir) << move_rel(v.x - 1, v.y);
             cur += v;
-            cell = &grid_cell(cur);
             prev_dir = next_dir;
         }
-        out << get_snake_symbol(prev_dir, cell->dir, true) << attrs() << restore_cursor;
+        out << "●" << attrs() << restore_cursor;
     }
 
     void draw_apples(charbuf& out) const {
         out << attrs().fg(color::RED);
-        for (const apple& apple: apples) {
+        for (const auto& apple: apples) {
             out << store_cursor
-                << move_rel(apple.pos)
-                << (apple.type == apple_type::SMALL ? "•" : "●")
+                << move_rel(apple.first)
+                << (apple.second.type == apple_type::SMALL ? "•" : "●")
                 << restore_cursor;
         }
         out << attrs();
@@ -298,20 +261,20 @@ public:
             out << "not enough room to render game, current size " 
                 << terminal_size << " required " << min_terminal_size << '\n';
             draw_rows = 1;
-            return;
+        } else {
+            draw_border(out);
+            draw_snake(out);
+            draw_apples(out);
+            if (game_over) {
+                draw_center_text(out, "GAME IS OVER");
+            } else if (paused) {
+                draw_center_text(out, "PAUSE");
+            }
+            out << move(CURSOR_DOWN, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 0);
+            draw_rows = border_size.y;
         }
-
-        draw_border(out);
-        draw_snake(out);
-        draw_apples(out);
-        
-        if (game_over) {
-            draw_center_text(out, "GAME IS OVER");
-        } else if (paused) {
-            draw_center_text(out, "PAUSE");
-        }
-        out << move(CURSOR_DOWN, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 0);
-        draw_rows = border_size.y;
+        terminal_write(out.view());
+        out.clear();
     }
 
     void loop(charbuf& out) {
@@ -320,9 +283,6 @@ public:
             if (!input()) break;
             process();
             draw(out);
-            terminal_write(out.view());
-            out.clear();
-
             initializing = false;
             last_frame_duration = hr_clock::now() - t1;
             if (game_over) break;
