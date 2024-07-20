@@ -11,7 +11,8 @@ void unsigned_abs_with_limits() {
     using limits = std::numeric_limits<T>;
     const T min = limits::min();
     const T max = limits::max();
-    REQUIRE( unsigned_abs<T>(min) == -static_cast<long int>(min) );
+    INFO( "unsigned_abs<" << typeid(T).name() << ">" );
+    REQUIRE( unsigned_abs<T>(min) == static_cast<unsigned long int>(-static_cast<long int>(min)) );
     REQUIRE( unsigned_abs<T>(-1) == 1 );
     REQUIRE( unsigned_abs<T>(max) == max );
 }
