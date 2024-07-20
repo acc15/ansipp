@@ -7,6 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "ansipp_test",
+            "program": "${workspaceFolder}/build/ansipp_test",
+            "args": ["format: benchmark"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "ansipp_demo_snake",
             "program": "${workspaceFolder}/build/ansipp_demo_snake",
             "args": [],
@@ -15,9 +24,8 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "ansipp_test",
-            "program": "${workspaceFolder}/build/ansipp_test",
-            "args": ["format: benchmark"],
+            "name": "ansipp_demo_snake_ncurses",
+            "program": "${workspaceFolder}/build/ansipp_demo_snake_ncurses",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
         }

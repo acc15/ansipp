@@ -8,13 +8,10 @@
 
 #include <ansipp.hpp>
 #include <unordered_map>
-#include <ansipp/charbuf.hpp>
 
 using namespace ansipp;
 
-enum class object_type: unsigned char { EMPTY, APPLE, SNAKE };
 enum class direction: unsigned char { UP, DOWN, LEFT, RIGHT };
-
 vec dir_to_vec(direction d) {
     using enum direction;
     switch (d) {
@@ -80,10 +77,11 @@ public:
     std::size_t print_ns;*/
     std::size_t frame_ns;
     
+    charbuf out;
     char input_buffer[512];
     std::deque<direction> input_queue;
 
-    snake_game() {
+    snake_game(): out(4096) {
         for (unsigned int i = 0; i < initial_snake_length; i++) {
             snake[vec(i, 0)] = direction::RIGHT;
         }
@@ -189,7 +187,7 @@ public:
         process_apples();
     }
 
-    void draw_border(charbuf& out) const {
+    void draw_border() {
         out << attrs().bg(WHITE).fg(BLACK);
 
         std::size_t top_offset = out.offset();
@@ -221,7 +219,7 @@ public:
         out << attrs() << '\n' << move(CURSOR_UP, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 2);
     }
 
-    void draw_snake(charbuf& out) const {
+    void draw_snake() {
         out << store_cursor << move_rel(tail) << attrs().fg(color::GREEN);
 
         direction prev_dir = snake.at(tail);
@@ -235,7 +233,7 @@ public:
         out << "●" << attrs() << restore_cursor;
     }
 
-    void draw_apples(charbuf& out) const {
+    void draw_apples() {
         out << attrs().fg(color::RED);
         for (const auto& apple: apples) {
             out << store_cursor
@@ -246,27 +244,27 @@ public:
         out << attrs();
     }
 
-    void draw_center_text(charbuf& out, std::string_view str) {
+    void draw_center_text(std::string_view str) {
         out << store_cursor
             << move_rel(align(CENTER, grid_size.x, static_cast<int>(str.size())), align(CENTER, grid_size.y, 1))
             << attrs().bg(WHITE).fg(BLACK) << str << attrs() 
             << restore_cursor;
     }
 
-    void draw(charbuf& out) {
+    void draw() {
         out << move(CURSOR_TO_COLUMN, 0) << move(CURSOR_UP, draw_rows) << erase(SCREEN, TO_END);
         if (undersize) {
             out << "not enough room to render game, current size " 
                 << terminal_size << " required " << min_terminal_size << '\n';
             draw_rows = 1;
         } else {
-            draw_border(out);
-            draw_snake(out);
-            draw_apples(out);
+            draw_border();
+            draw_snake();
+            draw_apples();
             if (game_over) {
-                draw_center_text(out, "GAME IS OVER");
+                draw_center_text("GAME IS OVER");
             } else if (paused) {
-                draw_center_text(out, "PAUSE");
+                draw_center_text("PAUSE");
             }
             out << move(CURSOR_DOWN, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 0);
             draw_rows = border_size.y;
@@ -276,17 +274,14 @@ public:
     }
 
     void loop() {
-        charbuf out(4096);
         while (true) {
             hr_clock::time_point t1 = hr_clock::now();
             if (!input()) break;
             // hr_clock::time_point t2 = hr_clock::now();
             process();
             // hr_clock::time_point t3 = hr_clock::now();
-            draw(out);
+            draw();
             // hr_clock::time_point t4 = hr_clock::now();
-            terminal_write(out.view());
-            out.reset();
             hr_clock::time_point t5 = hr_clock::now();
 
             // input_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();

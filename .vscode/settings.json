@@ -3,7 +3,9 @@
         "ansipp"
     ],
     "cmake.debugConfig": {
-        "args": []
+        "args": [],
+        "externalConsole": true,
+        "console": "externalTerminal"
     },
     "files.associations": {
         "*.cppm": "cpp",
