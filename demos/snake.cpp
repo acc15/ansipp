@@ -192,19 +192,12 @@ public:
         std::size_t top_offset = out.offset();
         out << " press q to exit, <arrows> to move, <space> to pause/unpause";
         out.fill(border_size.x - (out.offset() - top_offset), ' ');
-        
-        out << attrs();
-        out << '\n';
+
+        out << attrs() << '\n';
 
         for (int y = 0; y < grid_size.y; y++) {
-            out << attrs().bg(WHITE);
-            out << ' ';
-            out << attrs();
-            out << move(CURSOR_TO_COLUMN, border_size.x);
-            out << attrs().bg(WHITE);
-            out << ' ';
-            out << attrs();
-            out << '\n';
+            out << attrs().bg(WHITE) << ' ' << attrs() << move(CURSOR_TO_COLUMN, border_size.x);
+            out << attrs().bg(WHITE) << ' ' << attrs() << '\n';
         }
 
         out << attrs().bg(WHITE).fg(BLACK);
@@ -218,9 +211,7 @@ public:
             << " length=" << length;
         out.fill(border_size.x - (out.offset() - bottom_offset), ' ');
         
-        out << attrs() << '\n';
-
-        out << move(CURSOR_UP, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 2);
+        out << attrs() << '\n' << move(CURSOR_UP, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 2);
     }
 
     void draw_snake(charbuf& out) const {
