@@ -42,29 +42,29 @@ testing(TARGETS ansipp SOURCES
     ${TEST}/ansipp/vec.cpp
     ${TEST}/ansipp/format.cpp
     ${TEST}/ansipp/charbuf.cpp
+    ${TEST}/ansipp/integral.cpp
 )
 
 configure_install(ansipp)
 
 option(BUILD_DEMOS "Build demo programs" ${PROJECT_IS_TOP_LEVEL})
 if(BUILD_DEMOS)
-
     function(add_demo name)
         add_executable(ansipp_demo_${name} demos/${name}.cpp)
         target_link_libraries(ansipp_demo_${name} ansipp)
     endfunction()
-
     add_demo(simple)
     add_demo(snake)
     add_demo(readkey)
     add_demo(nonblock)
     add_demo(dead_pixels)
+endif()
 
-    #set(CURSES_NEED_WIDE TRUE)
+option(BUILD_NCURSES_DEMOS "Build NCURSES demo programs (for comparison)" OFF)
+if (BUILD_NCURSES_DEMOS)
     set(CURSES_NEED_NCURSES TRUE)
     find_package(Curses REQUIRED)
     add_executable(ansipp_demo_snake_ncurses demos/snake_ncurses.cpp)
     target_include_directories(ansipp_demo_snake_ncurses PRIVATE ${CURSES_INCLUDE_DIRS})
     target_link_libraries(ansipp_demo_snake_ncurses ${CURSES_LIBRARIES})
-
 endif()

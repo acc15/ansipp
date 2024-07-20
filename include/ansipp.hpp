@@ -1,3 +1,4 @@
+#include <ansipp/integral.hpp>
 #include <ansipp/charbuf.hpp>
 #include <ansipp/esc.hpp>
 #include <ansipp/error.hpp>

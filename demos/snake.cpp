@@ -180,9 +180,9 @@ public:
             --grow_frames;
             ++length;
         } else {
-            direction dir = snake[tail];
+            direction tail_dir = snake[tail];
             snake.erase(tail);
-            tail += dir_to_vec(dir);
+            tail += dir_to_vec(tail_dir);
         }
         process_apples();
     }

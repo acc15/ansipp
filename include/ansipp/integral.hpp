@@ -23,7 +23,15 @@ template <std::integral T>
 std::make_unsigned_t<T> unsigned_abs(T v) {
     if constexpr (std::is_signed_v<T>) {
         const auto uv = std::make_unsigned_t<T>(v);
-        return v < 0 ? -uv : uv;
+        if (v < 0) {
+#ifdef _MSC_VER
+#pragma warning(suppress: 4146)
+            return -uv;
+#else
+            return -uv;
+#endif
+        }
+        return uv;
     } else {
         return v;
     }
