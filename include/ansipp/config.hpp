@@ -1,21 +1,9 @@
 #pragma once
 
 #include <string_view>
+#include <ansipp/mouse.hpp>
 
 namespace ansipp {
-
-enum mouse_reporting_mode {
-    MOUSE_OFF,
-    MOUSE_CLICK,
-    MOUSE_CELL,
-    MOUSE_ALL
-};
-
-enum mouse_reporting_encoding {
-    MOUSE_LEGACY,
-    MOUSE_UTF8,
-    MOUSE_SGR
-};
 
 struct config {
     
@@ -69,12 +57,12 @@ struct config {
     /**
      * @brief enables mouse reporting
      */
-    mouse_reporting_mode mouse_mode = MOUSE_OFF;
+    mouse_mode mouse_mode = MOUSE_OFF;
 
     /**
      * @brief mouse reporting encoding
      */
-    mouse_reporting_encoding mouse_encoding = MOUSE_UTF8;
+    mouse_encoding mouse_encoding = MOUSE_UTF8;
 
     /**
      * @brief additional custom init string, useful to initialize some additional modes using raw escape sequences

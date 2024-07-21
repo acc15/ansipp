@@ -1,5 +1,3 @@
-#include <iostream>
-
 #ifdef _WIN32
 #   include <windows.h>
 #else
@@ -106,13 +104,18 @@ void configure_mode(std::error_code& ec, const config& cfg) {
 #endif
 }
 
-void disable_stdio_sync() {
-    std::cin.sync_with_stdio(false);
-    std::cout.sync_with_stdio(false);
-}
-
 void atexit_restore(std::error_code& ec) {
     if (std::atexit(&restore) != 0) ec = ansipp_error::at_exit_failure;
+}
+
+void configure_mouse(const config& cfg, charbuf& init_esc, charbuf& restore_esc) {
+    const decset_mode* mode = get_mouse_mode_decset(cfg.mouse_mode);
+    if (mode == nullptr) return;
+    const decset_mode* enc = get_mouse_encoding_decset(cfg.mouse_encoding);
+    if (enc != nullptr) init_esc << enc->on();
+    init_esc << mode->on();
+    restore_esc << mode->off();
+    if (enc != nullptr) restore_esc << enc->off();
 }
 
 void configure_escapes(const config& cfg, std::error_code& ec) {
@@ -129,21 +132,8 @@ void configure_escapes(const config& cfg, std::error_code& ec) {
         init_esc    << alternate_buffer.on(); 
         restore_esc << alternate_buffer.off(); 
     }
-    switch (cfg.mouse_mode) {
-        case MOUSE_CLICK:   
-            init_esc << mouse_click.on();
-            restore_esc << mouse_click.off();
-            break;
-        case MOUSE_CELL:    
-            init_esc << mouse_cell.on();
-            restore_esc << mouse_cell.off();
-            break;
-        case MOUSE_ALL:
-            init_esc << mouse_all.on();
-            restore_esc << mouse_all.off();
-            break;
-        default: 
-            break;
+    if (cfg.mouse_mode != MOUSE_OFF) {
+        configure_mouse(cfg, init_esc, restore_esc);
     }
     init_esc << cfg.init_esc;
     if (terminal_write(init_esc.view()) < 0) { ec = last_error(); return; }
@@ -155,7 +145,6 @@ void configure_escapes(const config& cfg, std::error_code& ec) {
 void init_non_restorable(std::error_code& ec, const config& cfg) {
     if (!is_terminal()) { ec = ansipp_error::not_terminal; return; }
     if (cfg.enable_utf8 && (enable_utf8(ec), ec)) { return; }
-    if (cfg.disable_stdio_sync) { disable_stdio_sync(); }
 }
 
 void init_restorable(std::error_code& ec, const config& cfg) {
