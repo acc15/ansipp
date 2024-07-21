@@ -93,10 +93,8 @@ inline charbuf& operator<<(charbuf& buf, std::string_view sv) { buf.put(sv.data(
 
 template <std::integral T>
 inline charbuf& operator<<(charbuf& buf, const T& v) { 
-    if constexpr (std::is_signed_v<T>) if (v < 0) buf.put('-');
-    const auto uv = unsigned_abs(v);
-    unsigned int len = unsigned_digit_count(uv, 10);
-    unsigned_integral_chars(buf.reserve(len), len, uv, 10, false);
+    unsigned int len = integral_length(v, 10);
+    integral_chars(buf.reserve(len), len, v, 10, false);
     return buf;
 }
 

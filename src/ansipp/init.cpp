@@ -132,9 +132,7 @@ void configure_escapes(const config& cfg, std::error_code& ec) {
         init_esc    << alternate_buffer.on(); 
         restore_esc << alternate_buffer.off(); 
     }
-    if (cfg.mouse_mode != MOUSE_OFF) {
-        configure_mouse(cfg, init_esc, restore_esc);
-    }
+    configure_mouse(cfg, init_esc, restore_esc);
     init_esc << cfg.init_esc;
     if (terminal_write(init_esc.view()) < 0) { ec = last_error(); return; }
 
