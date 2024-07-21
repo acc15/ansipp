@@ -129,14 +129,26 @@ void configure_escapes(const config& cfg, std::error_code& ec) {
         init_esc    << alternate_buffer.on(); 
         restore_esc << alternate_buffer.off(); 
     }
-    if (cfg.enable_mouse_reporting) {
-        init_esc    << mouse_all.on();
-        restore_esc << mouse_all.off();
+    switch (cfg.mouse_mode) {
+        case MOUSE_CLICK:   
+            init_esc << mouse_click.on();
+            restore_esc << mouse_click.off();
+            break;
+        case MOUSE_CELL:    
+            init_esc << mouse_cell.on();
+            restore_esc << mouse_cell.off();
+            break;
+        case MOUSE_ALL:
+            init_esc << mouse_all.on();
+            restore_esc << mouse_all.off();
+            break;
+        default: 
+            break;
     }
-    init_esc << cfg.init_esc.view();
+    init_esc << cfg.init_esc;
     if (terminal_write(init_esc.view()) < 0) { ec = last_error(); return; }
 
-    restore_esc << cfg.restore_esc.view();
+    restore_esc << cfg.restore_esc;
     if (!__ansipp_restore.escapes.store(std::move(restore_esc))) { ec = ansipp_error::already_initialized; return; }
 }
 

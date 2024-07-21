@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include <ansipp/esc.hpp>
 
 namespace ansipp {

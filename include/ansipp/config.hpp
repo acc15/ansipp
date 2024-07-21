@@ -1,8 +1,21 @@
 #pragma once
 
-#include <ansipp/charbuf.hpp>
+#include <string_view>
 
 namespace ansipp {
+
+enum mouse_reporting_mode {
+    MOUSE_OFF,
+    MOUSE_CLICK,
+    MOUSE_CELL,
+    MOUSE_ALL
+};
+
+enum mouse_reporting_encoding {
+    MOUSE_LEGACY,
+    MOUSE_UTF8,
+    MOUSE_SGR
+};
 
 struct config {
     
@@ -56,19 +69,24 @@ struct config {
     /**
      * @brief enables mouse reporting
      */
-    bool enable_mouse_reporting = false;
+    mouse_reporting_mode mouse_mode = MOUSE_OFF;
+
+    /**
+     * @brief mouse reporting encoding
+     */
+    mouse_reporting_encoding mouse_encoding = MOUSE_UTF8;
 
     /**
      * @brief additional custom init string, useful to initialize some additional modes using raw escape sequences
      * @details note that after init(std::error_code, config) call any modifications to this string will be ignored
      */
-    charbuf init_esc = {};
+    std::string_view init_esc = {};
 
     /**
      * @brief additional custom restore string, useful to restore some additional modes using raw escape sequences
      * @details note that after init(std::error_code, config) call any modifications to this string will be ignored
      */
-    charbuf restore_esc = {};
+    std::string_view restore_esc = {};
 
 };
 

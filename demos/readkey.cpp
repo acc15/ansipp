@@ -10,7 +10,7 @@ std::string encode_bytes(std::string_view str) {
     std::string result;
     for (auto it = str.begin(); it != str.end(); ++it) {
         if (it != str.begin()) result.append(1, ' ');
-        result.append(std::format("0x{:02X}", *it));
+        result.append(std::format("0x{:02X}", static_cast<unsigned char>(*it)));
     }
     return result;
 }
@@ -21,7 +21,7 @@ std::string encode_string(std::string_view str) {
         if (ch >= 0x20 && ch < 0x7f) {
             result.append(1, ch);
         } else {
-            result.append(std::format("\\x{:02x}", ch));
+            result.append(std::format("\\x{:02X}", static_cast<unsigned char>(ch)));
         }
     }
     return result;
@@ -89,12 +89,12 @@ void parse_input(std::ostream& out, std::string_view str) {
 
 int main() {
 
-    config cfg = {};
+    charbuf restore_esc;
     for (const mode_switch& m: modes) {
-        cfg.restore_esc << (m.initial_value ? m.decset.on() : m.decset.off());
+        restore_esc << (m.initial_value ? m.decset.on() : m.decset.off());
     }
 
-    if (std::error_code ec; init(ec, cfg), ec) {
+    if (std::error_code ec; init(ec, config { .restore_esc = restore_esc.view() }), ec) {
         std::cerr << "can't init: " << ec.message() << std::endl;
         return EXIT_FAILURE;
     }
