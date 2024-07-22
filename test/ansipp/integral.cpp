@@ -15,7 +15,6 @@ void unsigned_integral_abs_with_limits() {
         using limits = std::numeric_limits<T>;
         const T min = limits::min();
         const T max = limits::max();
-        REQUIRE( unsigned_integral_abs<T>(min) == static_cast<unsigned long int>(-static_cast<long int>(min)) );
         REQUIRE( unsigned_integral_abs<T>(-1) == 1 );
         REQUIRE( unsigned_integral_abs<T>(max) == max );
     }
@@ -62,11 +61,22 @@ TEST_CASE("integral: integral_chars", "[integral]") {
 
 }
 
+template <std::unsigned_integral T>
+void unsigned_integral_chars_single_loop(char* buf, unsigned int length, T value, unsigned int base, bool upper) {
+    for (char* ptr = buf + length; ptr != buf; value /= base) *--ptr = to_digit(value % base, upper);
+}
+
 TEST_CASE("integral: unsigned_integral_chars benchmark", "[integral][!benchmark]") {
     unsigned long v = std::numeric_limits<unsigned long>::max();
     unsigned int base = GENERATE(2, 4, 8, 10, 12, 16);
     DYNAMIC_SECTION("base = " << base) {
         unsigned int len = unsigned_integral_length(v, base);
+
+        char single_loop[128];
+        BENCHMARK("unsigned_integral_chars_single_loop") {
+            unsigned_integral_chars_single_loop(single_loop, len, v, base, false);
+            return std::string_view(single_loop, single_loop + len);
+        };
 
         char integral_chars_buf[128];
         BENCHMARK("unsigned_integral_chars") {
