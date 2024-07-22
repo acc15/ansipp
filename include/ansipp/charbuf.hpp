@@ -1,9 +1,9 @@
 #pragma once
 
-#include <cstdlib>
-#include <cstring>
-#include <bit>
-#include <new>
+#include <cstdlib> // std::malloc, std::free, etc
+#include <cstring> // std::memcpy
+#include <bit> // std::bit_ceil
+#include <new> // bad_alloc
 #include <string>
 #include <string_view>
 
@@ -93,8 +93,9 @@ inline charbuf& operator<<(charbuf& buf, std::string_view sv) { return buf.put(s
 
 template <std::integral T>
 inline charbuf& operator<<(charbuf& buf, const T& v) { 
-    unsigned int len = integral_length(v, 10);
-    integral_chars(buf.reserve(len), len, v, 10, false);
+    constexpr unsigned int base = 10;
+    unsigned int len = integral_length(v, base);
+    integral_chars(buf.reserve(len), len, v, base, false);
     return buf;
 }
 
