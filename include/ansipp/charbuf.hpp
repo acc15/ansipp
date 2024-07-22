@@ -86,16 +86,21 @@ public:
 
 };
 
-inline charbuf& operator<<(charbuf& buf, char c) { buf.put(c); return buf; }
-inline charbuf& operator<<(charbuf& buf, bool v) { buf.put(v ? '1' : '0'); return buf; }
-inline charbuf& operator<<(charbuf& buf, const char* sv) { buf.put(sv, strlen(sv)); return buf; }
-inline charbuf& operator<<(charbuf& buf, std::string_view sv) { buf.put(sv.data(), sv.size()); return buf; }
+inline charbuf& operator<<(charbuf& buf, char c) { return buf.put(c); }
+inline charbuf& operator<<(charbuf& buf, bool v) { return buf.put(v ? '1' : '0'); }
+inline charbuf& operator<<(charbuf& buf, const char* sv) { return buf.put(sv, strlen(sv)); }
+inline charbuf& operator<<(charbuf& buf, std::string_view sv) { return buf.put(sv.data(), sv.size()); }
 
 template <std::integral T>
 inline charbuf& operator<<(charbuf& buf, const T& v) { 
     unsigned int len = integral_length(v, 10);
     integral_chars(buf.reserve(len), len, v, 10, false);
     return buf;
+}
+
+template <typename T>
+inline charbuf& operator<<(charbuf&& buf, const T& v) { 
+    return buf << v;
 }
 
 }

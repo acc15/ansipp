@@ -11,9 +11,7 @@ const std::string decset = csi + '?';
 
 template <typename Esc>
 std::string esc_str(const Esc& esc) {
-    charbuf cb(16);
-    cb << esc;
-    return cb.str();
+    return (charbuf(16) << esc).str();
 }
 
 struct decset_esc {

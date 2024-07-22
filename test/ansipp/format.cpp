@@ -80,7 +80,8 @@ struct format_benchmark {
     }
 
     std::string current_impl() {
-        return esc_str( move_abs(x, y) );
+        shared_cb.reset() << move_abs(x, y);
+        return shared_cb.str();
     }
 
 };
