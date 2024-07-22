@@ -13,7 +13,6 @@ template <typename T>
 void unsigned_integral_abs_with_limits() {
     DYNAMIC_SECTION(typeid(T).name()) {
         using limits = std::numeric_limits<T>;
-        const T min = limits::min();
         const T max = limits::max();
         REQUIRE( unsigned_integral_abs<T>(-1) == 1 );
         REQUIRE( unsigned_integral_abs<T>(max) == max );
