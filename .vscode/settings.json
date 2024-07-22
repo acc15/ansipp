@@ -4,7 +4,7 @@
     ],
     "cmake.debugConfig": {
         "args": [],
-        "externalConsole": true
+        // "externalConsole": true
     },
     "files.associations": {
         "*.cppm": "cpp",

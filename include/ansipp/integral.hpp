@@ -5,6 +5,20 @@
 
 namespace ansipp {
 
+constexpr unsigned int cpow(unsigned int base, unsigned int pow) {
+    unsigned int result = 1;
+    while (pow > 0) {
+        if ((pow & 1) == 0) { 
+            pow >>= 1; 
+            base *= base; 
+        } else {
+            --pow;
+            result *= base;
+        }
+    }
+    return result;
+}
+
 constexpr char to_digit(unsigned int v, bool upper) { return static_cast<char>((v < 10 ? '0' : upper ? 'A' : 'a') + v); }
 
 template <std::integral T>

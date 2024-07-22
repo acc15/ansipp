@@ -19,6 +19,13 @@ void unsigned_integral_abs_with_limits() {
     }
 }
 
+TEST_CASE("integral: cpow", "[integral]") {
+    REQUIRE( cpow(3, 3) == 27 );
+    REQUIRE( cpow(2, 8) == 256 );
+    REQUIRE( cpow(10, 0) == 1 );
+    REQUIRE( cpow(10, 5) == 100000 );
+}
+
 TEST_CASE("integral: unsigned_integral_abs", "[integral]") {
     unsigned_integral_abs_with_limits<char>();
     unsigned_integral_abs_with_limits<short>();

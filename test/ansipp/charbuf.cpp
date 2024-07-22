@@ -5,27 +5,27 @@
 
 using namespace ansipp;
 
-TEST_CASE("empty to string", "[charbuf]") {
+TEST_CASE("charbuf: empty to string", "[charbuf]") {
     charbuf cb;
     REQUIRE( cb.str() == "" );
     REQUIRE( cb.view() == "" );
 }
 
-TEST_CASE("string", "[charbuf]") {
+TEST_CASE("charbuf: string", "[charbuf]") {
     charbuf cb;
     std::string str = "123";
     cb << str;
     REQUIRE( cb.view() == "123" );
 }
 
-TEST_CASE("integral", "[charbuf]") {
+TEST_CASE("charbuf: integral", "[charbuf]") {
     charbuf cb;
     unsigned int uint_max = std::numeric_limits<unsigned int>::max();
     REQUIRE( (cb.reset() << -123).view() == "-123" );
     REQUIRE( (cb.reset() << uint_max).view() == std::to_string(uint_max) );
 }
 
-TEST_CASE("bool", "[charbuf]") {
+TEST_CASE("charbuf: bool", "[charbuf]") {
     charbuf cb;
     REQUIRE( (cb.reset() << false).view() == "0" );
     REQUIRE( (cb.reset() << true).view() == "1" );
