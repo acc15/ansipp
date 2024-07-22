@@ -57,12 +57,12 @@ struct config {
     /**
      * @brief enables mouse reporting
      */
-    mouse_mode mouse_mode = MOUSE_OFF;
+    enum mouse_mode mouse_mode = MOUSE_OFF;
 
     /**
      * @brief mouse reporting encoding
      */
-    mouse_encoding mouse_encoding = MOUSE_UTF8;
+    enum mouse_encoding mouse_encoding = MOUSE_UTF8;
 
     /**
      * @brief additional custom init string, useful to initialize some additional modes using raw escape sequences

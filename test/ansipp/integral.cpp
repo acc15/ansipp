@@ -2,10 +2,10 @@
 #include <catch2/benchmark/catch_benchmark_all.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
-#include <ansipp/integral.hpp>
-
 #include <limits>
 #include <charconv>
+
+#include <ansipp/integral.hpp>
 
 using namespace ansipp;
 
@@ -32,7 +32,7 @@ TEST_CASE("integral: unsigned_integral_length", "[integral]") {
     REQUIRE( unsigned_integral_length<unsigned int>(0, 10) == 1 );
     REQUIRE( unsigned_integral_length<unsigned int>(123, 10) == 3 );
     REQUIRE( unsigned_integral_length<unsigned int>(std::numeric_limits<unsigned int>::max(), 10) == 10 );
-    REQUIRE( unsigned_integral_length<unsigned int>(std::numeric_limits<unsigned int>::max(), 2) == CHAR_BIT * sizeof(unsigned int));
+    REQUIRE( unsigned_integral_length<unsigned int>(std::numeric_limits<unsigned int>::max(), 2) == std::numeric_limits<unsigned int>::digits);
 }
 
 TEST_CASE("integral: integral_length", "[integral]") {
@@ -76,9 +76,9 @@ TEST_CASE("integral: unsigned_integral_chars benchmark", "[integral][!benchmark]
 
         char to_chars_buf[128];
         BENCHMARK("std_to_chars") {
-            // std::to_chars is highly optimized 
-            // by using 4 chars (for base = 2)
-            // or 2 chars (for 8, 10, 16 bases) lookup tables
+            // std::to_chars is highly optimized by using power & lookup tables
+            // 4 chars for base = 2 
+            // 2 chars for 8, 10, 16 bases
             std::to_chars_result result = std::to_chars(to_chars_buf, to_chars_buf + sizeof(to_chars_buf), v, base);
             return std::string_view(to_chars_buf, result.ptr);
         };

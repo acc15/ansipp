@@ -18,10 +18,10 @@ enum mouse_mode {
 };
 inline const decset_mode* get_mouse_mode_decset(mouse_mode mode) {
     switch (mode) {
-        case MOUSE_OFF: return nullptr;
         case MOUSE_CLICK: return &mouse_click;
         case MOUSE_CELL: return &mouse_cell;
         case MOUSE_ALL: return &mouse_all;
+        default: return nullptr;
     }
 }
 
@@ -32,9 +32,9 @@ enum mouse_encoding {
 };
 inline const decset_mode* get_mouse_encoding_decset(mouse_encoding enc) {
     switch (enc) {
-        case MOUSE_LEGACY: return nullptr;
         case MOUSE_UTF8: return &mouse_utf8;
         case MOUSE_SGR: return &mouse_sgr;
+        default: return nullptr;
     }
 }
 

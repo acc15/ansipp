@@ -5,6 +5,7 @@
 #include <deque>
 #include <chrono>
 #include <format>
+#include <limits>
 
 #include <ansipp.hpp>
 #include <unordered_map>
@@ -26,7 +27,7 @@ vec dir_to_vec(direction d) {
 template <>
 struct std::hash<vec> {
     std::size_t operator()(const vec& v) const {
-        return std::hash<int>{}(v.x) ^ std::rotl(std::hash<int>{}(v.y), CHAR_BIT*sizeof(std::size_t)/2);
+        return std::hash<int>{}(v.x) ^ std::rotl(std::hash<int>{}(v.y), std::numeric_limits<std::size_t>::digits/2);
     }
 };
 
