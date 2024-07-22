@@ -36,22 +36,6 @@ target_sources(ansipp PUBLIC FILE_SET HEADERS BASE_DIRS ${INC} FILES
     ${INC}/ansipp.hpp
 )
 
-# include(CTest)
-# if(BUILD_TESTING)
-#     find_package(Catch2 REQUIRED)
-#     add_executable(ansipp_test
-#         test/ansipp/attrs.cpp
-#         test/ansipp/cursor.cpp
-#         test/ansipp/vec.cpp
-#         test/ansipp/format.cpp
-#         test/ansipp/charbuf.cpp
-#         test/ansipp/integral.cpp)
-#     target_include_directories(ansipp_test PRIVATE test)
-#     target_link_libraries(ansipp_test PRIVATE Catch2::Catch2WithMain ansipp)
-#     include(Catch)
-#     catch_discover_tests(ansipp_test)
-# endif()
-
 testing(TARGETS ansipp SOURCES 
     ${TEST}/ansipp/attrs.cpp
     ${TEST}/ansipp/cursor.cpp

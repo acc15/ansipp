@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "ansipp_test",
             "program": "${workspaceFolder}/build/ansipp_test",
-            "args": ["format: benchmark"],
+            "args": [],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
         },
