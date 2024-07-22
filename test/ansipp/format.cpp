@@ -8,19 +8,25 @@ using namespace ansipp;
 
 struct format_benchmark {
 
-    static constexpr unsigned int x = 5;
-    static constexpr unsigned int y = 10;
+    static constexpr int x = 5;
+    static constexpr int y = 10;
     static constexpr char expected_esc[] = "\33" "[10;5H";
     static constexpr std::size_t min_buf_size = std::size(expected_esc);
 
     char snprintf_buf[min_buf_size];
     char to_chars_buf[min_buf_size];
+    char format_buf[min_buf_size];
     std::string shared_str = std::string(min_buf_size, 0);
     charbuf shared_cb = charbuf(min_buf_size);
     std::stringstream shared_ss;
 
     std::string std_format() { 
         return std::format("{}{};{}H", csi, y, x); 
+    }
+
+    std::string std_format_shared() { 
+        char* end = std::format_to(format_buf, "{}{};{}H", csi, y, x); 
+        return std::string(format_buf, end);
     }
 
     std::string std_string_append() { 
@@ -86,6 +92,7 @@ TEST_CASE("format: benchmark", "[format][!benchmark]") {
     format_benchmark fb;
     
     REQUIRE( fb.std_format() == fb.expected_esc );
+    REQUIRE( fb.std_format_shared() == fb.expected_esc );
     REQUIRE( fb.std_string_append() == fb.expected_esc );
     REQUIRE( fb.std_string_append_shared() == fb.expected_esc );
     REQUIRE( fb.std_stringstream() == fb.expected_esc );
@@ -97,6 +104,7 @@ TEST_CASE("format: benchmark", "[format][!benchmark]") {
     REQUIRE( fb.current_impl() == fb.expected_esc ); 
 
     BENCHMARK("std_format") { return fb.std_format(); }; 
+    BENCHMARK("std_format_shared") { return fb.std_format_shared(); }; 
     BENCHMARK("std_string_append") { return fb.std_string_append(); };
     BENCHMARK("std_string_append_shared") { return fb.std_string_append_shared(); };
     BENCHMARK("std_stringstream") { return fb.std_stringstream(); };
