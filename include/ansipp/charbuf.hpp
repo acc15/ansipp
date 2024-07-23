@@ -11,6 +11,17 @@
 
 namespace ansipp {
 
+template <typename T>
+struct integral_format {
+    T value;
+    unsigned int base;
+    bool upper;
+    unsigned int width;
+
+    integral_format(T value, unsigned int base = 10, bool upper = false, unsigned int width = 0):
+        value(value), base(base), upper(upper), width(width) {}
+};
+
 class charbuf {
     
     static constexpr std::size_t min_alloc_sz = 32;
@@ -58,32 +69,29 @@ public:
     std::size_t size() const { return e - b; }
     std::size_t offset() const { return p - b; }
     std::string_view view() const { return std::string_view(b, p); }
+    std::string_view flush() { std::string_view r(b, p); p = b; return r; }
     std::string str() const  { return std::string(b, p); }
     
     charbuf& put(const void* data, std::size_t size) { std::memcpy(reserve(size), data, size); return *this; }
-    charbuf& put(char ch) {
-        if (p + 1 > e) [[unlikely]] resize(p - b + 1);
-        *p++ = ch;
-        return *this;
-    }
-
-    charbuf& fill(std::size_t count, char ch) { std::memset(reserve(count), ch, count); return *this; }
+    charbuf& put(char ch, std::size_t count = 1) { std::memset(reserve(count), ch, count); return *this; }
 
     template <typename T>
     charbuf& operator<<(const T& v) && { return *this << v; }
 
     charbuf& operator<<(char c) { return put(c); }
     charbuf& operator<<(bool v) { return put(v ? '1' : '0'); }
-    charbuf& operator<<(const char* sv) { return put(sv, strlen(sv)); }
+    charbuf& operator<<(const char* sv) { return put(sv, std::strlen(sv)); }
     charbuf& operator<<(std::string_view sv) { return put(sv.data(), sv.size()); }
 
     template <std::integral T>
-    charbuf& operator<<(T v) { 
-        constexpr unsigned int base = 10;
-        unsigned int len = integral_length(v, base);
-        integral_chars(reserve(len), len, v, base, false);
+    charbuf& operator<<(const integral_format<T>& v) {
+        unsigned int width = v.width == 0 ? integral_length(v.value, v.base) : v.width;
+        integral_chars(reserve(width), width, v.value, v.base, v.upper);
         return *this;
     }
+
+    template <std::integral T>
+    charbuf& operator<<(T v) { return *this << integral_format<T>(v); }
 
 };
 

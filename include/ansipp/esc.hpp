@@ -10,9 +10,7 @@ const std::string csi = esc + '[';
 const std::string decset = csi + '?';
 
 template <typename Esc>
-std::string esc_str(const Esc& esc) {
-    return (charbuf(16) << esc).str();
-}
+std::string esc_str(const Esc& esc) { return (charbuf() << esc).str(); }
 
 struct decset_esc {
     unsigned int code;

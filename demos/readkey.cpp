@@ -5,28 +5,6 @@
 #include <ansipp.hpp>
 
 using namespace ansipp;
-
-std::string encode_bytes(std::string_view str) {
-    std::string result;
-    for (auto it = str.begin(); it != str.end(); ++it) {
-        if (it != str.begin()) result.append(1, ' ');
-        result.append(std::format("0x{:02X}", static_cast<unsigned char>(*it)));
-    }
-    return result;
-}
-
-std::string encode_string(std::string_view str) {
-    std::string result;
-    for (const char ch: str) {
-        if (ch >= 0x20 && ch < 0x7f) {
-            result.append(1, ch);
-        } else {
-            result.append(std::format("\\x{:02X}", static_cast<unsigned char>(ch)));
-        }
-    }
-    return result;
-}
-
 /*
 Ps = 9  -> Send Mouse X & Y on button press.  See the section Mouse Tracking.  This is the X10 xterm mouse protocol.
 Ps = 1 0 0 1  -> Use Hilite Mouse Tracking.
@@ -58,7 +36,7 @@ mode_switch modes[] {
     mode_switch { .name = "Show Cursor",    .decset = cursor_visibility, .initial_value = true },
 };
 
-void mode_line(std::ostream& out) {
+void mode_line(charbuf& out) {
     out << store_cursor << move_abs(1, 1) << attrs().bg(WHITE).fg(BLACK) << "<alt>";
     for (std::size_t i = 0; i < std::size(modes); i++) {
         const mode_switch& m = modes[i];
@@ -69,7 +47,7 @@ void mode_line(std::ostream& out) {
     out << erase(LINE, TO_END) << attrs() << restore_cursor;
 }
 
-void parse_input(std::ostream& out, std::string_view str) {
+void parse_input(charbuf& out, std::string_view str) {
     bool next_esc = false;
     while (!str.empty()) {
         char ch = str[0];
@@ -99,11 +77,11 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    terminal_stream out;
+    charbuf out;
     
     char buf[512];
     mode_line(out);
-    out << std::flush;
+    terminal_write(out.flush()); 
 
     while (true) {
         std::string_view rd;
@@ -113,18 +91,32 @@ int main() {
         }
 
         parse_input(out, rd);
-        out << attrs().fg(GREEN) << "HEX: " << attrs() << encode_bytes(rd) 
-            << attrs().fg(BLUE) << " CHARS: " << attrs() << encode_string(rd) 
-            << '\n';
+        if (!rd.empty()) {
+            out << attrs().fg(GREEN) << "HEX:" << attrs();
+            for (char ch: rd) {
+                out << ' ' << integral_format<unsigned char>(ch, 16, true, 2);
+            }
+            out << attrs().fg(BLUE) << " CHARS: " << attrs();
+            for (const char ch: rd) {
+                if (ch >= 0x20 && ch < 0x7f) {
+                    out << ch;
+                } else {
+                    out << attrs().fg(CYAN) << "0x" << integral_format<unsigned char>(ch, 16, false, 2) << attrs();
+                }
+            }
+        } else {
+            out << attrs().fg(color::YELLOW) << "<EMPTY>" << attrs();
+        }
+        out << '\n';
 
 #ifdef _WIN32 
-        out << std::flush;
+        terminal_write(out.flush());
         // Allow Windows Terminal to update current line... otherwise mode_line sometimes won't draw 
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
 #endif
 
         mode_line(out);
-        out << std::flush;
+        terminal_write(out.flush());
 
     }
     return EXIT_SUCCESS;

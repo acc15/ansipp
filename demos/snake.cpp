@@ -193,7 +193,7 @@ public:
 
         std::size_t top_offset = out.offset();
         out << " press q to exit, <arrows> to move, <space> to pause/unpause";
-        out.fill(border_size.x - (out.offset() - top_offset), ' ');
+        out.put(' ', border_size.x - (out.offset() - top_offset));
 
         out << attrs() << '\n';
 
@@ -215,7 +215,7 @@ public:
             << " game_over=" << static_cast<unsigned int>(game_over)
             << " apples=" << apples.size()
             << " length=" << length;
-        out.fill(border_size.x - (out.offset() - bottom_offset), ' ');
+        out.put(' ', border_size.x - (out.offset() - bottom_offset));
         
         out << attrs() << '\n' << move(CURSOR_UP, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 2);
     }
@@ -270,8 +270,7 @@ public:
             out << move(CURSOR_DOWN, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 0);
             draw_rows = border_size.y;
         }
-        terminal_write(out.view());
-        out.reset();
+        terminal_write(out.flush());
     }
 
     void loop() {

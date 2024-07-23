@@ -31,14 +31,14 @@ enum erase_mode: char {
     ALL = '2'
 };
 
-struct erase_esc {
+struct erase {
     erase_target target;
     erase_mode mode;
+    erase(erase_target target, erase_mode mode): target(target), mode(mode) {}
 };
 template <typename Stream>
-Stream& operator<<(Stream& s, const erase_esc& esc) {
+Stream& operator<<(Stream& s, const erase& esc) {
     return s << csi << static_cast<char>(esc.mode) << static_cast<char>(esc.target);
 }
-inline erase_esc erase(erase_target target, erase_mode mode) { return erase_esc { target, mode }; }
 
 }

@@ -20,6 +20,14 @@ void unsigned_integral_abs_with_limits() {
     }
 }
 
+TEST_CASE("integral: to_digit", "[integral]") {
+    const char chars[] = "0123456789abcdefghijklmnopqrstuv";
+    for (unsigned int i = 0; i < std::size(chars); ++i) {
+        REQUIRE( to_digit(i) == chars[i] );
+    }
+}
+
+
 TEST_CASE("integral: cpow", "[integral]") {
     REQUIRE( cpow(3, 3) == 27 );
     REQUIRE( cpow(2, 8) == 256 );

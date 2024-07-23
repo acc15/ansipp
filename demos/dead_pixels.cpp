@@ -13,36 +13,20 @@ struct dead_pixel {
     vec pos;
     unsigned int frame;
 
-    bool process() {
-        frame += 8;
-        return frame < max_frame;
-    }
-
-    void draw(std::ostream& out) const {
-        unsigned char v = frame < 256 
-            ? static_cast<unsigned char>(frame) 
-            : static_cast<unsigned char>(255 - (frame - 256)); 
-        out << move_abs(pos) << attrs().bg(rgb { v, v, v }).fg(BLACK) << ' ' << attrs();
-    }
-
 };
 
 struct dead_pixels {
     unsigned int next_frames = 10;
 
+    charbuf out = charbuf(4096);
     std::vector<dead_pixel> pixels;
     vec dim;
 
     void process() {
-        auto it = pixels.begin();
-        while (it != pixels.end()) {
-            if (it->process()) {
-                ++it;
-            } else {
-                it = pixels.erase(it);
-            }
-        }
-
+        std::erase_if(pixels, [](dead_pixel& p) {
+            p.frame += 8;
+            return p.frame >= p.max_frame;
+        });
         if (next_frames > 0) {
             --next_frames;
             return;
@@ -58,17 +42,21 @@ struct dead_pixels {
         });
     }
 
-    void draw(std::ostream& out) const {
+    void draw() {
         out << store_cursor;
         for (const dead_pixel& p: pixels) {
-            p.draw(out);
+            unsigned char v = p.frame < 256 
+                ? static_cast<unsigned char>(p.frame) 
+                : static_cast<unsigned char>(255 - (p.frame - 256)); 
+            out << move_abs(p.pos) << attrs().bg(rgb { v, v, v }).fg(BLACK) << ' ' << attrs();
         }
-        out << restore_cursor << std::flush;
+        out << restore_cursor;
+        terminal_write(out.flush());
     }
 
-    void loop(std::ostream& out) {
+    void loop() {
         dim = get_terminal_size();
-        draw(out);
+        draw();
 
         char buf[20];
         while (true) {
@@ -84,7 +72,7 @@ struct dead_pixels {
             }
 
             process();
-            draw(out);
+            draw();
         }
     }
 
@@ -95,9 +83,6 @@ int main() {
         std::cerr << "can't init: " << ec.message() << std::endl;
         return EXIT_FAILURE;
     }
-
-    dead_pixels g;
-    terminal_stream out;
-    g.loop(out);
+    dead_pixels().loop();
     return 0;
 }

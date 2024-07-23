@@ -59,19 +59,25 @@ enum move_mode: char {
     SCROLL_DOWN = 'T'
 };
 
-struct move_esc { move_mode mode; unsigned int value; };
+struct move { 
+    move_mode mode; 
+    unsigned int value; 
+    move(move_mode mode, unsigned int value = 1): mode(mode), value(value) {}
+};
 template <typename Stream>
-Stream& operator<<(Stream& s, const move_esc& op) {
+Stream& operator<<(Stream& s, const move& op) {
     if (op.mode == CURSOR_TO_COLUMN && op.value < 2) return s << '\r';
     if (op.value > 0) s << csi << op.value << static_cast<char>(op.mode);
     return s;
 }
-inline move_esc move(move_mode mode, unsigned int value = 1) { return move_esc { mode, value }; }
 
-
-struct move_rel_esc { int x, y; };
+struct move_rel { 
+    int x, y; 
+    move_rel(int x, int y): x(x), y(y) {}
+    move_rel(const vec& v): x(v.x), y(v.y) {}
+};
 template <typename Stream>
-Stream& operator<<(Stream& s, const move_rel_esc& op) {
+Stream& operator<<(Stream& s, const move_rel& op) {
     s << (op.x < 0 
         ? move(CURSOR_LEFT, static_cast<unsigned int>(-op.x)) 
         : move(CURSOR_RIGHT, static_cast<unsigned int>(op.x)));
@@ -80,15 +86,14 @@ Stream& operator<<(Stream& s, const move_rel_esc& op) {
         : move(CURSOR_DOWN, static_cast<unsigned int>(op.y)));
     return s;
 }
-inline move_rel_esc move_rel(int x, int y) { return move_rel_esc { x, y }; }
-inline move_rel_esc move_rel(const vec& v) { return move_rel_esc { v.x, v.y }; }
 
-
-struct move_abs_esc { int x, y; };
+struct move_abs { 
+    int x, y; 
+    move_abs(int x, int y): x(x), y(y) {}
+    move_abs(const vec& v): x(v.x), y(v.y) {}
+};
 template <typename Stream>
-Stream& operator<<(Stream& s, const move_abs_esc& op) { return s << csi << op.y << ';' << op.x << 'H'; }
-inline move_abs_esc move_abs(int x, int y) { return move_abs_esc { x, y }; }
-inline move_abs_esc move_abs(const vec& v) { return move_abs_esc { v.x, v.y }; }
+Stream& operator<<(Stream& s, const move_abs& op) { return s << csi << op.y << ';' << op.x << 'H'; }
 
 
 const std::string store_cursor = esc + "7";
@@ -105,8 +110,7 @@ enum cursor_shape: char {
     SHAPE_STEADY_BAR = '6'
 };
 
-inline std::string change_cursor_shape(cursor_shape shape) { 
-    return std::string(csi).append(1, static_cast<char>(shape)).append(" q");
-}
+template <typename Stream>
+Stream& operator<<(Stream& o, cursor_shape s) { return o << csi << static_cast<char>(s) << " q"; }
 
 }
