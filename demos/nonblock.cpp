@@ -1,9 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include <thread>
-#include <ansipp.hpp>
 #include <cstring>
-
 
 #ifdef _WIN32
 #   include <windows.h>
@@ -12,6 +10,8 @@
 #   include <fcntl.h>
 #   include <sys/select.h>
 #endif
+
+#include <ansipp.hpp>
 
 using namespace ansipp;
 

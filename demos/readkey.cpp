@@ -1,6 +1,5 @@
 #include <iostream>
 #include <iomanip>
-#include <format>
 #include <thread>
 #include <ansipp.hpp>
 
