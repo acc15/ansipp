@@ -4,6 +4,9 @@
 #if __has_include(<format>)
 #   include <format>
 #endif
+#include <string>
+#include <sstream>
+#include <charconv>
 
 #include <ansipp/cursor.hpp>
 #include <ansipp/charbuf.hpp>
@@ -96,8 +99,10 @@ TEST_CASE("format: benchmark", "[format][!benchmark]") {
     
     format_benchmark fb;
     
+#if __has_include(<format>)
     REQUIRE( fb.std_format() == fb.expected_esc );
     REQUIRE( fb.std_format_shared() == fb.expected_esc );
+#endif
     REQUIRE( fb.std_string_append() == fb.expected_esc );
     REQUIRE( fb.std_string_append_shared() == fb.expected_esc );
     REQUIRE( fb.std_stringstream() == fb.expected_esc );
@@ -108,8 +113,10 @@ TEST_CASE("format: benchmark", "[format][!benchmark]") {
     REQUIRE( fb.charbuf_shared() == fb.expected_esc );
     REQUIRE( fb.current_impl() == fb.expected_esc ); 
 
+#if __has_include(<format>)
     BENCHMARK("std_format") { return fb.std_format(); }; 
     BENCHMARK("std_format_shared") { return fb.std_format_shared(); }; 
+#endif
     BENCHMARK("std_string_append") { return fb.std_string_append(); };
     BENCHMARK("std_string_append_shared") { return fb.std_string_append_shared(); };
     BENCHMARK("std_stringstream") { return fb.std_stringstream(); };
