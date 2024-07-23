@@ -59,7 +59,7 @@ struct format_benchmark {
     }
 
     std::string charbuf_alloc() {
-        charbuf cb(16);
+        charbuf cb;
         cb << csi << y << ';' << x << 'H';
         return cb.str();
     }

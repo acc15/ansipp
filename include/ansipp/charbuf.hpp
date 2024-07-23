@@ -91,7 +91,11 @@ public:
     }
 
     template <std::integral T>
-    charbuf& operator<<(T v) { return *this << integral_format<T>(v); }
+    charbuf& operator<<(T v) { 
+        unsigned int w = integral_length(v, 10);
+        integral_chars(reserve(w), w, v, 10, false);
+        return *this;
+    }
 
 };
 

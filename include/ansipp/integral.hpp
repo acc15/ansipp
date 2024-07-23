@@ -91,6 +91,8 @@ constexpr unsigned int unsigned_integral_length(T value, const unsigned int base
 
 template <std::unsigned_integral T>
 void unsigned_integral_chars(char* buf, unsigned int len, T value, const unsigned int base, bool upper) {
+    // lookup tables requires ~1,5kb of memory, but performance is almost the same for small numbers (~<1000)
+#ifdef ANSIPP_FAST_INTEGRAL
     switch (base) {
         [[likely]] case 10: unsigned_integral_lookup_chars<T, 10, 2>(buf, len, value); return;
         case  2: unsigned_integral_lookup_chars<T, 2, 4>(buf, len, value); return;
@@ -103,6 +105,7 @@ void unsigned_integral_chars(char* buf, unsigned int len, T value, const unsigne
             }
             return;
     }
+#endif
     for (char* ptr = buf + len; ptr != buf; value /= base) *--ptr = to_digit(value % base, upper); 
 }
 
