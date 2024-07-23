@@ -12,9 +12,9 @@ constexpr char to_digit(unsigned int v, bool upper = false) {
 
 constexpr unsigned int cpow(unsigned int base, unsigned int pow) {
     unsigned int result = 1;
-    while (pow > 0) {
-        if ((pow & 1) == 0) { 
-            pow >>= 1; 
+    for (; pow > 0;) {
+        if (pow % 2 == 0) { 
+            pow /= 2;
             base *= base; 
         } else {
             --pow;
@@ -43,25 +43,10 @@ struct integral_lookup {
 template <unsigned int base, unsigned int digits, bool upper>
 constexpr integral_lookup<base, digits, upper> integral_lookup<base, digits, upper>::instance;
 
-template <std::unsigned_integral T, unsigned int base, unsigned int digits, bool upper = false>
+template <std::unsigned_integral T, const unsigned int base, const unsigned int digits, const bool upper = false>
 void unsigned_integral_lookup_chars(char* buf, unsigned int len, T value) {
     using lookup = integral_lookup<base, digits, upper>;
     const lookup& l = lookup::instance;
-    // char* ptr = buf + len;
-    // for (; value >= lookup::pow; value /= lookup::pow) {
-    //     ptr -= digits;
-    //     std::memcpy(ptr, l.chars[value % lookup::pow], digits);
-    // }
-    // for (; value >= base; value /= base) *--ptr = to_digit(value % base, upper);
-    // *--ptr = to_digit(value, upper);
-
-    // char* ptr = buf + len;
-    // for (; ptr - digits >= buf; value /= lookup::pow) {
-    //     ptr -= digits;
-    //     std::memcpy(ptr, l.chars[value % lookup::pow], digits);
-    // }
-    // if (len > 0) std::memcpy(buf, l.chars[value % lookup::pow] + digits - len, len);
-
     for (; len >= digits; value /= lookup::pow) {
         len -= digits;
         std::memcpy(buf + len, l.chars[value % lookup::pow], digits);
@@ -88,24 +73,22 @@ constexpr std::make_unsigned_t<T> unsigned_integral_abs(T v) {
 }
 
 template <std::unsigned_integral T>
-constexpr unsigned int unsigned_integral_length(T value, unsigned int radix) {
+constexpr unsigned int unsigned_integral_length(T value, const unsigned int base) {
     unsigned int len = 1;
+    unsigned int base2 = base * base;
     if constexpr (std::numeric_limits<T>::digits > 8) {
-        unsigned int radix2 = radix * radix;
-        if constexpr (std::numeric_limits<T>::digits > 16) {
-            unsigned int radix4 = radix2 * radix2;
-            for (; value >= radix4; value /= radix4) len += 4;
-        }
-        for (; value >= radix2; value /= radix2) len += 2;
+        unsigned int base4 = base2 * base2;
+        for (; value >= base4; value /= base4) len += 4;
     }
-    for (; value >= radix; value /= radix) ++len;
+    for (; value >= base2; value /= base2) len += 2;
+    for (; value >= base; value /= base) ++len;
     return len;
 }
 
 template <std::unsigned_integral T>
-void unsigned_integral_chars(char* buf, unsigned int len, T value, unsigned int base, bool upper) {
+void unsigned_integral_chars(char* buf, unsigned int len, T value, const unsigned int base, bool upper) {
     switch (base) {
-        case 10: unsigned_integral_lookup_chars<T, 10, 2>(buf, len, value); return;
+        [[likely]] case 10: unsigned_integral_lookup_chars<T, 10, 2>(buf, len, value); return;
         case  2: unsigned_integral_lookup_chars<T, 2, 4>(buf, len, value); return;
         case  8: unsigned_integral_lookup_chars<T, 8, 2>(buf, len, value); return;
         case 16: 
@@ -122,14 +105,14 @@ void unsigned_integral_chars(char* buf, unsigned int len, T value, unsigned int 
 }
 
 template <std::integral T>
-constexpr unsigned int integral_length(T value, unsigned int base) {
+constexpr unsigned int integral_length(T value, const unsigned int base) {
     unsigned int unsigned_length = unsigned_integral_length(unsigned_integral_abs(value), base);
     if constexpr (std::is_signed_v<T>) if (value < 0) return unsigned_length + 1;
     return unsigned_length;
 }
 
 template <std::integral T>
-void integral_chars(char* buf, unsigned int length, T value, unsigned int base, bool upper) {
+void integral_chars(char* buf, unsigned int length, T value, const unsigned int base, bool upper) {
     if constexpr (std::is_signed_v<T>) if (value < 0) { *buf++ = '-'; --length; }
     unsigned_integral_chars(buf, length, unsigned_integral_abs(value), base, upper); 
 }

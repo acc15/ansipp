@@ -4,6 +4,7 @@
 
 #include <limits>
 #include <charconv>
+#include <algorithm>
 
 #include <ansipp/integral.hpp>
 
@@ -53,23 +54,105 @@ TEST_CASE("integral: unsigned_integral_length", "[integral]") {
     REQUIRE( unsigned_integral_length<unsigned int>(std::numeric_limits<unsigned int>::max(), 2) == std::numeric_limits<unsigned int>::digits);
 }
 
-template <std::unsigned_integral T>
-constexpr unsigned int unsigned_integral_length_simple(T value, unsigned int radix) {
+unsigned int unsigned_integral_length_simple(unsigned int value, unsigned int base) {
     unsigned int len = 1;
-    for (; value >= radix; value /= radix, ++len);
+    for (; value >= base; value /= base, ++len);
     return len;
 }
 
+unsigned int unsigned_integral_length_pow10_conditions(unsigned int v) {
+    // 4294967295
+    // 1000000000
+    // 100000000
+    // 10000000
+    // 1000000
+    // 100000
+    // 10000
+    // 1000
+    // 100
+    // 10
+    return v < 100000 
+        ? v < 1000      ? (v < 10 ? 1 : v < 100 ? 2 : 3) : (v < 10000 ? 4 : 5)
+        : v < 100000000 ? (v < 1000000 ? 6 : v < 10000000 ? 7 : 8) : (v < 1000000000 ? 9 : 10);
+}
+
+constexpr unsigned int pow10_table[] = {
+    10,
+    100,
+    1000,
+    10000,
+    100000,
+    1000000,
+    10000000,
+    100000000,
+    1000000000
+};
+
+unsigned int unsigned_integral_length_pow10_binary_search(unsigned int value) {
+    unsigned int l = 0, r = std::size(pow10_table), mid = std::size(pow10_table) >> 1;
+    for (; l < r; mid = (l + r) >> 1) {
+        if (value < pow10_table[mid]) r = mid; else l = mid + 1;
+    }
+    return mid + 1;
+}
+
+unsigned int unsigned_integral_length_pow10_std_binary_search(unsigned int value) {
+    constexpr unsigned int base = 10;
+    if (value < base) return 1;
+
+    const unsigned int* p = std::upper_bound(pow10_table, pow10_table + std::size(pow10_table), value);
+    return (p - pow10_table) + 1;
+}
+
+unsigned int unsigned_integral_length_pow10_loop(unsigned int value) {
+    for (unsigned int i = 0; i < std::size(pow10_table); ++i) {
+        if (value < pow10_table[i]) return i + 1;
+    }
+    return std::size(pow10_table) + 1;
+}
+
+TEST_CASE("integral: unsigned_integral_length benchmark methods", "[integral]") {
+    for (unsigned int i = 1; i <= 10; ++i) {
+        unsigned int v = cpow(10, i - 1);
+        REQUIRE(unsigned_integral_length(v, 10) == i);
+        REQUIRE(unsigned_integral_length_simple(v, 10) == i);
+        REQUIRE(unsigned_integral_length_pow10_conditions(v) == i);
+        REQUIRE(unsigned_integral_length_pow10_binary_search(v) == i);
+        REQUIRE(unsigned_integral_length_pow10_std_binary_search(v) == i);
+        REQUIRE(unsigned_integral_length_pow10_loop(v) == i);
+#ifdef _GLIBCXX_CHARCONV_H
+        REQUIRE(std::__detail::__to_chars_len(v, 10) == i);
+#endif
+    }
+}
+
 TEST_CASE("integral: unsigned_integral_length benchmark", "[integral][!benchmark]") {
-    unsigned int value = GENERATE(0, 10, 53344, std::numeric_limits<unsigned int>::max());
-    unsigned int base = 10;
+    const unsigned int base = 10;
+    const unsigned int value = GENERATE(0, 10, 53344, 7238943, std::numeric_limits<unsigned int>::max());
     DYNAMIC_SECTION("value = " << value) {
         BENCHMARK("unsigned_integral_length") {
-            return unsigned_integral_length<unsigned int>(value, base);
+            return unsigned_integral_length(value, base);
         };
         BENCHMARK("unsigned_integral_length_simple") {
-            return unsigned_integral_length_simple<unsigned int>(value, base);
+            return unsigned_integral_length_simple(value, base);
         };
+        BENCHMARK("unsigned_integral_length_pow10_conditions") {
+            return unsigned_integral_length_pow10_conditions(value);
+        };
+        BENCHMARK("unsigned_integral_length_pow10_binary_search") {
+            return unsigned_integral_length_pow10_binary_search(value);
+        };
+        BENCHMARK("unsigned_integral_length_pow10_std_binary_search") {
+            return unsigned_integral_length_pow10_std_binary_search(value);
+        };
+        BENCHMARK("unsigned_integral_length_pow10_loop") {
+            return unsigned_integral_length_pow10_loop(value);
+        };
+#ifdef _GLIBCXX_CHARCONV_H
+        BENCHMARK("unsigned_integral_length_stdlib") {
+            return std::__detail::__to_chars_len(value, base);
+        };
+#endif
     }
 }
 
@@ -133,13 +216,12 @@ TEST_CASE("integral: unsigned_integral_chars benchmark", "[integral][!benchmark]
 
     DYNAMIC_SECTION("base = " << base << ", value = " << value) {
         char buf[128];
+        unsigned int len = unsigned_integral_length(value, base);
         BENCHMARK("unsigned_integral_chars_single_loop") {
-            unsigned int len = unsigned_integral_length(value, base);
             unsigned_integral_chars_single_loop(buf, len, value, base, false);
             return std::string_view(buf, buf + len);
         };
         BENCHMARK("unsigned_integral_chars") {
-            unsigned int len = unsigned_integral_length(value, base);
             unsigned_integral_chars(buf, len, value, base, false);
             return std::string_view(buf, buf + len);
         };
