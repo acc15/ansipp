@@ -4,7 +4,6 @@
 #include <vector>
 #include <deque>
 #include <chrono>
-#include <format>
 #include <limits>
 
 #include <ansipp.hpp>
