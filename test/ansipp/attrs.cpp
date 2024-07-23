@@ -2,7 +2,11 @@
 #include <catch2/benchmark/catch_benchmark_all.hpp>
 
 #include <iostream>
-#include <format>
+#include <version>
+
+#if __has_include(<format>)
+#   include <format>
+#endif
 
 #include <ansipp/attrs.hpp>
 
@@ -13,9 +17,11 @@ TEST_CASE("attrs: format", "[attrs][!benchmark]") {
     BENCHMARK("impl") {
         return esc_str(attrs().fg(c));
     };
+#if __has_include(<format>)
     BENCHMARK("format") {
         return std::format("\33[{};{};{};{};{}m", 38, 5, c.r, c.g, c.b);
     };
+#endif
 }
 
 TEST_CASE("attrs: colors", "[attrs]") {

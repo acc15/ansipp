@@ -1,7 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/benchmark/catch_benchmark_all.hpp>
 
-#include <format>
+#if __has_include(<format>)
+#   include <format>
+#endif
 
 #include <ansipp/cursor.hpp>
 #include <ansipp/charbuf.hpp>
@@ -15,21 +17,21 @@ struct format_benchmark {
     static constexpr char expected_esc[] = "\33" "[10;5H";
     static constexpr std::size_t min_buf_size = std::size(expected_esc);
 
-    char snprintf_buf[min_buf_size];
-    char to_chars_buf[min_buf_size];
-    char format_buf[min_buf_size];
+    char buf[min_buf_size];
     std::string shared_str = std::string(min_buf_size, 0);
     charbuf shared_cb = charbuf(min_buf_size);
     std::stringstream shared_ss;
 
+#if __has_include(<format>)
     std::string std_format() { 
         return std::format("{}{};{}H", csi, y, x); 
     }
 
     std::string std_format_shared() { 
-        char* end = std::format_to(format_buf, "{}{};{}H", csi, y, x); 
-        return std::string(format_buf, end);
+        char* end = std::format_to(buf, "{}{};{}H", csi, y, x); 
+        return std::string(buf, end);
     }
+#endif
 
     std::string std_string_append() { 
         return std::string(csi)
@@ -56,8 +58,8 @@ struct format_benchmark {
     }
 
     std::string snprintf_shared() {
-        int len = snprintf(snprintf_buf, sizeof(snprintf_buf), "%s%u;%uH", csi.c_str(), y, x);
-        return std::string(snprintf_buf, len);
+        int len = snprintf(buf, sizeof(buf), "%s%u;%uH", csi.c_str(), y, x);
+        return std::string(buf, len);
     }
 
     std::string charbuf_alloc() {
@@ -72,13 +74,13 @@ struct format_benchmark {
     }
 
     std::string std_to_chars() {
-        char* ptr = to_chars_buf;
+        char* ptr = buf;
         ptr += csi.copy(ptr, csi.size());
-        ptr = std::to_chars(ptr, std::end(to_chars_buf), y).ptr;
+        ptr = std::to_chars(ptr, std::end(buf), y).ptr;
         *ptr++ = ';';
-        ptr = std::to_chars(ptr, std::end(to_chars_buf), x).ptr;
+        ptr = std::to_chars(ptr, std::end(buf), x).ptr;
         *ptr++ = 'H';
-        return std::string(to_chars_buf, ptr);
+        return std::string(buf, ptr);
     }
 
     std::string current_impl() {
