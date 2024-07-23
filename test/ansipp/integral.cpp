@@ -97,9 +97,6 @@ unsigned int unsigned_integral_length_pow10_binary_search(unsigned int value) {
 }
 
 unsigned int unsigned_integral_length_pow10_std_binary_search(unsigned int value) {
-    constexpr unsigned int base = 10;
-    if (value < base) return 1;
-
     const unsigned int* p = std::upper_bound(pow10_table, pow10_table + std::size(pow10_table), value);
     return (p - pow10_table) + 1;
 }
