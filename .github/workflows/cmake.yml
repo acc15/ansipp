@@ -30,8 +30,8 @@ jobs:
         submodules: true
 
     - name: vcpkg
-      run: vcpkg install
-
+      uses: lukka/run-vcpkg@v11
+      
     - name: configure
       run: |
         cmake -B ${{github.workspace}}/build \
