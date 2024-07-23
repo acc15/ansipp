@@ -73,7 +73,13 @@ public:
     std::string str() const  { return std::string(b, p); }
     
     charbuf& put(const void* data, std::size_t size) { std::memcpy(reserve(size), data, size); return *this; }
-    charbuf& put(char ch, std::size_t count = 1) { std::memset(reserve(count), ch, count); return *this; }
+    charbuf& put(char ch) { 
+        if (p >= e) [[unlikely]] resize(e - b + 1);
+        *p++ = ch;
+        return *this;
+    }
+    
+    charbuf& put(char ch, std::size_t count) { std::memset(reserve(count), ch, count); return *this; }
 
     template <typename T>
     charbuf& operator<<(const T& v) && { return *this << v; }
