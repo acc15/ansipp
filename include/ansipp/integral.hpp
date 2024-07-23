@@ -10,9 +10,13 @@ constexpr char to_digit(unsigned int v, bool upper = false) {
     return static_cast<char>((v < 10 ? '0' : upper ? 'A' : 'a') + v); 
 }
 
-constexpr unsigned int cpow(unsigned int base, unsigned int pow) {
-    unsigned int result = 1;
-    for (; pow > 0;) {
+template <typename T>
+constexpr T cpow(T base, unsigned int pow) {
+    if (base == 1 || pow == 0) return 1;
+    if (base == 0) return 0;
+    
+    T result = 1;
+    while (pow > 0) {
         if (pow % 2 == 0) { 
             pow /= 2;
             base *= base; 
@@ -98,10 +102,8 @@ void unsigned_integral_chars(char* buf, unsigned int len, T value, const unsigne
                 unsigned_integral_lookup_chars<T, 16, 2, false>(buf, len, value); 
             }
             return;
-        default: 
-            for (char* ptr = buf + len; ptr != buf; value /= base) *--ptr = to_digit(value % base, upper); 
-            return;
     }
+    for (char* ptr = buf + len; ptr != buf; value /= base) *--ptr = to_digit(value % base, upper); 
 }
 
 template <std::integral T>
