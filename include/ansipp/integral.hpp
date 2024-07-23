@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <concepts>
 #include <cstring>
+#include <limits>
 
 namespace ansipp {
 
