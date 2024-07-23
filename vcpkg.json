@@ -1,6 +1,7 @@
 {
-    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-    "dependencies": [
-      "catch2"
-    ]
-  }
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "dependencies": [
+    "catch2"
+  ],
+  "builtin-baseline": "072bc1790b19de5f01effbfd07aef2a2512ea1db"
+}
