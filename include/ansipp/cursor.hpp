@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <ostream>
 #include <ansipp/vec.hpp>
 #include <ansipp/esc.hpp>
 
