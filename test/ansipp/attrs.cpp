@@ -2,6 +2,8 @@
 #include <catch2/benchmark/catch_benchmark_all.hpp>
 
 #include <iostream>
+#include <format>
+
 #include <ansipp/attrs.hpp>
 
 using namespace ansipp;
