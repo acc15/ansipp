@@ -21,12 +21,14 @@ void unsigned_integral_abs_with_limits() {
 }
 
 TEST_CASE("integral: to_digit", "[integral]") {
-    const char chars[] = "0123456789abcdefghijklmnopqrstuv";
-    for (unsigned int i = 0; i < std::size(chars); ++i) {
-        REQUIRE( to_digit(i) == chars[i] );
+    std::string_view chars = "0123456789abcdefghijklmnopqrstuvwxyz";
+    for (unsigned int i = 0; i < chars.size(); ++i) {
+        char d = to_digit(i);
+        char c = chars[i];
+        INFO("i = " << i << "; d = " << d << "; c = " << c);
+        REQUIRE( d == c );
     }
 }
-
 
 TEST_CASE("integral: cpow", "[integral]") {
     REQUIRE( cpow(3, 3) == 27 );
