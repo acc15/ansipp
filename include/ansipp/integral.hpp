@@ -32,26 +32,24 @@ constexpr T cpow(T base, unsigned int pow) {
 template <unsigned int base, unsigned int digits, bool upper = false>
 struct integral_lookup {
     constexpr static unsigned int pow = cpow(base, digits);
-    char chars[pow][digits];
-    constexpr integral_lookup() {
-        for (unsigned int v = 0; v < pow; ++v) {
-            unsigned int n = v;
-            for (unsigned int c = digits; c-- > 0; n /= base) {
-                chars[v][c] = to_digit(n % base, upper);
+    struct table {
+        char chars[pow][digits];
+        constexpr table() {
+            for (unsigned int v = 0; v < pow; ++v) {
+                unsigned int n = v;
+                for (unsigned int c = digits; c-- > 0; n /= base) {
+                    chars[v][c] = to_digit(n % base, upper);
+                }
             }
         }
-    }
-
-    static const integral_lookup instance;
+    };
+    constexpr static table instance {};
 };
-
-template <unsigned int base, unsigned int digits, bool upper>
-constexpr integral_lookup<base, digits, upper> integral_lookup<base, digits, upper>::instance;
 
 template <std::unsigned_integral T, const unsigned int base, const unsigned int digits, const bool upper = false>
 void unsigned_integral_lookup_chars(char* buf, unsigned int len, T value) {
     using lookup = integral_lookup<base, digits, upper>;
-    const lookup& l = lookup::instance;
+    const typename lookup::table& l = lookup::instance;
     for (; len >= digits; value /= lookup::pow) {
         len -= digits;
         std::memcpy(buf + len, l.chars[value % lookup::pow], digits);

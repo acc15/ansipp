@@ -38,8 +38,9 @@ TEST_CASE("integral: cpow", "[integral]") {
 }
 
 TEST_CASE("integral: integral_lookup", "[integral]") {
-    constexpr integral_lookup<2, 4> t;
-    REQUIRE( t.pow == 16 );
+    using lookup = integral_lookup<2, 4>;
+    const lookup::table& t = lookup::instance;
+    REQUIRE( lookup::pow == 16 );
 
     std::string_view v0( t.chars[0], t.chars[1] );
     std::string_view v9( t.chars[9], t.chars[10] );
