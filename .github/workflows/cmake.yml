@@ -34,7 +34,7 @@ jobs:
     - name: configure
       run: |
         cmake -B ${{github.workspace}}/build \
-          --toolchain "$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+          -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
           -DCMAKE_BUILD_TYPE=Release
 
     - name: build
