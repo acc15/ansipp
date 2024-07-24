@@ -4,7 +4,7 @@
 #include <iostream>
 #include <version>
 
-#if __has_include(<format>)
+#if defined(__cpp_lib_format_ranges) || defined(__cpp_lib_format)
 #   include <format>
 #endif
 
@@ -17,7 +17,7 @@ TEST_CASE("attrs: format", "[attrs][!benchmark]") {
     BENCHMARK("impl") {
         return esc_str(attrs().fg(c));
     };
-#if __has_include(<format>)
+#if defined(__cpp_lib_format_ranges) || defined(__cpp_lib_format)
     BENCHMARK("format") {
         return std::format("\33[{};{};{};{};{}m", 38, 5, c.r, c.g, c.b);
     };

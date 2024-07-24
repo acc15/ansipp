@@ -1,9 +1,12 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/benchmark/catch_benchmark_all.hpp>
 
-#if __has_include(<format>)
+#include <version>
+
+#if defined(__cpp_lib_format_ranges) || defined(__cpp_lib_format)
 #   include <format>
 #endif
+
 #include <string>
 #include <sstream>
 #include <charconv>
@@ -99,7 +102,7 @@ TEST_CASE("format: benchmark", "[format][!benchmark]") {
     
     format_benchmark fb;
     
-#if __has_include(<format>)
+#if defined(__cpp_lib_format_ranges) || defined(__cpp_lib_format)
     REQUIRE( fb.std_format() == fb.expected_esc );
     REQUIRE( fb.std_format_shared() == fb.expected_esc );
 #endif
@@ -113,7 +116,7 @@ TEST_CASE("format: benchmark", "[format][!benchmark]") {
     REQUIRE( fb.charbuf_shared() == fb.expected_esc );
     REQUIRE( fb.current_impl() == fb.expected_esc ); 
 
-#if __has_include(<format>)
+#if defined(__cpp_lib_format_ranges) || defined(__cpp_lib_format)
     BENCHMARK("std_format") { return fb.std_format(); }; 
     BENCHMARK("std_format_shared") { return fb.std_format_shared(); }; 
 #endif

@@ -2,10 +2,6 @@
     "cSpell.words": [
         "ansipp"
     ],
-    "cmake.debugConfig": {
-        "args": [],
-        // "externalConsole": true
-    },
     "files.associations": {
         "*.cppm": "cpp",
         "*.ccm": "cpp",
