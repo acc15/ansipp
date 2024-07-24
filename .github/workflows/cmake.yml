@@ -32,10 +32,7 @@ jobs:
       uses: lukka/run-vcpkg@v11
 
     - name: configure
-      run: |
-        cmake -B ${{github.workspace}}/build \
-          -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
-          -DCMAKE_BUILD_TYPE=Release
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release
 
     - name: build
       run: cmake --build ${{github.workspace}}/build
