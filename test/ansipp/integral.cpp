@@ -20,6 +20,14 @@ void unsigned_integral_abs_with_limits() {
     }
 }
 
+TEST_CASE("integral: unsigned comparisons", "[integral]") {
+    unsigned char v = 255;
+
+    unsigned int ui = 256;
+    REQUIRE( v < ui );
+    REQUIRE( ui >= v );
+}
+
 TEST_CASE("integral: to_digit", "[integral]") {
     std::string_view chars = "0123456789abcdefghijklmnopqrstuvwxyz";
     for (unsigned int i = 0; i < chars.size(); ++i) {
@@ -59,6 +67,7 @@ TEST_CASE("integral: unsigned_integral_abs", "[integral]") {
 }
 
 TEST_CASE("integral: unsigned_integral_length", "[integral]") {
+    REQUIRE( unsigned_integral_length<unsigned char>(255, 16) == 2 );
     REQUIRE( unsigned_integral_length<unsigned int>(0, 10) == 1 );
     REQUIRE( unsigned_integral_length<unsigned int>(123, 10) == 3 );
     REQUIRE( unsigned_integral_length<unsigned int>(std::numeric_limits<unsigned int>::max(), 10) == 10 );
@@ -109,7 +118,7 @@ unsigned int unsigned_integral_length_pow10_binary_search(unsigned int value) {
 
 unsigned int unsigned_integral_length_pow10_std_binary_search(unsigned int value) {
     const unsigned int* p = std::upper_bound(pow10_table, pow10_table + std::size(pow10_table), value);
-    return (p - pow10_table) + 1;
+    return static_cast<unsigned int>(p - pow10_table) + 1;
 }
 
 unsigned int unsigned_integral_length_pow10_loop(unsigned int value) {

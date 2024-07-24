@@ -50,7 +50,7 @@ template <std::unsigned_integral T, const unsigned int base, const unsigned int 
 void unsigned_integral_lookup_chars(char* buf, unsigned int len, T value) {
     using lookup = integral_lookup<base, digits, upper>;
     const typename lookup::table& l = lookup::instance;
-    for (; len >= digits; value /= lookup::pow) {
+    for (; len >= digits; value = static_cast<T>(value / lookup::pow)) {
         len -= digits;
         std::memcpy(buf + len, l.chars[value % lookup::pow], digits);
     }
@@ -78,20 +78,18 @@ constexpr std::make_unsigned_t<T> unsigned_integral_abs(T v) {
 template <std::unsigned_integral T>
 constexpr unsigned int unsigned_integral_length(T value, const unsigned int base) {
     unsigned int len = 1;
-    unsigned int base2 = base * base;
-    if constexpr (std::numeric_limits<T>::digits > 8) {
-        unsigned int base4 = base2 * base2;
-        for (; value >= base4; value /= base4) len += 4;
-    }
-    for (; value >= base2; value /= base2) len += 2;
-    for (; value >= base; value /= base) ++len;
+    const unsigned int base2 = base * base;
+    const unsigned int base4 = base2 * base2;
+    for (; value >= base4; value = static_cast<T>(value / base4)) len += 4;
+    for (; value >= base2; value = static_cast<T>(value / base2)) len += 2;
+    for (; value >= base; value = static_cast<T>(value / base)) ++len;
     return len;
 }
 
 template <std::unsigned_integral T>
 void unsigned_integral_chars(char* buf, unsigned int len, T value, const unsigned int base, bool upper) {
     // lookup tables requires ~1,5kb of memory, but performance is almost the same for small numbers (~<1000)
-#ifdef ANSIPP_FAST_INTEGRAL
+#ifndef ANSIPP_SLOW_INTEGRAL
     switch (base) {
         [[likely]] case 10: unsigned_integral_lookup_chars<T, 10, 2>(buf, len, value); return;
         case  2: unsigned_integral_lookup_chars<T, 2, 4>(buf, len, value); return;
@@ -105,7 +103,7 @@ void unsigned_integral_chars(char* buf, unsigned int len, T value, const unsigne
             return;
     }
 #endif
-    for (char* ptr = buf + len; ptr != buf; value /= base) *--ptr = to_digit(value % base, upper); 
+    for (char* ptr = buf + len; ptr != buf; value = static_cast<T>(value / base)) *--ptr = to_digit(value % base, upper); 
 }
 
 template <std::integral T>
