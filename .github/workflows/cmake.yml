@@ -20,10 +20,7 @@ jobs:
       uses: lukka/get-cmake@latest
     - name: vcpkg
       uses: lukka/run-vcpkg@v11
-    - name: configure
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release
     - name: build
-      run: cmake --build ${{github.workspace}}/build
-    - name: test
-      working-directory: ${{github.workspace}}/build
-      run: ctest
+      uses: lukka/run-cmake@v10
+      with:  
+        workflowPreset: ci
