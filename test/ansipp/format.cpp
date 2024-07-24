@@ -28,7 +28,7 @@ struct format_benchmark {
     charbuf shared_cb = charbuf(min_buf_size);
     std::stringstream shared_ss;
 
-#if __has_include(<format>)
+#if defined(__cpp_lib_format_ranges) || defined(__cpp_lib_format)
     std::string std_format() { 
         return std::format("{}{};{}H", csi, y, x); 
     }
