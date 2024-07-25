@@ -8,7 +8,8 @@
 namespace ansipp {
 
 constexpr char to_digit(unsigned int v, bool upper = false) { 
-    return static_cast<char>(v < 10 ? ('0' + v) : (upper ? 'A' : 'a') + (v - 10)); 
+    constexpr char ul = 'A' - 10, ll = 'a' - 10;
+    return static_cast<char>((v < 10 ? '0' : upper ? ul : ll) + v); 
 }
 
 template <typename T>
