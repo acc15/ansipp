@@ -9,9 +9,9 @@ It doesn't store terminal screen in memory.
 
 It works on 
 
-* Linux (ArchLinux)
-* MacOS (Sonoma) 14.5 
-* Windows 11
+* https://github.com/acc15/ansipp/actions/workflows/linux.yml/badge.svg
+* https://github.com/acc15/ansipp/actions/workflows/macos.yml/badge.svg
+* https://github.com/acc15/ansipp/actions/workflows/windows.yml/badge.svg 
 
 ## Hello world
 
@@ -32,28 +32,32 @@ Code:
 
 int main() {
     using namespace ansipp;
-    if (std::error_code ec; init(ec, {.hide_cursor=true}), ec) {
+    if (std::error_code ec; init(ec), ec) {
         std::cerr << "can't init: " << ec.message() << std::endl;
         return EXIT_FAILURE;
     }
 
-    terminal_stream s;
-    s << "hello " << attrs().on(BOLD).fg(RED) << "RED BOLD" << attrs() << " text\n";
-    s << std::flush;
-
+    charbuf out;
+    out << "hello " << attrs().on(BOLD).fg(RED) << "RED BOLD" << attrs() << " text\n";
+    terminal_write(out.flush());
     return EXIT_SUCCESS;
 }
 ```
 
 ## Features
 
-* No extra dependencies (only `libc` and `stdlib++`)
 * CMake support
+* No extra dependencies (only `libc` and `libc++`)
 * Colors (including 8bit and RGB)
-* A lot of helpful ANSI escapes 
+* A lot of helpful ANSI escapes
+* Mouse support
 * Fast terminal I/O routines (direct sys calls, no stdio) with non-blocking reading support
-* Terminal stream to buffer all output to send it in one-shot directly to OS
+* `charbuf` for fast escape buffering and printing (it's like `std::stringstream`, but 10x faster)
 * Automatic restore of terminal modes on `exit`, `SIGINT` (Ctrl+C), `SIGTERM` (excluding Windows)
+
+## TODO
+
+* Input escapes parsing
 
 ## Demos
 
