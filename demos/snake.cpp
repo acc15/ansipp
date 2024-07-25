@@ -190,9 +190,9 @@ public:
     void draw_border() {
         out << attrs().bg(WHITE).fg(BLACK);
 
-        std::size_t top_offset = out.offset();
+        std::size_t top_offset = out.size();
         out << " press q to exit, <arrows> to move, <space> to pause/unpause";
-        out.put(' ', border_size.x - (out.offset() - top_offset));
+        out.put(' ', border_size.x - (out.size() - top_offset));
 
         out << attrs() << '\n';
 
@@ -203,7 +203,7 @@ public:
 
         out << attrs().bg(WHITE).fg(BLACK);
         
-        std::size_t bottom_offset = out.offset();
+        std::size_t bottom_offset = out.size();
         out /*<< " input=" << input_ns
             << " process=" << process_ns
             << " draw=" << draw_ns
@@ -214,7 +214,7 @@ public:
             << " game_over=" << static_cast<unsigned int>(game_over)
             << " apples=" << apples.size()
             << " length=" << length;
-        out.put(' ', border_size.x - (out.offset() - bottom_offset));
+        out.put(' ', border_size.x - (out.size() - bottom_offset));
         
         out << attrs() << '\n' << move(CURSOR_UP, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 2);
     }

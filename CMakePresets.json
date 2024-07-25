@@ -36,6 +36,14 @@
             }
         },
         {
+            "name": "reldebug",
+            "inherits": "base",
+            "description": "Release with debug info preset, mostly used in VSCode",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
             "name": "multi",
             "inherits": "base",
             "generator": "Ninja Multi-Config",

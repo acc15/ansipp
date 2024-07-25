@@ -66,10 +66,10 @@ public:
     const char* end() const { return e; }
     char* data() { return b; }
     const char* data() const { return b; }
-    std::size_t size() const { return e - b; }
-    std::size_t offset() const { return p - b; }
+    std::size_t capacity() const { return e - b; }
+    std::size_t size() const { return p - b; }
     std::string_view view() const { return std::string_view(b, p); }
-    std::string_view flush() { std::string_view r(b, p); p = b; return r; }
+    std::string_view flush() { char* pe = p; p = b; return std::string_view(b, pe); }
     std::string str() const  { return std::string(b, p); }
     
     charbuf& put(const void* data, std::size_t size) { std::memcpy(reserve(size), data, size); return *this; }
