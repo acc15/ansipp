@@ -9,9 +9,9 @@ It doesn't store terminal screen in memory.
 
 It builds and works on 
 
-![Linux](https://github.com/acc15/ansipp/actions/workflows/linux.yml/badge.svg)
-![MacOS](https://github.com/acc15/ansipp/actions/workflows/macos.yml/badge.svg)
-![Windows](https://github.com/acc15/ansipp/actions/workflows/windows.yml/badge.svg)
+[![Linux](https://github.com/acc15/ansipp/actions/workflows/linux.yml/badge.svg)](https://github.com/acc15/ansipp/actions/workflows/linux.yml)
+[![MacOS](https://github.com/acc15/ansipp/actions/workflows/macos.yml/badge.svg)](https://github.com/acc15/ansipp/actions/workflows/macos.yml)
+[![Windows](https://github.com/acc15/ansipp/actions/workflows/windows.yml/badge.svg)](https://github.com/acc15/ansipp/actions/workflows/windows.yml)
 
 ## Hello world
 
@@ -32,12 +32,12 @@ Code:
 
 int main() {
     using namespace ansipp;
-    charbuf out(4096);
     if (std::error_code ec; init(ec), ec) {
-        out << "can't init: " << ec.message() << '\n';
+        std::cerr << "can't init: " << ec.message() << std::endl;
         return EXIT_FAILURE;
     }
 
+    charbuf out(4096);
     out << "hello " << attrs().on(BOLD).fg(RED) << "RED BOLD" << attrs() << " text\n";
     terminal_write(out.flush());
     return EXIT_SUCCESS;
