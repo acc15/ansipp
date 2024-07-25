@@ -119,5 +119,9 @@
         "xutility": "cpp",
         "__tree": "cpp",
         "version": "cpp"
-    }
+    },
+    "lldb.displayFormat": "auto",
+    "lldb.showDisassembly": "always",
+    "lldb.dereferencePointers": true,
+    "lldb.consoleMode": "commands"
 }
