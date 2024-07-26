@@ -79,10 +79,7 @@ struct dead_pixels {
 };
 
 int main() {
-    if (std::error_code ec; init(ec, { .hide_cursor = true }), ec) {
-        std::cerr << "can't init: " << ec.message() << std::endl;
-        return EXIT_FAILURE;
-    }
+    init_or_exit({ .hide_cursor = true });
     dead_pixels().loop();
     return 0;
 }

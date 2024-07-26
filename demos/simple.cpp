@@ -12,10 +12,7 @@ void gradient(const rgb& a, const rgb& b, size_t width) {
 
 int main() {
 
-    if (std::error_code ec; init(ec, { .hide_cursor = true }), ec) {
-        std::cerr << "can't init: " << ec.message() << std::endl;
-        return EXIT_FAILURE;
-    }
+    init_or_exit({ .hide_cursor = true });
 
     std::cout << attrs().on(UNDERLINE).fg(WHITE) << "hello" << attrs() << std::endl;
     std::cout << attrs().fg(RED) << "i'm red" << attrs() << std::endl;

@@ -56,6 +56,7 @@ if(BUILD_DEMOS)
     add_demo(readkey)
     add_demo(nonblock)
     add_demo(dead_pixels)
+    add_demo(logo)
 endif()
 
 option(BUILD_NCURSES_DEMOS "Build NCURSES demo programs (for comparison)" OFF)

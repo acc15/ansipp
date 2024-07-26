@@ -9,18 +9,31 @@
 
 namespace ansipp {
 
-std::streamsize terminal_write(const void* buf, std::size_t sz) {
+std::streamsize fd_write(bool err, const void* buf, std::size_t sz) {
     if (sz == 0) return 0; // fast return to avoid syscall
 #ifdef _WIN32
-    HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+    constexpr DWORD fds[] = { STD_OUTPUT_HANDLE, STD_ERROR_HANDLE }; 
+    HANDLE out = GetStdHandle(fds[err]);
     if (out == INVALID_HANDLE_VALUE) return -1;
     
     DWORD result;
     return WriteFile(out, buf, static_cast<DWORD>(sz), &result, nullptr) ? result : -1;
 #else
-    return write(STDOUT_FILENO, buf, sz);
+    constexpr int fds[] = { STDOUT_FILENO, STDERR_FILENO }; 
+    return write(fds[err], buf, sz);
 #endif
 }
+
+std::streamsize terminal_write(const void* buf, std::size_t sz) {
+    return fd_write(false, buf, sz);
+}
+
+std::streamsize terminal_write(std::string_view sw) {
+    return terminal_write(sw.data(), sw.size());
+}
+
+std::streamsize stderr_write(const void* buf, std::size_t sz) { return fd_write(true, buf, sz); }
+std::streamsize stderr_write(std::string_view sw) { return stderr_write(sw.data(), sw.size()); }
 
 std::streamsize terminal_read(void* buf, std::size_t sz) {
 #ifdef _WIN32
@@ -32,20 +45,6 @@ std::streamsize terminal_read(void* buf, std::size_t sz) {
 #else
     return read(STDIN_FILENO, buf, sz);
 #endif
-}
-
-std::streamsize terminal_read(void* buf, std::size_t sz, int timeout) {
-    const int v = timeout < 0 ? 1 : terminal_read_ready(timeout);
-    return v > 0 ? terminal_read(buf, sz) : v;
-}
-
-std::streamsize terminal_write(std::string_view sw) {
-    return terminal_write(sw.data(), sw.size());
-}
-
-int terminal_getch(int timeout) {
-    char v[1];
-    return terminal_read(v, 1, timeout) == 1 ? v[0] : -1;
 }
 
 int terminal_read_ready(int timeout) {
@@ -93,6 +92,16 @@ int terminal_read_ready(int timeout) {
     pollfd stdin_pollfd = { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 };
     return poll(&stdin_pollfd, 1, timeout);
 #endif
+}
+
+std::streamsize terminal_read(void* buf, std::size_t sz, int timeout) {
+    const int v = timeout < 0 ? 1 : terminal_read_ready(timeout);
+    return v > 0 ? terminal_read(buf, sz) : v;
+}
+
+int terminal_getch(int timeout) {
+    char v;
+    return terminal_read(&v, 1, timeout) == 1 ? v : -1;
 }
 
 }

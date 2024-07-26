@@ -165,4 +165,11 @@ void init(std::error_code& ec, const config& cfg) {
     if (init_restorable(ec, cfg), ec) restore();
 }
 
+void init_or_exit(const config &cfg) {
+    if (std::error_code ec; init(ec, cfg), ec) { 
+        stderr_write((charbuf() << "can't init: " << ec.message()).view());
+        std::exit(EXIT_FAILURE);
+    }
+}
+
 }
