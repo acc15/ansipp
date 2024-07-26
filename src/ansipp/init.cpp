@@ -73,12 +73,11 @@ void configure_mode(std::error_code& ec, const config& cfg) {
     DWORD in_modes;
     if (!GetConsoleMode(in, &in_modes)) { ec = last_error(); return; }
     if (!__ansipp_restore.in_modes.store(in_modes)) { ec = ansipp_error::already_initialized; return; }
-    if (cfg.disable_input_echo) {
-        in_modes = 0;
-    }
-    if (!cfg.disable_input_signal) {
-        in_modes |= ENABLE_PROCESSED_INPUT;
-    }
+    if (cfg.disable_input_echo) in_modes &= ~(
+        ENABLE_ECHO_INPUT | ENABLE_INSERT_MODE | ENABLE_LINE_INPUT | ENABLE_QUICK_EDIT_MODE);
+    if (cfg.disable_input_signal) in_modes &= ~ENABLE_PROCESSED_INPUT;
+    // mouse input can be enabled back again with escape sequence in portable manner
+    in_modes &= ~(ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT);
     in_modes |= ENABLE_VIRTUAL_TERMINAL_INPUT;
     if (!SetConsoleMode(in, in_modes)) { ec = last_error(); return; }
     
