@@ -180,7 +180,7 @@ TEST_CASE("integral: unsigned_integral_length benchmark", "[integral][!benchmark
         };
 #ifdef _GLIBCXX_CHARCONV_H
         BENCHMARK("glibcxx") {
-            return std::__detail::__to_chars_len(info.value, base);
+            return std::__detail::__to_chars_len(value, base);
         };
 #endif
 #ifdef _LIBCPP___CHARCONV_TO_CHARS_INTEGRAL_H
