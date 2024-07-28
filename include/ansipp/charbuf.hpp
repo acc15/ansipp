@@ -6,6 +6,7 @@
 #include <new> // bad_alloc
 #include <string>
 #include <string_view>
+#include <charconv>
 
 #include <ansipp/integral.hpp>
 
@@ -22,6 +23,28 @@ struct integral_format {
         value(value), base(base), upper(upper), width(width) {}
 };
 
+template <typename T>
+struct floating_format {
+    T value;
+    std::chars_format format;
+    int precision;
+
+    floating_format(T value, std::chars_format format = std::chars_format::general, int precision = -1):
+        value(value), format(format), precision(precision) {}
+};
+
+/**
+ * Simple and fast mix of `std::string` and `std::stringstream`.
+ * 
+ * Why not `std::vector<char>`?
+ * - Not uses `realloc` which sometimes can be faster than (`operator new[]`, `memory copy`, `operator delete[](old)`).
+ * 
+ * Why not `std::string`? 
+ * - Same as `std::vector<char>`
+ * - They are required now to zero memory when shrinking (`resize(0)` will result in redundant `memset` or similar loop) 
+ *  for correct `.c_str()` implementation ()
+ * - Some implementations may place '\0' on `append` instead of memset above - also redundant overhead
+ */
 class charbuf {
     
     static constexpr std::size_t min_alloc_sz = 32;
@@ -30,13 +53,16 @@ class charbuf {
     char* e;
     char* p;
 
-    void resize(std::size_t ns) {
-        ns = ns < min_alloc_sz ? min_alloc_sz : std::bit_ceil(ns);
-        char* nb = static_cast<char*>(std::realloc(b, ns));
+    void resize_pow2(std::size_t sz) {
+        char* nb = static_cast<char*>(std::realloc(b, sz));
         if (nb == nullptr) [[unlikely]] throw std::bad_alloc();
         p = nb + (p - b);
         b = nb;
-        e = b + ns;
+        e = b + sz;
+    }
+
+    void resize(std::size_t sz) {
+        resize_pow2(std::max(min_alloc_sz, std::bit_ceil(sz)));
     }
 
 public:
@@ -45,11 +71,16 @@ public:
     charbuf(charbuf&& mv): b(mv.b), e(mv.e), p(mv.p) { mv.b = mv.e = mv.p = nullptr; }
     ~charbuf() { std::free(b); }
 
+    void require(std::size_t size) {
+        char* np = p + size;
+        if (np > e) [[unlikely]] resize(np - b);
+    }
+
     char* reserve(std::size_t size) {
-        if (char* np = p + size; np > e) [[unlikely]] resize(np - b);
-        char* buf = p;
+        require(size);
+        char* r = p;
         p += size;
-        return buf;
+        return r;
     }
 
     charbuf& operator=(charbuf&& mv) {
@@ -70,15 +101,16 @@ public:
     std::size_t size() const { return p - b; }
     std::string_view view() const { return std::string_view(b, p); }
     std::string_view flush() { char* pe = p; p = b; return std::string_view(b, pe); }
-    std::string str() const  { return std::string(b, p); }
+    std::string str() const { return std::string(b, p); }
     
-    charbuf& put(const void* data, std::size_t size) { std::memcpy(reserve(size), data, size); return *this; }
-    charbuf& put(char ch) { 
+    // compatibility with std::back_inserter
+    void push_back(char ch) { 
         if (p >= e) [[unlikely]] resize(e - b + 1);
         *p++ = ch;
-        return *this;
     }
-    
+
+    charbuf& put(const void* data, std::size_t size) { std::memcpy(reserve(size), data, size); return *this; }
+    charbuf& put(char ch) { push_back(ch); return *this; }
     charbuf& put(char ch, std::size_t count) { std::memset(reserve(count), ch, count); return *this; }
 
     template <typename T>
@@ -101,6 +133,27 @@ public:
         unsigned int w = integral_length(v, 10);
         integral_chars(reserve(w), w, v, 10, false);
         return *this;
+    }
+    
+    template <std::floating_point T>
+    charbuf& operator<<(const floating_format<T>& v) {
+        require(1);
+        for (;;) {
+            const std::to_chars_result r = v.precision < 0 
+                ? std::to_chars(p, e, v.value, v.format)
+                : std::to_chars(p, e, v.value, v.format, v.precision);
+            if (r.ec != std::errc::value_too_large) {
+                p = r.ptr;
+                break;
+            }
+            resize_pow2((e - b) * 2);
+        }
+        return *this;
+    }
+
+    template <std::floating_point T>
+    charbuf& operator<<(T v) {
+        return *this << floating_format(v);
     }
 
 };

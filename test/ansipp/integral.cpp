@@ -249,16 +249,23 @@ TEST_CASE("integral: unsigned_integral_chars benchmark", "[integral][!benchmark]
     const auto [pow, value] = GENERATE_COPY(base_gen<type>(base));
     DYNAMIC_SECTION("xlabel=# of digits;xtick=1;x=" << pow + 1 << ";base=" << base << ";value=" << value) {
         char buf[128];
-        unsigned int len = unsigned_integral_length(value, base);
+        BENCHMARK("current") {
+            unsigned int len = unsigned_integral_length(value, base);
+            unsigned_integral_chars(buf, len, value, base, false);
+            return std::string_view(buf, buf + len);
+        };
         BENCHMARK("chars_digit_str") {
+            unsigned int len = unsigned_integral_length(value, base);
             unsigned_integral_chars_digit_str(buf, len, value, base);
             return std::string_view(buf, buf + len);
         };
         BENCHMARK("chars_to_digit") {
+            unsigned int len = unsigned_integral_length(value, base);
             unsigned_integral_chars_to_digit(buf, len, value, base, false);
             return std::string_view(buf, buf + len);
         };
         BENCHMARK("lookup_chars") {
+            unsigned int len = unsigned_integral_length(value, base);
             unsigned_integral_lookup_chars<type, base, 2>(buf, len, value);
             return std::string_view(buf, buf + len);
         };
