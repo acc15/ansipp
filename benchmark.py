@@ -4,29 +4,28 @@ import argparse
 import pathlib
 import re
 import subprocess
-import sys
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass, field
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as plticker
-
-# import numpy as np
 
 build_dir = pathlib.Path("build/benchmark")
 test_executable = build_dir / "ansipp_test"
 
 def build():
-    return bool(subprocess.run(["cmake", "--workflow", "--preset benchmark"]))
+    subprocess.run(["cmake", "--workflow", "--preset benchmark"]).check_returncode()
+
+def run_benchmark(name: str, report: pathlib.Path):
+    subprocess.run([
+        test_executable, name, 
+        "--reporter", "xml", 
+        "--benchmark-samples", "40",
+        "--out", str(report)
+    ]).check_returncode()
 
 def get_report_file(name: str) -> pathlib.Path:
     return build_dir / "reports" / (re.sub("[: ]+", "_", name) + ".xml")
-
-def run_benchmark(name: str, report: pathlib.Path):
-    if not build():
-        return False
-    report.parent.mkdir(parents=True, exist_ok=True)
-    with open(report, "w") as out:
-        return bool(subprocess.run([test_executable, name, "--reporter", "xml", "--benchmark-samples", "40"], stdout=out))
 
 def parse_report_params(params: str) -> dict[str, str]:
     d = {}
@@ -35,26 +34,38 @@ def parse_report_params(params: str) -> dict[str, str]:
         d[pp[0]] = pp[1]
     return d
 
-def parse_report(path: pathlib.Path):
-    result: dict[str, tuple[list[float], list[float]]] = {}
-    xml = ET.parse(path)
-    for section in xml.findall("TestCase/Section"):
+@dataclass
+class Report:
+    xlabel: str = ""
+    xtick: float | None = None
+    data: dict[str, tuple[list[float], list[float]]] = field(default_factory=dict)
+
+def parse_report(path: pathlib.Path) -> Report:
+    result = Report()
+    for section in ET.parse(path).findall("TestCase/Section"):
         section_name = section.attrib["name"]
         params = parse_report_params(section_name)
+        if "xlabel" in params: 
+            result.xlabel = params["xlabel"]
+        if "xtick" in params: 
+            result.xtick = float(params["xtick"])
+        x_value = float(params["x"])
         for tc in section.findall("BenchmarkResults"):
             benchmark_name = tc.attrib["name"]
             y_value = float(tc.find("mean").attrib["value"])
-            axis_data = result.setdefault(benchmark_name, ([], []))
-            axis_data[0].append(float(params["x"]))
-            axis_data[1].append(y_value)
+            data = result.data.setdefault(benchmark_name, ([], []))
+            data[0].append(x_value)
+            data[1].append(y_value)
     return result
 
-def plot(report: pathlib.Path):
+def plot(report: Report):
     ax = plt.subplots()[1]
-    ax.set_xlabel("# of digits")
+    if report.xlabel:
+        ax.set_xlabel(report.xlabel)
     ax.set_ylabel("nanos")
-    ax.xaxis.set_major_locator(plticker.MultipleLocator(1))
-    for k, v in parse_report(report).items():
+    if report.xtick is not None:
+        ax.xaxis.set_major_locator(plticker.MultipleLocator(report.xtick))
+    for k, v in report.data.items():
         ax.plot(v[0], v[1], label = k)
     ax.legend()
     plt.show()
@@ -64,9 +75,9 @@ if __name__ == "__main__":
     p.add_argument("name")
     p.add_argument("-r", "--rerun", action="store_true")
     a = p.parse_args()
-    report = get_report_file(a.name)
-    if not report.exists() or a.rerun:
-        if not run_benchmark(a.name, report):
-            exit(1)
-    plot(report)
+    report_file = get_report_file(a.name)
+    if not report_file.exists() or a.rerun:
+        build()
+        run_benchmark(a.name, report_file)
+    plot(parse_report(report_file))
 

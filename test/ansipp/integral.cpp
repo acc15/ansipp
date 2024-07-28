@@ -159,7 +159,7 @@ TEST_CASE("integral: unsigned_integral_length benchmark", "[integral][!benchmark
     using type = unsigned long;
     constexpr unsigned int base = 10;
     auto [pow, value] = GENERATE_COPY(base_gen<type>(base));
-    DYNAMIC_SECTION("xlabel=# of digits;xtickstep=1;x=" << pow + 1 << ";base=" << base << ";value=" << value) {
+    DYNAMIC_SECTION("xlabel=# of digits;xtick=1;x=" << pow + 1 << ";base=" << base << ";value=" << value) {
         BENCHMARK("current") {
             return unsigned_integral_length(value, base);
         };
@@ -247,7 +247,7 @@ TEST_CASE("integral: unsigned_integral_chars benchmark", "[integral][!benchmark]
     using type = unsigned long;
     constexpr unsigned int base = 10;
     const auto [pow, value] = GENERATE_COPY(base_gen<type>(base));
-    DYNAMIC_SECTION("xlabel=# of digits;xtickstep=1;x=" << pow + 1 << ";base=" << base << ";value=" << value) {
+    DYNAMIC_SECTION("xlabel=# of digits;xtick=1;x=" << pow + 1 << ";base=" << base << ";value=" << value) {
         char buf[128];
         unsigned int len = unsigned_integral_length(value, base);
         BENCHMARK("chars_digit_str") {
