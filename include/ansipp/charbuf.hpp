@@ -62,7 +62,7 @@ class charbuf {
     }
 
     void resize(std::size_t sz) {
-        resize_pow2(std::max(min_alloc_sz, std::bit_ceil(sz)));
+        resize_pow2((std::max)(min_alloc_sz, std::bit_ceil(sz)));
     }
 
 public:
