@@ -12,6 +12,26 @@
             "generator": "Ninja",
             "description": "Base preset with all required configuration",
             "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": false,
+                "BUILD_TESTING": false,
+                "BUILD_DEMOS": false
+            }
+        },
+        {
+            "name": "install",
+            "inherits": "base",
+            "generator": "Ninja Multi-Config",
+            "description": "Install preset",
+            "binaryDir": "${sourceDir}/build/install",
+            "cacheVariables": {
+                "CMAKE_CONFIGURATION_TYPES": "Debug;Release"
+            }
+        },
+        {
+            "name": "dev",
+            "hidden": true,
+            "inherits": "base",
             "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
             "cacheVariables": {
                 "CMAKE_EXPORT_COMPILE_COMMANDS": true,
@@ -21,7 +41,7 @@
         },
         {
             "name": "debug",
-            "inherits": "base",
+            "inherits": "dev",
             "description": "Debug preset, mostly used in VSCode",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
@@ -29,7 +49,7 @@
         },
         {
             "name": "release",
-            "inherits": "base",
+            "inherits": "dev",
             "description": "Release preset, mostly used in VSCode",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
@@ -37,39 +57,24 @@
         },
         {
             "name": "reldebug",
-            "inherits": "base",
+            "inherits": "dev",
             "description": "Release with debug info preset, mostly used in VSCode",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo"
             }
         },
         {
-            "name": "multi",
-            "inherits": "base",
-            "generator": "Ninja Multi-Config",
-            "description": "Multi-Ninja preset",
-            "cacheVariables": {
-                "CMAKE_CONFIGURATION_TYPES": "Debug;Release"
-            }
-        },
-        {
-            "name": "vs64",
-            "inherits": "base",
-            "description": "Visual Studio preset (x64)",
-            "generator": "Visual Studio 17 2022",
-            "architecture": "x64",
-            "cacheVariables": {
-                "CMAKE_CONFIGURATION_TYPES": "Debug;Release"
-            }
+            "name": "benchmark",
+            "inherits": "release",
+            "binaryDir": "${sourceDir}/build/benchmark"
         }
     ],
     "buildPresets": [
         {"name": "debug", "configurePreset": "debug"},
         {"name": "release", "configurePreset": "release"},
-        {"name": "multi-debug", "configurePreset": "multi", "configuration": "Debug"},
-        {"name": "multi-release", "configurePreset": "multi", "configuration": "Release"},
-        {"name": "vs64-debug", "configurePreset": "vs64", "configuration": "Debug"},
-        {"name": "vs64-release", "configurePreset": "vs64", "configuration": "Release"}
+        {"name": "benchmark", "configurePreset": "benchmark"},
+        {"name": "install-debug", "configurePreset": "install", "configuration": "Debug"},
+        {"name": "install-release", "configurePreset": "install", "configuration": "Release"}
     ],
     "testPresets": [
         {"name": "debug", "description": "Debug test preset", "configurePreset": "debug"},
@@ -82,6 +87,21 @@
                 {"type": "configure", "name": "release"},
                 {"type": "build", "name": "release"},
                 {"type": "test", "name": "release"}
+            ]
+        },
+        {
+            "name": "benchmark",
+            "steps": [
+                {"type": "configure", "name": "benchmark"},
+                {"type": "build", "name": "benchmark"}
+            ]
+        },
+        {
+            "name": "install",
+            "steps": [
+                {"type": "configure", "name": "install"},
+                {"type": "build", "name": "install-debug"},
+                {"type": "build", "name": "install-release"}
             ]
         }
     ]

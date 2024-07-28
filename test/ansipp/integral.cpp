@@ -1,12 +1,19 @@
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/benchmark/catch_benchmark_all.hpp>
-#include <catch2/generators/catch_generators.hpp>
-
+#include <version>
 #include <limits>
 #include <charconv>
 #include <algorithm>
+#include <cstdlib>
+
+#if defined(__cpp_lib_format_ranges) || defined(__cpp_lib_format)
+#   include <format>
+#endif
+
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/benchmark/catch_benchmark_all.hpp>
+#include <catch2/generators/catch_generators_all.hpp>
 
 #include <ansipp/integral.hpp>
+#include "base_gen.hpp"
 
 using namespace ansipp;
 
@@ -15,8 +22,8 @@ void unsigned_integral_abs_with_limits() {
     DYNAMIC_SECTION(typeid(T).name()) {
         using limits = std::numeric_limits<T>;
         const T max = limits::max();
-        REQUIRE( unsigned_integral_abs<T>(-1) == 1 );
         REQUIRE( unsigned_integral_abs<T>(max) == max );
+        REQUIRE( unsigned_integral_abs<T>(-1) == 1 );
     }
 }
 
@@ -39,8 +46,10 @@ TEST_CASE("integral: to_digit", "[integral]") {
 }
 
 TEST_CASE("integral: cpow", "[integral]") {
+    REQUIRE( cpow(2, 15) == 32768 );
     REQUIRE( cpow(3, 3) == 27 );
     REQUIRE( cpow(2, 8) == 256 );
+    REQUIRE( cpow(2, 7) == 128 );
     REQUIRE( cpow(10, 0) == 1 );
     REQUIRE( cpow(10, 5) == 100000 );
 }
@@ -140,34 +149,43 @@ TEST_CASE("integral: unsigned_integral_length benchmark methods", "[integral]") 
 #ifdef _GLIBCXX_CHARCONV_H
         REQUIRE(std::__detail::__to_chars_len(v, 10) == i);
 #endif
+#ifdef _LIBCPP___CHARCONV_TO_CHARS_INTEGRAL_H
+        REQUIRE(static_cast<unsigned int>(std::__1::__itoa::__traits<decltype(v)>::__width(v)) == i);
+#endif
     }
 }
 
 TEST_CASE("integral: unsigned_integral_length benchmark", "[integral][!benchmark]") {
-    const unsigned int base = 10;
-    const unsigned int value = GENERATE(0, 10, 53344, 7238943, std::numeric_limits<unsigned int>::max());
-    DYNAMIC_SECTION("value = " << value) {
-        BENCHMARK("unsigned_integral_length") {
+    using type = unsigned long;
+    constexpr unsigned int base = 10;
+    auto [pow, value] = GENERATE_COPY(base_gen<type>(base));
+    DYNAMIC_SECTION("xlabel=# of digits;xtickstep=1;x=" << pow + 1 << ";base=" << base << ";value=" << value) {
+        BENCHMARK("current") {
             return unsigned_integral_length(value, base);
         };
-        BENCHMARK("unsigned_integral_length_simple") {
+        BENCHMARK("simple") {
             return unsigned_integral_length_simple(value, base);
         };
-        BENCHMARK("unsigned_integral_length_pow10_conditions") {
+        BENCHMARK("pow10 table: conditions") {
             return unsigned_integral_length_pow10_conditions(value);
         };
-        BENCHMARK("unsigned_integral_length_pow10_binary_search") {
+        BENCHMARK("pow10 table: binary_search") {
             return unsigned_integral_length_pow10_binary_search(value);
         };
-        BENCHMARK("unsigned_integral_length_pow10_std_binary_search") {
+        BENCHMARK("pow10 table: std::upper_bound") {
             return unsigned_integral_length_pow10_std_binary_search(value);
         };
-        BENCHMARK("unsigned_integral_length_pow10_loop") {
+        BENCHMARK("pow10 table: loop") {
             return unsigned_integral_length_pow10_loop(value);
         };
 #ifdef _GLIBCXX_CHARCONV_H
-        BENCHMARK("unsigned_integral_length_stdlib") {
-            return std::__detail::__to_chars_len(value, base);
+        BENCHMARK("glibcxx") {
+            return std::__detail::__to_chars_len(info.value, base);
+        };
+#endif
+#ifdef _LIBCPP___CHARCONV_TO_CHARS_INTEGRAL_H
+        BENCHMARK("libcpp") {
+            return std::__1::__itoa::__traits<type>::__width(value);
         };
 #endif
     }
@@ -226,33 +244,33 @@ void unsigned_integral_chars_to_digit(char* buf, unsigned int length, T value, u
 }
 
 TEST_CASE("integral: unsigned_integral_chars benchmark", "[integral][!benchmark]") {
-
-    const unsigned int base = GENERATE(2, 4, 8, 10, 12, 16);
-    const unsigned long long value = GENERATE(
-        // 1ull, 
-        // static_cast<unsigned long long>(std::numeric_limits<unsigned char>::max()),
-        // static_cast<unsigned long long>(std::numeric_limits<unsigned short>::max()),
-        // static_cast<unsigned long long>(std::numeric_limits<unsigned int>::max()),
-        // static_cast<unsigned long long>(std::numeric_limits<unsigned long>::max()),
-        std::numeric_limits<unsigned long long>::max()
-    );
-
-    DYNAMIC_SECTION("base = " << base << ", value = " << value) {
+    using type = unsigned long;
+    constexpr unsigned int base = 10;
+    const auto [pow, value] = GENERATE_COPY(base_gen<type>(base));
+    DYNAMIC_SECTION("xlabel=# of digits;xtickstep=1;x=" << pow + 1 << ";base=" << base << ";value=" << value) {
         char buf[128];
         unsigned int len = unsigned_integral_length(value, base);
-        BENCHMARK("unsigned_integral_chars_digit_str") {
+        BENCHMARK("chars_digit_str") {
             unsigned_integral_chars_digit_str(buf, len, value, base);
             return std::string_view(buf, buf + len);
         };
-        BENCHMARK("unsigned_integral_chars_to_digit") {
+        BENCHMARK("chars_to_digit") {
             unsigned_integral_chars_to_digit(buf, len, value, base, false);
             return std::string_view(buf, buf + len);
         };
-        BENCHMARK("unsigned_integral_chars") {
-            unsigned_integral_chars(buf, len, value, base, false);
+        BENCHMARK("lookup_chars") {
+            unsigned_integral_lookup_chars<type, base, 2>(buf, len, value);
             return std::string_view(buf, buf + len);
         };
-        BENCHMARK("std_to_chars") {
+        BENCHMARK("std::to_string") {
+            return std::to_string(value);
+        };
+        #if defined(__cpp_lib_format_ranges) || defined(__cpp_lib_format)
+        BENCHMARK("std::format") {
+            return std::string_view(buf, std::format_to(buf, "{}", value));
+        };
+        #endif
+        BENCHMARK("std::to_chars") {
             // std::to_chars is highly optimized by using power & lookup tables
             // 4 chars for base = 2 
             // 2 chars for 8, 10, 16 bases
