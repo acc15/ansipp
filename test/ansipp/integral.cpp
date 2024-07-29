@@ -58,15 +58,15 @@ TEST_CASE("integral: cpow", "[integral]") {
 }
 
 TEST_CASE("integral: cmaxpow", "[integral]") {
-    auto mp2 = cmaxpow<unsigned char>(2);
+    const auto mp2 = cmaxpow<unsigned char>(2);
     REQUIRE( mp2.first == 7 );
     REQUIRE( mp2.second == 128U );
 
-    auto mp10 = cmaxpow<unsigned int>(10);
+    const auto mp10 = cmaxpow<unsigned int>(10);
     REQUIRE( mp10.first == 9 );
     REQUIRE( mp10.second == 1000000000U );
 
-    auto mpl10 = cmaxpow<unsigned long long>(10);
+    const auto mpl10 = cmaxpow<unsigned long long>(10);
     REQUIRE( mpl10.first == 19 );
     REQUIRE( mpl10.second == 10000000000000000000UL );
 }
@@ -74,6 +74,13 @@ TEST_CASE("integral: cmaxpow", "[integral]") {
 TEST_CASE("integral: pow_table", "[integral]") {
     REQUIRE( pt10::data.pow[0] == 10 );
     REQUIRE( pt10::data.pow[4] == 100000 );
+}
+
+TEST_CASE("integral: pow_table print", "[.print][integral]") {
+    std::cout << "table size: " << pt10::size << std::endl;
+    for (unsigned int i = 0; i < pt10::size; ++i) {
+        std::cout << i << " = " << pt10::data.pow[i] << std::endl;
+    }
 }
 
 TEST_CASE("integral: integral_lookup", "[integral]") {
@@ -101,8 +108,21 @@ TEST_CASE("integral: unsigned_integral_length", "[integral]") {
     REQUIRE( unsigned_integral_length<unsigned char>(255, 16) == 2 );
     REQUIRE( unsigned_integral_length<unsigned int>(0, 10) == 1 );
     REQUIRE( unsigned_integral_length<unsigned int>(123, 10) == 3 );
+    REQUIRE( unsigned_integral_length<unsigned int>(64, 10) == 2 );
+    REQUIRE( unsigned_integral_length<unsigned int>(512, 10) == 3 );
     REQUIRE( unsigned_integral_length<unsigned int>(std::numeric_limits<unsigned int>::max(), 10) == 10 );
     REQUIRE( unsigned_integral_length<unsigned int>(std::numeric_limits<unsigned int>::max(), 2) == std::numeric_limits<unsigned int>::digits);
+}
+
+TEST_CASE("integral: unsigned_integral_length print", "[.print][integral]") {
+    for (unsigned int i = 0; i < 1024; ++i) {
+        std::cout << i 
+            << " b2=" << unsigned_integral_length<unsigned int>(i, 2) 
+            << " b8=" << unsigned_integral_length<unsigned int>(i, 8) 
+            << " b10=" << unsigned_integral_length<unsigned int>(i, 10) 
+            << " b16=" << unsigned_integral_length<unsigned int>(i, 16) 
+            << std::endl;
+    }
 }
 
 unsigned int unsigned_integral_length_simple(unsigned int value, unsigned int base) {
@@ -135,7 +155,7 @@ unsigned int unsigned_integral_length_pow10_binary_search(unsigned int value) {
     return mid + 1;
 }
 
-unsigned int unsigned_integral_length_pow10_std_binary_search(unsigned int value) {
+unsigned int unsigned_integral_length_pow10_std_upper_bound(unsigned int value) {
     const auto& pt = pt10::data;
     const pt10::type* p = std::upper_bound(pt.pow, pt.pow + pt10::size, value);
     return static_cast<unsigned int>(p - pt.pow) + 1;
@@ -156,7 +176,7 @@ TEST_CASE("integral: unsigned_integral_length benchmark methods", "[integral]") 
         REQUIRE(unsigned_integral_length_simple(v, 10) == d);
         REQUIRE(unsigned_integral_length_pow10_conditions(v) == d);
         REQUIRE(unsigned_integral_length_pow10_binary_search(v) == d);
-        REQUIRE(unsigned_integral_length_pow10_std_binary_search(v) == d);
+        REQUIRE(unsigned_integral_length_pow10_std_upper_bound(v) == d);
         REQUIRE(unsigned_integral_length_pow10_loop(v) == d);
 #ifdef _GLIBCXX_CHARCONV_H
         REQUIRE(std::__detail::__to_chars_len(v, 10) == d);
@@ -185,7 +205,7 @@ TEST_CASE("integral: unsigned_integral_length benchmark", "[integral][!benchmark
             return unsigned_integral_length_pow10_binary_search(value);
         };
         BENCHMARK("pow10 table: std::upper_bound") {
-            return unsigned_integral_length_pow10_std_binary_search(value);
+            return unsigned_integral_length_pow10_std_upper_bound(value);
         };
         BENCHMARK("pow10 table: loop") {
             return unsigned_integral_length_pow10_loop(value);

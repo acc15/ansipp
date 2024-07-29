@@ -5,6 +5,7 @@
 #include <cstring>
 #include <limits>
 #include <utility>
+#include <bit>
 
 namespace ansipp {
 
@@ -32,19 +33,20 @@ constexpr T cpow(T base, unsigned int pow) {
 
 template <typename T>
 constexpr std::pair<unsigned int, T> cmaxpow(T base) {
-    std::pair<unsigned int, T> r(0, 1);
-    for (T nv; nv = r.second * base, nv / base == r.second; ++r.first, r.second = nv);
-    return r;
+    unsigned int pow = 0;
+    T v = 1;
+    for (T nv; nv = v * base, nv / base == v; ++pow, v = nv);
+    return std::pair<unsigned int, T>(pow, v);
 }
 
-template <unsigned int base, typename T = unsigned long long>
+template <unsigned int base>
 struct pow_table {
-    using type = T;
-    constexpr static unsigned int size = cmaxpow<T>(base).first;
+    using type = unsigned long long;
+    constexpr static unsigned int size = cmaxpow<type>(base).first;
     struct table_data {
-        T pow[size];
+        type pow[size];
         constexpr table_data() {
-            T v = base;
+            type v = base;
             for (unsigned int i = 0; i < size; ++i) {
                 pow[i] = v;
                 v *= base;
@@ -102,19 +104,35 @@ constexpr std::make_unsigned_t<T> unsigned_integral_abs(T v) {
 
 template <std::unsigned_integral T>
 constexpr unsigned int unsigned_integral_length(T value, const unsigned int base) {
+    if (value < base) return 1;
+    if (base == 10) [[ likely ]] {
+        // idea from http://www.graphics.stanford.edu/~seander/bithacks.html
+        unsigned int approx_log10 = static_cast<unsigned int>(std::bit_width(value)) * 1233 >> 12;
+        return approx_log10 + static_cast<unsigned int>(value >= pow_table<10>::data.pow[approx_log10 - 1]);
+    }
+    if (base == 2) return std::bit_width(value);
+    if (std::has_single_bit(base)) { 
+        // another power of 2 bases (4, 8, 16, 32, 64) - can be computed in constant time using bit_width (log2)
+        const auto bp = static_cast<unsigned int>(std::bit_width(base - 1));
+        return (static_cast<unsigned int>(std::bit_width(value)) + bp - 1) / bp;
+    }
+
+    // fallback to slow method
     unsigned int len = 1;
     const unsigned int base2 = base * base;
     const unsigned int base4 = base2 * base2;
-    for (; value >= base4; value = static_cast<T>(value / base4)) len += 4;
-    for (; value >= base2; value = static_cast<T>(value / base2)) len += 2;
-    for (; value >= base; value = static_cast<T>(value / base)) ++len;
+    for (; value >= base4; value /= base4) len += 4;
+    for (; value >= base2; value /= base2) len += 2;
+    for (; value >= base; value /= base) ++len;
     return len;
 }
 
 template <std::unsigned_integral T>
 void unsigned_integral_chars(char* buf, unsigned int len, T value, const unsigned int base, bool upper) {
     // all lookup tables requires ~1,5kb of memory, but performance is almost the same for small numbers (~<1000, base 10)
-#if (ANSIPP_FAST_INTEGRAL & 0x3F) != 0
+#ifndef ANSIPP_FAST_INTEGRAL
+#define ANSIPP_FAST_INTEGRAL 0x04
+#endif
     switch (base) {
 #if (ANSIPP_FAST_INTEGRAL & 0x01) != 0
         // 2^4*4 = 64 bytes
@@ -151,7 +169,6 @@ void unsigned_integral_chars(char* buf, unsigned int len, T value, const unsigne
             }
 #endif
     }
-#endif
     for (char* ptr = buf + len; ptr != buf; value = static_cast<T>(value / base)) {
         *--ptr = to_digit(value % base, upper); 
     }
