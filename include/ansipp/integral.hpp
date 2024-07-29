@@ -88,22 +88,41 @@ constexpr unsigned int unsigned_integral_length(T value, const unsigned int base
 
 template <std::unsigned_integral T>
 void unsigned_integral_chars(char* buf, unsigned int len, T value, const unsigned int base, bool upper) {
-    // lookup tables requires ~1,5kb of memory, but performance is almost the same for small numbers (~<1000)
-#ifndef ANSIPP_SLOW_INTEGRAL
+    // all lookup tables requires ~1,5kb of memory, but performance is almost the same for small numbers (~<1000)
+#ifdef ANSIPP_FAST_INTEGRAL
     switch (base) {
-        [[likely]] case 10: unsigned_integral_lookup_chars<T, 10, 2>(buf, len, value); return;
+#if (ANSIPP_FAST_INTEGRAL & 0x01) != 0
+        // 2^4*4 = 64 bytes
         case  2: unsigned_integral_lookup_chars<T, 2, 4>(buf, len, value); return;
+#endif
+#if (ANSIPP_FAST_INTEGRAL & 0x02) != 0
+        // 8^2*2 = 128 bytes
         case  8: unsigned_integral_lookup_chars<T, 8, 2>(buf, len, value); return;
+#endif
+#if (ANSIPP_FAST_INTEGRAL & 0x04) != 0
+        // 10^2*2 = 200 bytes
+        [[likely]] case 10: unsigned_integral_lookup_chars<T, 10, 2>(buf, len, value); return;
+#endif
+#if (ANSIPP_FAST_INTEGRAL & (0x08 | 0x10)) != 0
+        // 16^2*2 = 512 bytes per each table, 1024 for both
+        // generally HEX values quite fast even without tables due to big base value
         case 16: 
             if (upper) {
+#if (ANSIPP_FAST_INTEGRAL & 0x08) != 0
                 unsigned_integral_lookup_chars<T, 16, 2, true>(buf, len, value); 
+#endif
             } else {
-                unsigned_integral_lookup_chars<T, 16, 2, false>(buf, len, value); 
+#if (ANSIPP_FAST_INTEGRAL & 0x10) != 0                
+                unsigned_integral_lookup_chars<T, 16, 2, false>(buf, len, value);
+#endif
             }
             return;
+#endif
     }
 #endif
-    for (char* ptr = buf + len; ptr != buf; value = static_cast<T>(value / base)) *--ptr = to_digit(value % base, upper); 
+    for (char* ptr = buf + len; ptr != buf; value = static_cast<T>(value / base)) {
+        *--ptr = to_digit(value % base, upper); 
+    }
 }
 
 template <std::integral T>

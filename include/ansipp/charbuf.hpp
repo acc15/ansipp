@@ -138,6 +138,8 @@ public:
     template <std::floating_point T>
     charbuf& operator<<(const floating_format<T>& v) {
         require(1);
+
+        std::size_t grow_by = 32 + (v.precision > 0 ? v.precision : 0);
         for (;;) {
             const std::to_chars_result r = v.precision < 0 
                 ? std::to_chars(p, e, v.value, v.format)
@@ -146,7 +148,8 @@ public:
                 p = r.ptr;
                 break;
             }
-            resize_pow2((e - b) * 2);
+            require(grow_by);
+            grow_by *= 2;
         }
         return *this;
     }
