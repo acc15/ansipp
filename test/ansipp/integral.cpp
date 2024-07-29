@@ -202,7 +202,7 @@ TEST_CASE("integral: unsigned_integral_length benchmark", "[integral][!benchmark
 #endif
 #ifdef _LIBCPP___CHARCONV_TO_CHARS_INTEGRAL_H
         BENCHMARK("libcpp") {
-            return std::__1::__itoa::__traits<type>::__width(value);
+            return std::__1::__itoa::__traits<decltype(value)>::__width(value);
         };
 #endif
     }
