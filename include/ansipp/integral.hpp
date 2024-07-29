@@ -8,6 +8,11 @@
 #include <utility>
 #include <bit>
 
+// by default only decimals are optimized
+#ifndef ANSIPP_FAST_INTEGRAL
+#define ANSIPP_FAST_INTEGRAL 0x04
+#endif
+
 namespace ansipp {
 
 constexpr char to_digit(unsigned int v, bool upper = false) { 
@@ -86,11 +91,15 @@ constexpr std::uintmax_t integral_abs(std::intmax_t v) {
 
 constexpr unsigned int unsigned_integral_length(uintmax_t value, unsigned int base) {
     if (value < base) return 1;
+#if (ANSIPP_FAST_INTEGRAL & 0x04) != 0 
     if (base == 10) [[ likely ]] {
         // idea from http://www.graphics.stanford.edu/~seander/bithacks.html
+        // requires pow_table<10> = sizeof(std::uintmax_t)*(std::numeric_limits<std::uintmax_t>::digits10 + 1)
+        // if uintmax_t is 64 bit then 8*19 = 152 bytes
         unsigned int approx_log10 = static_cast<unsigned int>(std::bit_width(value)) * 1233 >> 12;
         return approx_log10 + static_cast<unsigned int>(value >= pow_table<10>::data.pow[approx_log10 - 1]);
     }
+#endif
     if (base == 2) return std::bit_width(value);
     if (std::has_single_bit(base)) { 
         // another power of 2 bases (4, 8, 16, 32, 64) - can be computed in constant time using bit_width (log2)
@@ -124,10 +133,10 @@ constexpr unsigned int integral_length(std::intmax_t value, unsigned int base) {
 }
 
 inline void unsigned_integral_chars(char* buf, unsigned int len, std::uintmax_t value, unsigned int base, bool upper) {
-    // all lookup tables requires ~1,5kb of memory, but performance is almost the same for small numbers (~<1000, base 10)
-#ifndef ANSIPP_FAST_INTEGRAL
-#define ANSIPP_FAST_INTEGRAL 0x04
-#endif
+    // all lookup tables requires ~1,5kb of memory
+    // but performance is almost the same for small numbers (~<1000, base 10)
+    // the biggest impact - optimize binary (base=2) values
+#if (ANSIPP_FAST_INTEGRAL & 0x3f) != 0
     switch (base) {
 #if (ANSIPP_FAST_INTEGRAL & 0x01) != 0
         // 2^4*4 = 64 bytes
@@ -164,6 +173,7 @@ inline void unsigned_integral_chars(char* buf, unsigned int len, std::uintmax_t 
             }
 #endif
     }
+#endif
     for (char* ptr = buf + len; ptr != buf; value /= base) {
         *--ptr = to_digit(value % base, upper); 
     }

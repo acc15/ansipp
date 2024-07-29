@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 #include <charconv>
+#include <concepts>
 
 #include <ansipp/integral.hpp>
 
@@ -37,13 +38,13 @@ struct floating_format {
  * Simple and fast mix of `std::string` and `std::stringstream`.
  * 
  * Why not `std::vector<char>`?
- * - Not uses `realloc` which sometimes can be faster than (`operator new[]`, `memory copy`, `operator delete[](old)`).
+ * - Not uses `realloc` which sometimes can be faster than (`operator new[]`, `memory copy`, `operator delete[]`).
  * 
  * Why not `std::string`? 
  * - Same as `std::vector<char>`
  * - They are required now to zero memory when shrinking (`resize(0)` will result in redundant `memset` or similar loop) 
  *  for correct `.c_str()` implementation ()
- * - Some implementations may place '\0' on `append` instead of memset above - also redundant overhead
+ * - Some implementations may place '\0' on `append` instead of memset above - which is also redundant overhead
  */
 class charbuf {
     

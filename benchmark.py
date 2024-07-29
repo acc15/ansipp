@@ -17,6 +17,7 @@ def build():
     subprocess.run(["cmake", "--workflow", "--preset benchmark"]).check_returncode()
 
 def run_benchmark(name: str, report: pathlib.Path):
+    report.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run([
         test_executable, name, 
         "--reporter", "xml", 
@@ -52,14 +53,16 @@ def parse_report(path: pathlib.Path) -> Report:
         x_value = float(params["x"])
         for tc in section.findall("BenchmarkResults"):
             benchmark_name = tc.attrib["name"]
-            y_value = float(tc.find("mean").attrib["value"])
+            if (mean := tc.find("mean")) is None:
+                continue
+            y_value = float(mean.attrib["value"])
             data = result.data.setdefault(benchmark_name, ([], []))
             data[0].append(x_value)
             data[1].append(y_value)
     return result
 
 def plot(report: Report):
-    ax = plt.subplots()[1]
+    ax = plt.subplot()
     if report.xlabel:
         ax.set_xlabel(report.xlabel)
     ax.set_ylabel("nanos")
