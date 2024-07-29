@@ -4,6 +4,7 @@
 #include <concepts>
 #include <cstring>
 #include <limits>
+#include <utility>
 
 namespace ansipp {
 
@@ -29,12 +30,36 @@ constexpr T cpow(T base, unsigned int pow) {
     return result;
 }
 
+template <typename T>
+constexpr std::pair<unsigned int, T> cmaxpow(T base) {
+    std::pair<unsigned int, T> r(0, 1);
+    for (T nv; nv = r.second * base, nv / base == r.second; ++r.first, r.second = nv);
+    return r;
+}
+
+template <unsigned int base, typename T = unsigned long long>
+struct pow_table {
+    using type = T;
+    constexpr static unsigned int size = cmaxpow<T>(base).first;
+    struct table_data {
+        T pow[size];
+        constexpr table_data() {
+            T v = base;
+            for (unsigned int i = 0; i < size; ++i) {
+                pow[i] = v;
+                v *= base;
+            }
+        }
+    };
+    constexpr static table_data data;
+};
+
 template <unsigned int base, unsigned int digits, bool upper = false>
 struct integral_lookup {
     constexpr static unsigned int pow = cpow(base, digits);
-    struct table {
+    struct table_data {
         char chars[pow][digits];
-        constexpr table() {
+        constexpr table_data() {
             for (unsigned int v = 0; v < pow; ++v) {
                 unsigned int n = v;
                 for (unsigned int c = digits; c-- > 0; n /= base) {
@@ -43,13 +68,13 @@ struct integral_lookup {
             }
         }
     };
-    constexpr static table instance {};
+    constexpr static table_data data;
 };
 
 template <std::unsigned_integral T, const unsigned int base, const unsigned int digits, const bool upper = false>
 void unsigned_integral_lookup_chars(char* buf, unsigned int len, T value) {
     using lookup = integral_lookup<base, digits, upper>;
-    const typename lookup::table& l = lookup::instance;
+    const typename lookup::table_data& l = lookup::data;
     for (; len >= digits; value = static_cast<T>(value / lookup::pow)) {
         len -= digits;
         std::memcpy(buf + len, l.chars[value % lookup::pow], digits);

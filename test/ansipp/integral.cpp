@@ -3,6 +3,7 @@
 #include <charconv>
 #include <algorithm>
 #include <cstdlib>
+#include <iostream>
 
 #if defined(__cpp_lib_format_ranges) || defined(__cpp_lib_format)
 #   include <format>
@@ -16,6 +17,8 @@
 #include "base_gen.hpp"
 
 using namespace ansipp;
+
+using pt10 = pow_table<10>;
 
 template <typename T>
 void unsigned_integral_abs_with_limits() {
@@ -54,9 +57,28 @@ TEST_CASE("integral: cpow", "[integral]") {
     REQUIRE( cpow(10, 5) == 100000 );
 }
 
+TEST_CASE("integral: cmaxpow", "[integral]") {
+    auto mp2 = cmaxpow<unsigned char>(2);
+    REQUIRE( mp2.first == 7 );
+    REQUIRE( mp2.second == 128U );
+
+    auto mp10 = cmaxpow<unsigned int>(10);
+    REQUIRE( mp10.first == 9 );
+    REQUIRE( mp10.second == 1000000000U );
+
+    auto mpl10 = cmaxpow<unsigned long long>(10);
+    REQUIRE( mpl10.first == 19 );
+    REQUIRE( mpl10.second == 10000000000000000000UL );
+}
+
+TEST_CASE("integral: pow_table", "[integral]") {
+    REQUIRE( pt10::data.pow[0] == 10 );
+    REQUIRE( pt10::data.pow[4] == 100000 );
+}
+
 TEST_CASE("integral: integral_lookup", "[integral]") {
     using lookup = integral_lookup<2, 4>;
-    const lookup::table& t = lookup::instance;
+    const lookup::table_data& t = lookup::data;
     REQUIRE( lookup::pow == 16 );
 
     std::string_view v0( t.chars[0], t.chars[1] );
@@ -105,52 +127,42 @@ unsigned int unsigned_integral_length_pow10_conditions(unsigned int v) {
         : v < 100000000 ? (v < 1000000 ? 6 : v < 10000000 ? 7 : 8) : (v < 1000000000 ? 9 : 10);
 }
 
-constexpr unsigned int pow10_table[] = {
-    10,
-    100,
-    1000,
-    10000,
-    100000,
-    1000000,
-    10000000,
-    100000000,
-    1000000000
-};
-
 unsigned int unsigned_integral_length_pow10_binary_search(unsigned int value) {
-    unsigned int l = 0, r = std::size(pow10_table), mid = std::size(pow10_table) >> 1;
+    unsigned int l = 0, r = pow_table<10>::size, mid = pow_table<10>::size >> 1;
     for (; l < r; mid = (l + r) >> 1) {
-        if (value < pow10_table[mid]) r = mid; else l = mid + 1;
+        if (value < pow_table<10>::data.pow[mid]) r = mid; else l = mid + 1;
     }
     return mid + 1;
 }
 
 unsigned int unsigned_integral_length_pow10_std_binary_search(unsigned int value) {
-    const unsigned int* p = std::upper_bound(pow10_table, pow10_table + std::size(pow10_table), value);
-    return static_cast<unsigned int>(p - pow10_table) + 1;
+    const auto& pt = pt10::data;
+    const pt10::type* p = std::upper_bound(pt.pow, pt.pow + pt10::size, value);
+    return static_cast<unsigned int>(p - pt.pow) + 1;
 }
 
 unsigned int unsigned_integral_length_pow10_loop(unsigned int value) {
-    for (unsigned int i = 0; i < std::size(pow10_table); ++i) {
-        if (value < pow10_table[i]) return i + 1;
+    for (unsigned int i = 0; i < pt10::size; ++i) {
+        if (value < pt10::data.pow[i]) return i + 1;
     }
-    return std::size(pow10_table) + 1;
+    return pt10::size + 1;
 }
 
 TEST_CASE("integral: unsigned_integral_length benchmark methods", "[integral]") {
-    for (unsigned int i = 1; i <= 10; ++i) {
-        unsigned int v = cpow(10, i - 1);
-        REQUIRE(unsigned_integral_length(v, 10) == i);
-        REQUIRE(unsigned_integral_length_simple(v, 10) == i);
-        REQUIRE(unsigned_integral_length_pow10_conditions(v) == i);
-        REQUIRE(unsigned_integral_length_pow10_binary_search(v) == i);
-        REQUIRE(unsigned_integral_length_pow10_std_binary_search(v) == i);
-        REQUIRE(unsigned_integral_length_pow10_loop(v) == i);
+    for (unsigned int i = 0; i < 10; ++i) {
+        unsigned int d = i + 1;
+        unsigned int v = cpow(10, i);
+        REQUIRE(unsigned_integral_length(v, 10) == d);
+        REQUIRE(unsigned_integral_length_simple(v, 10) == d);
+        REQUIRE(unsigned_integral_length_pow10_conditions(v) == d);
+        REQUIRE(unsigned_integral_length_pow10_binary_search(v) == d);
+        REQUIRE(unsigned_integral_length_pow10_std_binary_search(v) == d);
+        REQUIRE(unsigned_integral_length_pow10_loop(v) == d);
 #ifdef _GLIBCXX_CHARCONV_H
-        REQUIRE(std::__detail::__to_chars_len(v, 10) == i);
+        REQUIRE(std::__detail::__to_chars_len(v, 10) == d);
 #endif
 #ifdef _LIBCPP___CHARCONV_TO_CHARS_INTEGRAL_H
-        REQUIRE(static_cast<unsigned int>(std::__1::__itoa::__traits<decltype(v)>::__width(v)) == i);
+        REQUIRE(static_cast<unsigned int>(std::__1::__itoa::__traits<decltype(v)>::__width(v)) == d);
 #endif
     }
 }
