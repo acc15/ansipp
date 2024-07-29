@@ -146,7 +146,7 @@ unsigned int unsigned_integral_length_pow10_binary_search(unsigned int value) {
 
 unsigned int unsigned_integral_length_pow10_std_upper_bound(unsigned int value) {
     const auto& pt = pt10::data;
-    const pt10::type* p = std::upper_bound(pt.pow, pt.pow + pt10::size, value);
+    const std::uintmax_t* p = std::upper_bound(pt.pow, pt.pow + pt10::size, value);
     return static_cast<unsigned int>(p - pt.pow) + 1;
 }
 

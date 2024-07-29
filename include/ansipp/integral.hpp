@@ -33,7 +33,7 @@ constexpr T cpow(T base, unsigned int pow) {
 }
 
 template <typename T>
-constexpr std::pair<unsigned int, T> cmaxpow(T base) {
+constexpr std::pair<unsigned int, T> cmaxpow(unsigned int base) {
     unsigned int pow = 0;
     T v = 1;
     for (T nv; nv = v * base, nv / base == v; ++pow, v = nv);
@@ -42,12 +42,11 @@ constexpr std::pair<unsigned int, T> cmaxpow(T base) {
 
 template <unsigned int base>
 struct pow_table {
-    using type = std::uintmax_t;
-    constexpr static unsigned int size = cmaxpow<type>(base).first;
+    constexpr static unsigned int size = cmaxpow<std::uintmax_t>(base).first;
     struct table_data {
-        type pow[size];
+        std::uintmax_t pow[size];
         constexpr table_data() {
-            type v = base;
+            std::uintmax_t v = base;
             for (unsigned int i = 0; i < size; ++i) {
                 pow[i] = v;
                 v *= base;
