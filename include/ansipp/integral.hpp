@@ -41,17 +41,17 @@ template <typename T>
 constexpr std::pair<unsigned int, T> cmaxpow(unsigned int base) {
     unsigned int pow = 0;
     T v = 1;
-    for (T nv; nv = v * base, nv / base == v; ++pow, v = nv);
+    for (T nv; nv = static_cast<T>(v * base), static_cast<T>(nv / base) == v; ++pow, v = nv);
     return std::pair<unsigned int, T>(pow, v);
 }
 
-template <unsigned int base>
+template <unsigned int base, typename T = std::uintmax_t>
 struct pow_table {
-    constexpr static unsigned int size = cmaxpow<std::uintmax_t>(base).first;
+    constexpr static unsigned int size = cmaxpow<T>(base).first;
     struct table_data {
-        std::uintmax_t pow[size];
+        T pow[size];
         constexpr table_data() {
-            std::uintmax_t v = base;
+            T v = base;
             for (unsigned int i = 0; i < size; ++i) {
                 pow[i] = v;
                 v *= base;
@@ -89,7 +89,7 @@ constexpr std::uintmax_t integral_abs(std::intmax_t v) {
 #endif
 }
 
-constexpr unsigned int unsigned_integral_length(uintmax_t value, unsigned int base) {
+constexpr unsigned int unsigned_integral_length(std::uintmax_t value, unsigned int base) {
     if (value < base) return 1;
 #if (ANSIPP_FAST_INTEGRAL & 0x04) != 0 
     if (base == 10) [[ likely ]] {
@@ -117,6 +117,10 @@ constexpr unsigned int unsigned_integral_length(uintmax_t value, unsigned int ba
     return len;
 }
 
+constexpr unsigned int integral_length(std::intmax_t value, unsigned int base) {
+    return static_cast<unsigned int>(value < 0) + unsigned_integral_length(integral_abs(value), base);
+}
+
 template <unsigned int base, unsigned int digits, bool upper = false>
 void unsigned_integral_lookup_chars(char* buf, unsigned int len, std::uintmax_t value) {
     using lookup = integral_lookup<base, digits, upper>;
@@ -126,10 +130,6 @@ void unsigned_integral_lookup_chars(char* buf, unsigned int len, std::uintmax_t 
         std::memcpy(buf + len, l.chars[value % lookup::pow], digits);
     }
     if (len > 0) std::memcpy(buf, l.chars[value % lookup::pow] + digits - len, len);
-}
-
-constexpr unsigned int integral_length(std::intmax_t value, unsigned int base) {
-    return static_cast<unsigned int>(value < 0) + unsigned_integral_length(integral_abs(value), base);
 }
 
 inline void unsigned_integral_chars(char* buf, unsigned int len, std::uintmax_t value, unsigned int base, bool upper) {
