@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <type_traits>
 #include <concepts>
 #include <cstring>
@@ -41,7 +42,7 @@ constexpr std::pair<unsigned int, T> cmaxpow(T base) {
 
 template <unsigned int base>
 struct pow_table {
-    using type = unsigned long long;
+    using type = std::uintmax_t;
     constexpr static unsigned int size = cmaxpow<type>(base).first;
     struct table_data {
         type pow[size];
@@ -53,7 +54,7 @@ struct pow_table {
             }
         }
     };
-    constexpr static table_data data;
+    constexpr static table_data data = {};
 };
 
 template <unsigned int base, unsigned int digits, bool upper = false>
@@ -70,40 +71,21 @@ struct integral_lookup {
             }
         }
     };
-    constexpr static table_data data;
+    constexpr static table_data data = {};
 };
 
-template <std::unsigned_integral T, const unsigned int base, const unsigned int digits, const bool upper = false>
-void unsigned_integral_lookup_chars(char* buf, unsigned int len, T value) {
-    using lookup = integral_lookup<base, digits, upper>;
-    const typename lookup::table_data& l = lookup::data;
-    for (; len >= digits; value = static_cast<T>(value / lookup::pow)) {
-        len -= digits;
-        std::memcpy(buf + len, l.chars[value % lookup::pow], digits);
-    }
-    if (len > 0) std::memcpy(buf, l.chars[value % lookup::pow] + digits - len, len);
-}
-
-template <std::integral T>
-constexpr std::make_unsigned_t<T> unsigned_integral_abs(T v) {
-    if constexpr (std::is_signed_v<T>) {
-        const auto uv = std::make_unsigned_t<T>(v);
-        if (v < 0) {
+constexpr std::uintmax_t integral_abs(std::intmax_t v) {
+    const auto uv = static_cast<std::uintmax_t>(v);
+    if (v >= 0) return uv;
 #ifdef _MSC_VER
 #pragma warning(suppress: 4146)
-            return -uv;
+    return -uv;
 #else
-            return -uv;
+    return -uv;
 #endif
-        }
-        return uv;
-    } else {
-        return v;
-    }
 }
 
-template <std::unsigned_integral T>
-constexpr unsigned int unsigned_integral_length(T value, const unsigned int base) {
+constexpr unsigned int unsigned_integral_length(uintmax_t value, unsigned int base) {
     if (value < base) return 1;
     if (base == 10) [[ likely ]] {
         // idea from http://www.graphics.stanford.edu/~seander/bithacks.html
@@ -127,8 +109,22 @@ constexpr unsigned int unsigned_integral_length(T value, const unsigned int base
     return len;
 }
 
-template <std::unsigned_integral T>
-void unsigned_integral_chars(char* buf, unsigned int len, T value, const unsigned int base, bool upper) {
+template <unsigned int base, unsigned int digits, bool upper = false>
+void unsigned_integral_lookup_chars(char* buf, unsigned int len, std::uintmax_t value) {
+    using lookup = integral_lookup<base, digits, upper>;
+    const typename lookup::table_data& l = lookup::data;
+    for (; len >= digits; value /= lookup::pow) {
+        len -= digits;
+        std::memcpy(buf + len, l.chars[value % lookup::pow], digits);
+    }
+    if (len > 0) std::memcpy(buf, l.chars[value % lookup::pow] + digits - len, len);
+}
+
+constexpr unsigned int integral_length(std::intmax_t value, unsigned int base) {
+    return static_cast<unsigned int>(value < 0) + unsigned_integral_length(integral_abs(value), base);
+}
+
+inline void unsigned_integral_chars(char* buf, unsigned int len, std::uintmax_t value, unsigned int base, bool upper) {
     // all lookup tables requires ~1,5kb of memory, but performance is almost the same for small numbers (~<1000, base 10)
 #ifndef ANSIPP_FAST_INTEGRAL
 #define ANSIPP_FAST_INTEGRAL 0x04
@@ -137,19 +133,19 @@ void unsigned_integral_chars(char* buf, unsigned int len, T value, const unsigne
 #if (ANSIPP_FAST_INTEGRAL & 0x01) != 0
         // 2^4*4 = 64 bytes
         case 2: 
-            unsigned_integral_lookup_chars<T, 2, 4>(buf, len, value); 
+            unsigned_integral_lookup_chars<2, 4>(buf, len, value); 
             return;
 #endif
 #if (ANSIPP_FAST_INTEGRAL & 0x02) != 0
         // 8^2*2 = 128 bytes
         case 8: 
-            unsigned_integral_lookup_chars<T, 8, 2>(buf, len, value); 
+            unsigned_integral_lookup_chars<8, 2>(buf, len, value); 
             return;
 #endif
 #if (ANSIPP_FAST_INTEGRAL & 0x04) != 0
         // 10^2*2 = 200 bytes
         [[likely]] case 10: 
-            unsigned_integral_lookup_chars<T, 10, 2>(buf, len, value); 
+            unsigned_integral_lookup_chars<10, 2>(buf, len, value); 
             return;
 #endif
 #if (ANSIPP_FAST_INTEGRAL & (0x08 | 0x10)) != 0
@@ -158,33 +154,25 @@ void unsigned_integral_chars(char* buf, unsigned int len, T value, const unsigne
         case 16: 
             if (upper) {
 #if (ANSIPP_FAST_INTEGRAL & 0x08) != 0
-                unsigned_integral_lookup_chars<T, 16, 2, true>(buf, len, value); 
+                unsigned_integral_lookup_chars<16, 2, true>(buf, len, value); 
                 return;
 #endif
             } else {
 #if (ANSIPP_FAST_INTEGRAL & 0x10) != 0                
-                unsigned_integral_lookup_chars<T, 16, 2, false>(buf, len, value); 
+                unsigned_integral_lookup_chars<16, 2, false>(buf, len, value); 
                 return;
 #endif
             }
 #endif
     }
-    for (char* ptr = buf + len; ptr != buf; value = static_cast<T>(value / base)) {
+    for (char* ptr = buf + len; ptr != buf; value /= base) {
         *--ptr = to_digit(value % base, upper); 
     }
 }
 
-template <std::integral T>
-constexpr unsigned int integral_length(T value, const unsigned int base) {
-    unsigned int unsigned_length = unsigned_integral_length(unsigned_integral_abs(value), base);
-    if constexpr (std::is_signed_v<T>) if (value < 0) return unsigned_length + 1;
-    return unsigned_length;
-}
-
-template <std::integral T>
-void integral_chars(char* buf, unsigned int length, T value, const unsigned int base, bool upper) {
-    if constexpr (std::is_signed_v<T>) if (value < 0) { *buf++ = '-'; --length; }
-    unsigned_integral_chars(buf, length, unsigned_integral_abs(value), base, upper); 
+inline void integral_chars(char* buf, unsigned int length, std::intmax_t value, unsigned int base, bool upper) {
+    if (value < 0) { *buf++ = '-'; --length; }
+    unsigned_integral_chars(buf, length, integral_abs(value), base, upper); 
 }
 
 }

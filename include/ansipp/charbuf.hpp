@@ -121,14 +121,28 @@ public:
     charbuf& operator<<(const char* sv) { return put(sv, std::strlen(sv)); }
     charbuf& operator<<(std::string_view sv) { return put(sv.data(), sv.size()); }
 
-    template <std::integral T>
+    template <std::unsigned_integral T>
+    charbuf& operator<<(const integral_format<T>& v) {
+        unsigned int width = v.width == 0 ? unsigned_integral_length(v.value, v.base) : v.width;
+        unsigned_integral_chars(reserve(width), width, v.value, v.base, v.upper);
+        return *this;
+    }
+
+    template <std::unsigned_integral T>
+    charbuf& operator<<(T v) { 
+        unsigned int w = unsigned_integral_length(v, 10);
+        unsigned_integral_chars(reserve(w), w, v, 10, false);
+        return *this;
+    }
+
+    template <std::signed_integral T>
     charbuf& operator<<(const integral_format<T>& v) {
         unsigned int width = v.width == 0 ? integral_length(v.value, v.base) : v.width;
         integral_chars(reserve(width), width, v.value, v.base, v.upper);
         return *this;
     }
 
-    template <std::integral T>
+    template <std::signed_integral T>
     charbuf& operator<<(T v) { 
         unsigned int w = integral_length(v, 10);
         integral_chars(reserve(w), w, v, 10, false);

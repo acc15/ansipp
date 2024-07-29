@@ -20,16 +20,6 @@ using namespace ansipp;
 
 using pt10 = pow_table<10>;
 
-template <typename T>
-void unsigned_integral_abs_with_limits() {
-    DYNAMIC_SECTION(typeid(T).name()) {
-        using limits = std::numeric_limits<T>;
-        const T max = limits::max();
-        REQUIRE( unsigned_integral_abs<T>(max) == max );
-        REQUIRE( unsigned_integral_abs<T>(-1) == 1 );
-    }
-}
-
 TEST_CASE("integral: unsigned comparisons", "[integral]") {
     unsigned char v = 255;
 
@@ -97,30 +87,29 @@ TEST_CASE("integral: integral_lookup", "[integral]") {
     REQUIRE( v15 == "1110" );
 }
 
-TEST_CASE("integral: unsigned_integral_abs", "[integral]") {
-    unsigned_integral_abs_with_limits<char>();
-    unsigned_integral_abs_with_limits<short>();
-    unsigned_integral_abs_with_limits<int>();
-    unsigned_integral_abs_with_limits<long>();
+TEST_CASE("integral: integral_abs", "[integral]") {
+    std::intmax_t v = std::numeric_limits<std::intmax_t>::max();
+    REQUIRE( integral_abs(v) == static_cast<std::uintmax_t>(v) );
+    REQUIRE( integral_abs(-1) == 1 );
 }
 
 TEST_CASE("integral: unsigned_integral_length", "[integral]") {
-    REQUIRE( unsigned_integral_length<unsigned char>(255, 16) == 2 );
-    REQUIRE( unsigned_integral_length<unsigned int>(0, 10) == 1 );
-    REQUIRE( unsigned_integral_length<unsigned int>(123, 10) == 3 );
-    REQUIRE( unsigned_integral_length<unsigned int>(64, 10) == 2 );
-    REQUIRE( unsigned_integral_length<unsigned int>(512, 10) == 3 );
-    REQUIRE( unsigned_integral_length<unsigned int>(std::numeric_limits<unsigned int>::max(), 10) == 10 );
-    REQUIRE( unsigned_integral_length<unsigned int>(std::numeric_limits<unsigned int>::max(), 2) == std::numeric_limits<unsigned int>::digits);
+    REQUIRE( unsigned_integral_length(255, 16) == 2 );
+    REQUIRE( unsigned_integral_length(0, 10) == 1 );
+    REQUIRE( unsigned_integral_length(123, 10) == 3 );
+    REQUIRE( unsigned_integral_length(64, 10) == 2 );
+    REQUIRE( unsigned_integral_length(512, 10) == 3 );
+    REQUIRE( unsigned_integral_length(std::numeric_limits<unsigned int>::max(), 10) == 10 );
+    REQUIRE( unsigned_integral_length(std::numeric_limits<unsigned int>::max(), 2) == std::numeric_limits<unsigned int>::digits);
 }
 
 TEST_CASE("integral: unsigned_integral_length print", "[.print][integral]") {
     for (unsigned int i = 0; i < 1024; ++i) {
         std::cout << i 
-            << " b2=" << unsigned_integral_length<unsigned int>(i, 2) 
-            << " b8=" << unsigned_integral_length<unsigned int>(i, 8) 
-            << " b10=" << unsigned_integral_length<unsigned int>(i, 10) 
-            << " b16=" << unsigned_integral_length<unsigned int>(i, 16) 
+            << " b2=" << unsigned_integral_length(i, 2) 
+            << " b8=" << unsigned_integral_length(i, 8) 
+            << " b10=" << unsigned_integral_length(i, 10) 
+            << " b16=" << unsigned_integral_length(i, 16) 
             << std::endl;
     }
 }
@@ -224,24 +213,24 @@ TEST_CASE("integral: unsigned_integral_length benchmark", "[integral][!benchmark
 }
 
 TEST_CASE("integral: integral_length", "[integral]") {
-    REQUIRE( integral_length<int>(-123, 10) == 4 );
-    REQUIRE( integral_length<int>(123, 10) == 3 );
-    REQUIRE( integral_length<int>(0, 10) == 1 );
-    REQUIRE( integral_length<int>(std::numeric_limits<int>::min(), 10) == 11);
+    REQUIRE( integral_length(-123, 10) == 4 );
+    REQUIRE( integral_length(123, 10) == 3 );
+    REQUIRE( integral_length(0, 10) == 1 );
+    REQUIRE( integral_length(std::numeric_limits<int>::min(), 10) == 11);
 }
 
 TEST_CASE("integral: unsigned_integral_lookup_chars", "[integral]") {
     char buf[128];
-    unsigned int len = unsigned_integral_length<unsigned int>(12345, 10);
-    unsigned_integral_lookup_chars<unsigned int, 10, 2>(buf, len, 12345);
+    unsigned int len = unsigned_integral_length(12345, 10);
+    unsigned_integral_lookup_chars<10, 2>(buf, len, 12345);
     REQUIRE(std::string_view(buf, buf + len) == "12345");
     
-    len = unsigned_integral_length<unsigned char>(255, 10);
-    unsigned_integral_lookup_chars<unsigned char, 10, 2>(buf, len, 255);
+    len = unsigned_integral_length(255, 10);
+    unsigned_integral_lookup_chars<10, 2>(buf, len, 255);
     REQUIRE(std::string_view(buf, buf + len) == "255");
 
-    len = unsigned_integral_length<unsigned char>(255, 2);
-    unsigned_integral_lookup_chars<unsigned char, 2, 4>(buf, len, 255);
+    len = unsigned_integral_length(255, 2);
+    unsigned_integral_lookup_chars<2, 4>(buf, len, 255);
     REQUIRE(std::string_view(buf, buf + len) == "11111111");
 }
 
@@ -298,7 +287,7 @@ TEST_CASE("integral: unsigned_integral_chars benchmark", "[integral][!benchmark]
         };
         BENCHMARK("lookup_chars") {
             unsigned int len = unsigned_integral_length(value, base);
-            unsigned_integral_lookup_chars<type, base, 2>(buf, len, value);
+            unsigned_integral_lookup_chars<base, 2>(buf, len, value);
             return std::string_view(buf, buf + len);
         };
         BENCHMARK("std::to_string") {
