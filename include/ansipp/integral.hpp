@@ -88,20 +88,26 @@ constexpr unsigned int unsigned_integral_length(T value, const unsigned int base
 
 template <std::unsigned_integral T>
 void unsigned_integral_chars(char* buf, unsigned int len, T value, const unsigned int base, bool upper) {
-    // all lookup tables requires ~1,5kb of memory, but performance is almost the same for small numbers (~<1000)
-#ifdef ANSIPP_FAST_INTEGRAL
+    // all lookup tables requires ~1,5kb of memory, but performance is almost the same for small numbers (~<1000, base 10)
+#if (ANSIPP_FAST_INTEGRAL & 0x3F) != 0
     switch (base) {
 #if (ANSIPP_FAST_INTEGRAL & 0x01) != 0
         // 2^4*4 = 64 bytes
-        case  2: unsigned_integral_lookup_chars<T, 2, 4>(buf, len, value); return;
+        case 2: 
+            unsigned_integral_lookup_chars<T, 2, 4>(buf, len, value); 
+            return;
 #endif
 #if (ANSIPP_FAST_INTEGRAL & 0x02) != 0
         // 8^2*2 = 128 bytes
-        case  8: unsigned_integral_lookup_chars<T, 8, 2>(buf, len, value); return;
+        case 8: 
+            unsigned_integral_lookup_chars<T, 8, 2>(buf, len, value); 
+            return;
 #endif
 #if (ANSIPP_FAST_INTEGRAL & 0x04) != 0
         // 10^2*2 = 200 bytes
-        [[likely]] case 10: unsigned_integral_lookup_chars<T, 10, 2>(buf, len, value); return;
+        [[likely]] case 10: 
+            unsigned_integral_lookup_chars<T, 10, 2>(buf, len, value); 
+            return;
 #endif
 #if (ANSIPP_FAST_INTEGRAL & (0x08 | 0x10)) != 0
         // 16^2*2 = 512 bytes per each table, 1024 for both
@@ -110,13 +116,14 @@ void unsigned_integral_chars(char* buf, unsigned int len, T value, const unsigne
             if (upper) {
 #if (ANSIPP_FAST_INTEGRAL & 0x08) != 0
                 unsigned_integral_lookup_chars<T, 16, 2, true>(buf, len, value); 
+                return;
 #endif
             } else {
 #if (ANSIPP_FAST_INTEGRAL & 0x10) != 0                
-                unsigned_integral_lookup_chars<T, 16, 2, false>(buf, len, value);
+                unsigned_integral_lookup_chars<T, 16, 2, false>(buf, len, value); 
+                return;
 #endif
             }
-            return;
 #endif
     }
 #endif
