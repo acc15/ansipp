@@ -15,7 +15,7 @@
 
 namespace ansipp {
 
-constexpr char to_digit(unsigned int v, bool upper = false) { 
+constexpr char digit(unsigned int v, bool upper = false) { 
     return static_cast<char>((v < 10 ? '0' : upper ? 'A' - 10 : 'a' - 10) + v); 
 }
 
@@ -70,7 +70,7 @@ struct integral_lookup {
             for (unsigned int v = 0; v < pow; ++v) {
                 unsigned int n = v;
                 for (unsigned int c = digits; c-- > 0; n /= base) {
-                    chars[v][c] = to_digit(n % base, upper);
+                    chars[v][c] = digit(n % base, upper);
                 }
             }
         }
@@ -175,7 +175,7 @@ constexpr void unsigned_integral_chars(char* buf, unsigned int len, std::uintmax
     }
 #endif
     for (char* ptr = buf + len; ptr != buf; value /= base) {
-        *--ptr = to_digit(value % base, upper); 
+        *--ptr = digit(value % base, upper); 
     }
 }
 

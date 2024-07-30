@@ -28,10 +28,10 @@ TEST_CASE("integral: unsigned comparisons", "[integral]") {
     REQUIRE( ui >= v );
 }
 
-TEST_CASE("integral: to_digit", "[integral]") {
+TEST_CASE("integral: digit", "[integral]") {
     std::string_view chars = "0123456789abcdefghijklmnopqrstuvwxyz";
     for (unsigned int i = 0; i < chars.size(); ++i) {
-        char d = to_digit(i);
+        char d = digit(i);
         char c = chars[i];
         INFO("i = " << i << "; d = " << d << "; c = " << c);
         REQUIRE( d == c );
@@ -254,7 +254,7 @@ void unsigned_integral_chars_digit_str(char* buf, unsigned int length, T value, 
 
 template <std::unsigned_integral T>
 void unsigned_integral_chars_to_digit(char* buf, unsigned int length, T value, unsigned int base, bool upper) {
-    for (char* ptr = buf + length; ptr != buf; value /= base) *--ptr = to_digit(value % base, upper);
+    for (char* ptr = buf + length; ptr != buf; value /= base) *--ptr = digit(value % base, upper);
 }
 
 TEST_CASE("integral: unsigned_integral_chars benchmark", "[integral][!benchmark]") {
