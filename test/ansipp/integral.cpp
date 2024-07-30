@@ -158,29 +158,25 @@ unsigned int unsigned_integral_length_pow10_loop(unsigned int value) {
 }
 
 TEST_CASE("integral: unsigned_integral_length benchmark methods", "[integral]") {
-    for (unsigned int i = 0; i < 10; ++i) {
-        unsigned int d = i + 1;
-        unsigned int v = cpow(10, i);
-        REQUIRE(unsigned_integral_length(v, 10) == d);
-        REQUIRE(unsigned_integral_length_simple(v, 10) == d);
-        REQUIRE(unsigned_integral_length_pow10_conditions(v) == d);
-        REQUIRE(unsigned_integral_length_pow10_binary_search(v) == d);
-        REQUIRE(unsigned_integral_length_pow10_std_upper_bound(v) == d);
-        REQUIRE(unsigned_integral_length_pow10_loop(v) == d);
+    auto [d, v] = GENERATE(base_gen<unsigned int>(10));
+    REQUIRE(unsigned_integral_length(v, 10) == d);
+    REQUIRE(unsigned_integral_length_simple(v, 10) == d);
+    REQUIRE(unsigned_integral_length_pow10_conditions(v) == d);
+    REQUIRE(unsigned_integral_length_pow10_binary_search(v) == d);
+    REQUIRE(unsigned_integral_length_pow10_std_upper_bound(v) == d);
+    REQUIRE(unsigned_integral_length_pow10_loop(v) == d);
 #ifdef _GLIBCXX_CHARCONV_H
-        REQUIRE(std::__detail::__to_chars_len(v, 10) == d);
+    REQUIRE(std::__detail::__to_chars_len(v, 10) == d);
 #endif
 #ifdef _LIBCPP___CHARCONV_TO_CHARS_INTEGRAL_H
-        REQUIRE(static_cast<unsigned int>(std::__1::__itoa::__traits<decltype(v)>::__width(v)) == d);
+    REQUIRE(static_cast<unsigned int>(std::__1::__itoa::__traits<decltype(v)>::__width(v)) == d);
 #endif
-    }
 }
 
 TEST_CASE("integral: unsigned_integral_length benchmark", "[integral][!benchmark]") {
-    using type = unsigned long;
     constexpr unsigned int base = 10;
-    auto [pow, value] = GENERATE_COPY(base_gen<type>(base));
-    DYNAMIC_SECTION("xlabel=# of digits;xtick=1;x=" << pow + 1 << ";base=" << base << ";value=" << value) {
+    auto [digits, value] = GENERATE_COPY(base_gen<unsigned int>(base));
+    DYNAMIC_SECTION("xlabel=# of digits;xtick=1;x=" << digits << ";base=" << base << ";value=" << value) {
         BENCHMARK("current") {
             return unsigned_integral_length(value, base);
         };
