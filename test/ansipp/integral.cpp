@@ -83,10 +83,10 @@ TEST_CASE("integral: integral_lookup", "[integral]") {
     REQUIRE( std::string_view(t.chars[14], t.chars[14] + digits) == "1110" );
 }
 
-TEST_CASE("integral: integral_abs", "[integral]") {
+TEST_CASE("integral: iabs", "[integral]") {
     std::intmax_t v = std::numeric_limits<std::intmax_t>::max();
-    REQUIRE( integral_abs(v) == static_cast<std::uintmax_t>(v) );
-    REQUIRE( integral_abs(-1) == 1 );
+    REQUIRE( iabs(v) == static_cast<std::uintmax_t>(v) );
+    REQUIRE( iabs(-1) == 1 );
 }
 
 TEST_CASE("integral: unsigned_integral_length", "[integral]") {

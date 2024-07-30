@@ -78,7 +78,7 @@ struct integral_lookup {
     constexpr static table_data data = {};
 };
 
-constexpr std::uintmax_t integral_abs(std::intmax_t v) {
+constexpr std::uintmax_t iabs(std::intmax_t v) {
     const auto uv = static_cast<std::uintmax_t>(v);
     if (v >= 0) return uv;
 #ifdef _MSC_VER
@@ -118,7 +118,7 @@ constexpr unsigned int unsigned_integral_length(std::uintmax_t value, unsigned i
 }
 
 constexpr unsigned int integral_length(std::intmax_t value, unsigned int base) {
-    return static_cast<unsigned int>(value < 0) + unsigned_integral_length(integral_abs(value), base);
+    return static_cast<unsigned int>(value < 0) + unsigned_integral_length(iabs(value), base);
 }
 
 template <unsigned int base, unsigned int digits, bool upper = false>
@@ -181,7 +181,7 @@ constexpr void unsigned_integral_chars(char* buf, unsigned int len, std::uintmax
 
 constexpr void integral_chars(char* buf, unsigned int length, std::intmax_t value, unsigned int base, bool upper) {
     if (value < 0) { *buf++ = '-'; --length; }
-    unsigned_integral_chars(buf, length, integral_abs(value), base, upper); 
+    unsigned_integral_chars(buf, length, iabs(value), base, upper); 
 }
 
 }
