@@ -52,10 +52,7 @@ struct ipow_lookup {
         T pow[size];
         constexpr table_data() {
             T v = base;
-            for (unsigned int i = 0; i < size; ++i) {
-                pow[i] = v;
-                v *= base;
-            }
+            for (unsigned int i = 0; i < size; pow[i] = v, v *= base, ++i);
         }
     };
     constexpr static table_data data = {};
@@ -68,8 +65,7 @@ struct ichars_lookup {
         char chars[pow][digits];
         constexpr table_data() {
             for (unsigned int v = 0; v < pow; ++v) {
-                unsigned int n = v;
-                for (unsigned int c = digits; c-- > 0; n /= base) {
+                for (unsigned int c = digits, n = v; c-- > 0; n /= base) {
                     chars[v][c] = digit(n % base, upper);
                 }
             }
@@ -89,16 +85,18 @@ constexpr std::uintmax_t iabs(std::intmax_t v) {
 #endif
 }
 
+constexpr unsigned int ulen10(std::uintmax_t value) {
+    // idea from http://www.graphics.stanford.edu/~seander/bithacks.html
+    // requires ipow_lookup<10> table = sizeof(std::uintmax_t)*(std::numeric_limits<std::uintmax_t>::digits10)
+    // if uintmax_t is 64 bit then 8*19 = 152 bytes
+    unsigned int approx_log10 = (std::bit_width(value) - 1) * 1233U >> 12U;
+    return 1U + approx_log10 + static_cast<unsigned int>(value >= ipow_lookup<10>::data.pow[approx_log10]);
+}
+
 constexpr unsigned int ulen(std::uintmax_t value, unsigned int base) {
     if (value < base) return 1;
 #if (ANSIPP_FAST_INTEGRAL & 0x04) != 0 
-    if (base == 10) [[ likely ]] {
-        // idea from http://www.graphics.stanford.edu/~seander/bithacks.html
-        // requires ipow_lookup<10> = sizeof(std::uintmax_t)*(std::numeric_limits<std::uintmax_t>::digits10)
-        // if uintmax_t is 64 bit then 8*19 = 152 bytes
-        unsigned int approx_log10 = std::bit_width(value) * 1233U >> 12U;
-        return approx_log10 + static_cast<unsigned int>(value >= ipow_lookup<10>::data.pow[approx_log10 - 1U]);
-    }
+    if (base == 10) [[ likely ]] return ulen10(value);
 #endif
     if (base == 2) return std::bit_width(value);
     if (std::has_single_bit(base)) { 
