@@ -158,7 +158,7 @@ struct init_guard {
 };
 
 void init(std::error_code& ec, const config& cfg) {
-    init_guard g; 
+    init_guard g;
     if (g.other_thread_init) { ec = ansipp_error::initializing; return; }
     if (init_non_restorable(ec, cfg), ec) return; // nothing to restore if any of these will fail
     if (init_restorable(ec, cfg), ec) restore();
