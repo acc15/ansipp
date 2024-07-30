@@ -235,14 +235,14 @@ TEST_CASE("integral: ichars", "[integral]") {
     
     unsigned int len = ilen(v, 2);
     ichars(buf, len, v, 2, false);
-    std::string_view integral_chars_str(buf, buf + len);
-    REQUIRE(integral_chars_str == '-' + std::string(len - 1, '1'));
+    std::string_view ichars_str(buf, buf + len);
+    REQUIRE(ichars_str == '-' + std::string(len - 1, '1'));
 
     char to_chars_buf[128];
     std::string_view to_chars_str(
         to_chars_buf, 
         std::to_chars(to_chars_buf, to_chars_buf + sizeof(to_chars_buf), v, 2).ptr);
-    REQUIRE(to_chars_str == integral_chars_str);
+    REQUIRE(to_chars_str == ichars_str);
 }
 
 template <std::unsigned_integral T>

@@ -14,7 +14,7 @@
 
 namespace ansipp {
 
-template <typename T>
+template <std::integral T>
 struct integral_format {
     T value;
     unsigned int base;
@@ -25,7 +25,7 @@ struct integral_format {
         value(value), base(base), upper(upper), width(width) {}
 };
 
-template <typename T>
+template <std::floating_point T>
 struct floating_format {
     T value;
     std::chars_format format;
