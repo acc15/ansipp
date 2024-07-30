@@ -76,12 +76,12 @@ int main() {
     charbuf out;
     
     mode_line(out);
-    terminal_write(out.flush()); 
+    out << charbuf::to_stdout;
 
     char input_buf[512];
     while (true) {
         std::string_view rd;
-        if (!terminal_read(input_buf, rd)) { 
+        if (!stdin_read(input_buf, rd)) { 
             std::cerr << "can't read stdin: " << last_error().message() << std::endl;
             return EXIT_FAILURE;
         }
@@ -104,13 +104,13 @@ int main() {
             out << attrs().fg(color::YELLOW) << "<EMPTY>" << attrs();
         }
         out << '\n';
-#ifdef _WIN32 
-        terminal_write(out.flush());
+#ifdef _WIN32
+        out << charbuf::to_stdout;
         // Allow Windows Terminal to update current line... otherwise mode_line sometimes won't draw 
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
 #endif
         mode_line(out);
-        terminal_write(out.flush());
+        out << charbuf::to_stdout;
     }
     return EXIT_SUCCESS;
 }

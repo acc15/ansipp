@@ -133,7 +133,7 @@ void configure_escapes(const config& cfg, std::error_code& ec) {
     }
     configure_mouse(cfg, init_esc, restore_esc);
     init_esc << cfg.init_esc;
-    if (terminal_write(init_esc.view()) < 0) { ec = last_error(); return; }
+    if (stdout_write(init_esc.view()) < 0) { ec = last_error(); return; }
 
     restore_esc << cfg.restore_esc;
     if (!__ansipp_restore.escapes.store(std::move(restore_esc))) { ec = ansipp_error::already_initialized; return; }

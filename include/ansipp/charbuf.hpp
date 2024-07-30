@@ -10,6 +10,7 @@
 #include <concepts>
 
 #include <ansipp/integral.hpp>
+#include <ansipp/io.hpp>
 
 namespace ansipp {
 
@@ -173,6 +174,12 @@ public:
     charbuf& operator<<(T v) {
         return *this << floating_format(v);
     }
+
+    charbuf& operator<<(void(*fn)(charbuf&)) { fn(*this); return *this; }
+
+    static void reset(charbuf& b) { b.reset(); }
+    static void to_stdout(charbuf& b) { stdout_write(b.flush()); }
+    static void to_stderr(charbuf& b) { stderr_write(b.flush()); }
 
 };
 

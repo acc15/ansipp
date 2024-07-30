@@ -127,7 +127,7 @@ public:
     bool input() {
         std::string_view rd;
         do {
-            if (!terminal_read(input_buffer, rd, 0)) { 
+            if (!stdin_read(input_buffer, rd, 0)) { 
                 std::cerr << "can't read stdin: " << last_error().message() << std::endl; 
                 return false;
             }
@@ -269,7 +269,7 @@ public:
             out << move(CURSOR_DOWN, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 0);
             draw_rows = border_size.y;
         }
-        terminal_write(out.flush());
+        out << charbuf::to_stdout;
     }
 
     void loop() {

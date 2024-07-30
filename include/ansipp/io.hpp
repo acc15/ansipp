@@ -17,8 +17,8 @@ namespace ansipp {
  * @param sz amount of bytes to write
  * @return actual amount of bytes was written, or `-1` in case of error
  */
-std::streamsize terminal_write(const void* buf, std::size_t sz);
-std::streamsize terminal_write(std::string_view sw);
+std::streamsize stdout_write(const void* buf, std::size_t sz);
+std::streamsize stdout_write(std::string_view sw);
 
 std::streamsize stderr_write(const void* buf, std::size_t sz);
 std::streamsize stderr_write(std::string_view sw);
@@ -30,7 +30,7 @@ std::streamsize stderr_write(std::string_view sw);
  * @param sz maximum amount of bytes to read
  * @return actual amount of bytes was read, or `-1` in case of error
  */
-std::streamsize terminal_read(void* buf, std::size_t sz);
+std::streamsize stdin_read(void* buf, std::size_t sz);
 
 /**
  * @brief checks that terminal has any byte to read
@@ -40,14 +40,14 @@ std::streamsize terminal_read(void* buf, std::size_t sz);
  *   `0` - nothing to read (i.e. `terminal_read(void*, std::size_t)` would block)
  *   `-1` - in case of error
  */
-int terminal_read_ready(int timeout = 0);
+int stdin_read_ready(int timeout = 0);
 
-std::streamsize terminal_read(void* buf, std::size_t sz, int timeout);
+std::streamsize stdin_read(void* buf, std::size_t sz, int timeout);
 
 template <typename T>
-bool terminal_read(T& buf, std::string_view& rd, int timeout = -1) {
+bool stdin_read(T& buf, std::string_view& rd, int timeout = -1) {
     char* data = std::data(buf);
-    auto res = terminal_read(data, std::size(buf), timeout); 
+    auto res = stdin_read(data, std::size(buf), timeout); 
     if (res < 0) return false;
     rd = std::string_view(data, res);
     return true;
@@ -58,6 +58,6 @@ bool terminal_read(T& buf, std::string_view& rd, int timeout = -1) {
  * @param timeout timeout in milliseconds, `0` return immediately, negative values - infinite timeout
  * @return read single char or `-1` if error ocurred
  */
-int terminal_getch(int timeout = -1); 
+int stdin_getch(int timeout = -1); 
 
 }

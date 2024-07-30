@@ -24,18 +24,18 @@ std::streamsize fd_write(bool err, const void* buf, std::size_t sz) {
 #endif
 }
 
-std::streamsize terminal_write(const void* buf, std::size_t sz) {
+std::streamsize stdout_write(const void* buf, std::size_t sz) {
     return fd_write(false, buf, sz);
 }
 
-std::streamsize terminal_write(std::string_view sw) {
-    return terminal_write(sw.data(), sw.size());
+std::streamsize stdout_write(std::string_view sw) {
+    return stdout_write(sw.data(), sw.size());
 }
 
 std::streamsize stderr_write(const void* buf, std::size_t sz) { return fd_write(true, buf, sz); }
 std::streamsize stderr_write(std::string_view sw) { return stderr_write(sw.data(), sw.size()); }
 
-std::streamsize terminal_read(void* buf, std::size_t sz) {
+std::streamsize stdin_read(void* buf, std::size_t sz) {
 #ifdef _WIN32
     HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
     if (in == INVALID_HANDLE_VALUE) return -1;
@@ -47,7 +47,7 @@ std::streamsize terminal_read(void* buf, std::size_t sz) {
 #endif
 }
 
-int terminal_read_ready(int timeout) {
+int stdin_read_ready(int timeout) {
 #ifdef _WIN32
     
     HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
@@ -94,14 +94,14 @@ int terminal_read_ready(int timeout) {
 #endif
 }
 
-std::streamsize terminal_read(void* buf, std::size_t sz, int timeout) {
-    const int v = timeout < 0 ? 1 : terminal_read_ready(timeout);
-    return v > 0 ? terminal_read(buf, sz) : v;
+std::streamsize stdin_read(void* buf, std::size_t sz, int timeout) {
+    const int v = timeout < 0 ? 1 : stdin_read_ready(timeout);
+    return v > 0 ? stdin_read(buf, sz) : v;
 }
 
-int terminal_getch(int timeout) {
+int stdin_getch(int timeout) {
     char v;
-    return terminal_read(&v, 1, timeout) == 1 ? v : -1;
+    return stdin_read(&v, 1, timeout) == 1 ? v : -1;
 }
 
 }

@@ -26,11 +26,13 @@ vec parse_cursor_position_escape(std::string_view v) {
 }
 
 vec get_cursor_position() {
-    if (auto w = terminal_write(request_cursor); static_cast<std::streamsize>(request_cursor.size()) != w) { return vec{}; }
+    if (auto w = stdout_write(request_cursor); static_cast<std::streamsize>(request_cursor.size()) != w) { 
+        return vec{}; 
+    }
     
     char buf[20];
     std::string_view rd;
-    return terminal_read(buf, rd) ? parse_cursor_position_escape(rd) : vec{};
+    return stdin_read(buf, rd) ? parse_cursor_position_escape(rd) : vec{};
 }
 
 }

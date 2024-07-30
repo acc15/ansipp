@@ -50,8 +50,7 @@ struct dead_pixels {
                 : static_cast<unsigned char>(255 - (p.frame - 256)); 
             out << move_abs(p.pos) << attrs().bg(rgb { v, v, v }).fg(BLACK) << ' ' << attrs();
         }
-        out << restore_cursor;
-        terminal_write(out.flush());
+        out << restore_cursor << charbuf::to_stdout;
     }
 
     void loop() {
@@ -63,7 +62,7 @@ struct dead_pixels {
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
             std::string_view rd;
-            if (!terminal_read(buf, rd, 0)) {
+            if (!stdin_read(buf, rd, 0)) {
                 std::cerr << "can't read stdin: " << last_error().message() << std::endl;
                 return;
             }

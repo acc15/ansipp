@@ -23,7 +23,7 @@ int main() {
     while (true) {
 
         std::string_view rd;
-        if (!terminal_read(buf, rd, 0)) { 
+        if (!stdin_read(buf, rd, 0)) { 
             std::cerr << "can't read stdin: " << last_error().message() << std::endl;
             return EXIT_FAILURE;
         }
