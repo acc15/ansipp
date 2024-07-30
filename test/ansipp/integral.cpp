@@ -14,7 +14,7 @@
 #include <catch2/generators/catch_generators_all.hpp>
 
 #include <ansipp/integral.hpp>
-#include "base_gen.hpp"
+#include "pow_gen.hpp"
 
 using namespace ansipp;
 
@@ -158,9 +158,10 @@ unsigned int unsigned_integral_length_pow10_loop(unsigned int value) {
 }
 
 TEST_CASE("integral: unsigned_integral_length benchmark methods", "[integral]") {
-    auto [d, v] = GENERATE(base_gen<unsigned int>(10));
-    REQUIRE(unsigned_integral_length(v, 10) == d);
-    REQUIRE(unsigned_integral_length_simple(v, 10) == d);
+    constexpr unsigned int base = 10;
+    auto [d, v] = GENERATE(pow_gen<unsigned int>::wrap(base));
+    REQUIRE(unsigned_integral_length(v, base) == d);
+    REQUIRE(unsigned_integral_length_simple(v, base) == d);
     REQUIRE(unsigned_integral_length_pow10_conditions(v) == d);
     REQUIRE(unsigned_integral_length_pow10_binary_search(v) == d);
     REQUIRE(unsigned_integral_length_pow10_std_upper_bound(v) == d);
@@ -175,7 +176,7 @@ TEST_CASE("integral: unsigned_integral_length benchmark methods", "[integral]") 
 
 TEST_CASE("integral: unsigned_integral_length benchmark", "[integral][!benchmark]") {
     constexpr unsigned int base = 10;
-    auto [digits, value] = GENERATE_COPY(base_gen<unsigned int>(base));
+    auto [digits, value] = GENERATE(pow_gen<unsigned int>::wrap(base));
     DYNAMIC_SECTION("xlabel=# of digits;xtick=1;x=" << digits << ";base=" << base << ";value=" << value) {
         BENCHMARK("current") {
             return unsigned_integral_length(value, base);
@@ -261,10 +262,9 @@ void unsigned_integral_chars_to_digit(char* buf, unsigned int length, T value, u
 }
 
 TEST_CASE("integral: unsigned_integral_chars benchmark", "[integral][!benchmark]") {
-    using type = unsigned long;
     constexpr unsigned int base = 10;
-    const auto [pow, value] = GENERATE_COPY(base_gen<type>(base));
-    DYNAMIC_SECTION("xlabel=# of digits;xtick=1;x=" << pow + 1 << ";base=" << base << ";value=" << value) {
+    const auto [digits, value] = GENERATE(pow_gen<unsigned long>::wrap(10));
+    DYNAMIC_SECTION("xlabel=# of digits;xtick=1;x=" << digits << ";base=" << base << ";value=" << value) {
         char buf[128];
         BENCHMARK("current") {
             unsigned int len = unsigned_integral_length(value, base);

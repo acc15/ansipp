@@ -40,6 +40,7 @@ testing(TARGETS ansipp SOURCES
     ${TEST}/ansipp/vec.cpp
     ${TEST}/ansipp/format.cpp
     ${TEST}/ansipp/charbuf.cpp
+    ${TEST}/ansipp/pow_gen.hpp
     ${TEST}/ansipp/integral.cpp
 )
 
