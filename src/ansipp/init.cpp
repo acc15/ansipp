@@ -45,11 +45,14 @@ int signal_ctrl_handler(DWORD ctrl_code) {
 }
 #else
 void init_signal_handler(std::error_code& ec, int sig, ts_opt<struct sigaction>& restore) {
-    struct sigaction sa, sa_old;
+    if (restore.is_set()) { ec = ansipp_error::already_initialized; return; }
+
+    struct sigaction sa;
     sa.sa_flags = 0;
     sa.sa_mask = 0;
     sa.sa_handler = &signal_restore;
-    if (restore.is_set()) { ec = ansipp_error::already_initialized; return; }
+
+    struct sigaction sa_old;
     if (sigaction(sig, &sa, &sa_old) == -1) { ec = last_error(); return; }
     if (!restore.store(sa_old)) { ec = ansipp_error::already_initialized; return; }
 }
