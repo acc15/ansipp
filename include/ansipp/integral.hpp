@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <type_traits>
 #include <concepts>
-#include <cstring>
 #include <limits>
 #include <utility>
 #include <bit>
@@ -94,17 +93,17 @@ constexpr unsigned int unsigned_integral_length(std::uintmax_t value, unsigned i
 #if (ANSIPP_FAST_INTEGRAL & 0x04) != 0 
     if (base == 10) [[ likely ]] {
         // idea from http://www.graphics.stanford.edu/~seander/bithacks.html
-        // requires pow_table<10> = sizeof(std::uintmax_t)*(std::numeric_limits<std::uintmax_t>::digits10 + 1)
+        // requires pow_table<10> = sizeof(std::uintmax_t)*(std::numeric_limits<std::uintmax_t>::digits10)
         // if uintmax_t is 64 bit then 8*19 = 152 bytes
-        unsigned int approx_log10 = static_cast<unsigned int>(std::bit_width(value)) * 1233 >> 12;
-        return approx_log10 + static_cast<unsigned int>(value >= pow_table<10>::data.pow[approx_log10 - 1]);
+        unsigned int approx_log10 = std::bit_width(value) * 1233U >> 12U;
+        return approx_log10 + static_cast<unsigned int>(value >= pow_table<10>::data.pow[approx_log10 - 1U]);
     }
 #endif
     if (base == 2) return std::bit_width(value);
     if (std::has_single_bit(base)) { 
-        // another power of 2 bases (4, 8, 16, 32, 64) - can be computed in constant time using bit_width (log2)
-        const auto bp = static_cast<unsigned int>(std::bit_width(base - 1));
-        return (static_cast<unsigned int>(std::bit_width(value)) + bp - 1) / bp;
+        // power of 2 bases (4, 8, 16, 32, 64) - can be computed in constant time using bit_width (log2)
+        unsigned int bp = std::bit_width(base - 1U);
+        return (std::bit_width(value) + bp - 1U) / bp;
     }
 
     // fallback to slow method
@@ -122,17 +121,17 @@ constexpr unsigned int integral_length(std::intmax_t value, unsigned int base) {
 }
 
 template <unsigned int base, unsigned int digits, bool upper = false>
-void unsigned_integral_lookup_chars(char* buf, unsigned int len, std::uintmax_t value) {
+constexpr void unsigned_integral_lookup_chars(char* buf, unsigned int len, std::uintmax_t value) {
     using lookup = integral_lookup<base, digits, upper>;
     const typename lookup::table_data& l = lookup::data;
     for (; len >= digits; value /= lookup::pow) {
         len -= digits;
-        std::memcpy(buf + len, l.chars[value % lookup::pow], digits);
+        std::copy_n(l.chars[value % lookup::pow], digits, buf + len);
     }
-    if (len > 0) std::memcpy(buf, l.chars[value % lookup::pow] + digits - len, len);
+    if (len > 0) std::copy_n(l.chars[value % lookup::pow] + digits - len, len, buf);
 }
 
-inline void unsigned_integral_chars(char* buf, unsigned int len, std::uintmax_t value, unsigned int base, bool upper) {
+constexpr void unsigned_integral_chars(char* buf, unsigned int len, std::uintmax_t value, unsigned int base, bool upper) {
     // all lookup tables requires ~1,5kb of memory
     // but performance is almost the same for small numbers (~<1000, base 10)
     // the biggest impact - optimize binary (base=2) values
@@ -179,7 +178,7 @@ inline void unsigned_integral_chars(char* buf, unsigned int len, std::uintmax_t 
     }
 }
 
-inline void integral_chars(char* buf, unsigned int length, std::intmax_t value, unsigned int base, bool upper) {
+constexpr void integral_chars(char* buf, unsigned int length, std::intmax_t value, unsigned int base, bool upper) {
     if (value < 0) { *buf++ = '-'; --length; }
     unsigned_integral_chars(buf, length, integral_abs(value), base, upper); 
 }

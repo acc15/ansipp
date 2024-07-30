@@ -74,17 +74,13 @@ TEST_CASE("integral: pow_table print", "[.print][integral]") {
 }
 
 TEST_CASE("integral: integral_lookup", "[integral]") {
-    using lookup = integral_lookup<2, 4>;
+    constexpr unsigned int digits = 4;
+    using lookup = integral_lookup<2, digits>;
     const lookup::table_data& t = lookup::data;
     REQUIRE( lookup::pow == 16 );
-
-    std::string_view v0( t.chars[0], t.chars[1] );
-    std::string_view v9( t.chars[9], t.chars[10] );
-    std::string_view v15( t.chars[14], t.chars[15] );
-
-    REQUIRE( v0 == "0000" );
-    REQUIRE( v9 == "1001" );
-    REQUIRE( v15 == "1110" );
+    REQUIRE( std::string_view(t.chars[0], t.chars[0] + digits) == "0000" );
+    REQUIRE( std::string_view(t.chars[9], t.chars[9] + digits) == "1001" );
+    REQUIRE( std::string_view(t.chars[14], t.chars[14] + digits) == "1110" );
 }
 
 TEST_CASE("integral: integral_abs", "[integral]") {
