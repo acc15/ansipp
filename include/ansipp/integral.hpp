@@ -5,6 +5,7 @@
 #include <concepts>
 #include <limits>
 #include <utility>
+#include <algorithm>
 #include <bit>
 
 // by default only decimals are optimized
