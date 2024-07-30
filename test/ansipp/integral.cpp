@@ -39,24 +39,24 @@ TEST_CASE("integral: to_digit", "[integral]") {
 }
 
 TEST_CASE("integral: cpow", "[integral]") {
-    REQUIRE( cpow(2, 15) == 32768 );
-    REQUIRE( cpow(3, 3) == 27 );
-    REQUIRE( cpow(2, 8) == 256 );
-    REQUIRE( cpow(2, 7) == 128 );
-    REQUIRE( cpow(10, 0) == 1 );
-    REQUIRE( cpow(10, 5) == 100000 );
+    REQUIRE( ipow(2, 15) == 32768 );
+    REQUIRE( ipow(3, 3) == 27 );
+    REQUIRE( ipow(2, 8) == 256 );
+    REQUIRE( ipow(2, 7) == 128 );
+    REQUIRE( ipow(10, 0) == 1 );
+    REQUIRE( ipow(10, 5) == 100000 );
 }
 
-TEST_CASE("integral: cmaxpow", "[integral]") {
-    const auto mp2 = cmaxpow<unsigned char>(2);
+TEST_CASE("integral: imaxpow", "[integral]") {
+    const auto mp2 = imaxpow<unsigned char>(2);
     REQUIRE( mp2.first == 7 );
     REQUIRE( mp2.second == 128U );
 
-    const auto mp10 = cmaxpow<unsigned int>(10);
+    const auto mp10 = imaxpow<unsigned int>(10);
     REQUIRE( mp10.first == 9 );
     REQUIRE( mp10.second == 1000000000U );
 
-    const auto mpl10 = cmaxpow<unsigned long long>(10);
+    const auto mpl10 = imaxpow<unsigned long long>(10);
     REQUIRE( mpl10.first == 19 );
     REQUIRE( mpl10.second == 10000000000000000000UL );
 }

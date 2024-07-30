@@ -15,7 +15,7 @@ class pow_gen final : public Catch::Generators::IGenerator<std::pair<unsigned in
     pow_gen(unsigned int base, unsigned int min_digits, unsigned int max_digits): 
         base(base), 
         max_digits(max_digits), 
-        info(min_digits, ansipp::cpow<T>(base, min_digits - 1)) 
+        info(min_digits, ansipp::ipow<T>(base, min_digits - 1)) 
     {}
 
 public:

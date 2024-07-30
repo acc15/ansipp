@@ -20,7 +20,7 @@ constexpr char to_digit(unsigned int v, bool upper = false) {
 }
 
 template <typename T>
-constexpr T cpow(T base, unsigned int pow) {
+constexpr T ipow(T base, unsigned int pow) {
     if (base == 1 || pow == 0) return 1;
     if (base == 0) return 0;
     
@@ -38,7 +38,7 @@ constexpr T cpow(T base, unsigned int pow) {
 }
 
 template <typename T>
-constexpr std::pair<unsigned int, T> cmaxpow(T base) {
+constexpr std::pair<unsigned int, T> imaxpow(T base) {
     unsigned int pow = 0;
     T v = 1;
     for (T nv = v*base; nv / base == v; ++pow, v = nv, nv *= base);
@@ -47,7 +47,7 @@ constexpr std::pair<unsigned int, T> cmaxpow(T base) {
 
 template <unsigned int base, typename T = std::uintmax_t>
 struct pow_table {
-    constexpr static unsigned int size = cmaxpow<T>(base).first;
+    constexpr static unsigned int size = imaxpow<T>(base).first;
     struct table_data {
         T pow[size];
         constexpr table_data() {
@@ -63,7 +63,7 @@ struct pow_table {
 
 template <unsigned int base, unsigned int digits, bool upper = false>
 struct integral_lookup {
-    constexpr static unsigned int pow = cpow(base, digits);
+    constexpr static unsigned int pow = ipow(base, digits);
     struct table_data {
         char chars[pow][digits];
         constexpr table_data() {
