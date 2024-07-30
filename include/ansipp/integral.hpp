@@ -46,7 +46,7 @@ constexpr std::pair<unsigned int, T> imaxpow(T base) {
 }
 
 template <unsigned int base, typename T = std::uintmax_t>
-struct pow_table {
+struct ipow_lookup {
     constexpr static unsigned int size = imaxpow<T>(base).first;
     struct table_data {
         T pow[size];
@@ -62,7 +62,7 @@ struct pow_table {
 };
 
 template <unsigned int base, unsigned int digits, bool upper = false>
-struct integral_lookup {
+struct ichars_lookup {
     constexpr static unsigned int pow = ipow(base, digits);
     struct table_data {
         char chars[pow][digits];
@@ -89,15 +89,15 @@ constexpr std::uintmax_t iabs(std::intmax_t v) {
 #endif
 }
 
-constexpr unsigned int unsigned_integral_length(std::uintmax_t value, unsigned int base) {
+constexpr unsigned int ulen(std::uintmax_t value, unsigned int base) {
     if (value < base) return 1;
 #if (ANSIPP_FAST_INTEGRAL & 0x04) != 0 
     if (base == 10) [[ likely ]] {
         // idea from http://www.graphics.stanford.edu/~seander/bithacks.html
-        // requires pow_table<10> = sizeof(std::uintmax_t)*(std::numeric_limits<std::uintmax_t>::digits10)
+        // requires ipow_lookup<10> = sizeof(std::uintmax_t)*(std::numeric_limits<std::uintmax_t>::digits10)
         // if uintmax_t is 64 bit then 8*19 = 152 bytes
         unsigned int approx_log10 = std::bit_width(value) * 1233U >> 12U;
-        return approx_log10 + static_cast<unsigned int>(value >= pow_table<10>::data.pow[approx_log10 - 1U]);
+        return approx_log10 + static_cast<unsigned int>(value >= ipow_lookup<10>::data.pow[approx_log10 - 1U]);
     }
 #endif
     if (base == 2) return std::bit_width(value);
@@ -117,13 +117,13 @@ constexpr unsigned int unsigned_integral_length(std::uintmax_t value, unsigned i
     return len;
 }
 
-constexpr unsigned int integral_length(std::intmax_t value, unsigned int base) {
-    return static_cast<unsigned int>(value < 0) + unsigned_integral_length(iabs(value), base);
+constexpr unsigned int ilen(std::intmax_t value, unsigned int base) {
+    return static_cast<unsigned int>(value < 0) + ulen(iabs(value), base);
 }
 
 template <unsigned int base, unsigned int digits, bool upper = false>
-constexpr void unsigned_integral_lookup_chars(char* buf, unsigned int len, std::uintmax_t value) {
-    using lookup = integral_lookup<base, digits, upper>;
+constexpr void ulookupchars(char* buf, unsigned int len, std::uintmax_t value) {
+    using lookup = ichars_lookup<base, digits, upper>;
     const typename lookup::table_data& l = lookup::data;
     for (; len >= digits; value /= lookup::pow) {
         len -= digits;
@@ -132,7 +132,7 @@ constexpr void unsigned_integral_lookup_chars(char* buf, unsigned int len, std::
     if (len > 0) std::copy_n(l.chars[value % lookup::pow] + digits - len, len, buf);
 }
 
-constexpr void unsigned_integral_chars(char* buf, unsigned int len, std::uintmax_t value, unsigned int base, bool upper) {
+constexpr void uchars(char* buf, unsigned int len, std::uintmax_t value, unsigned int base, bool upper) {
     // all lookup tables requires ~1,5kb of memory
     // but performance is almost the same for small numbers (~<1000, base 10)
     // the biggest impact - optimize binary (base=2) values
@@ -141,19 +141,19 @@ constexpr void unsigned_integral_chars(char* buf, unsigned int len, std::uintmax
 #if (ANSIPP_FAST_INTEGRAL & 0x01) != 0
         // 2^4*4 = 64 bytes
         case 2: 
-            unsigned_integral_lookup_chars<2, 4>(buf, len, value); 
+            ulookupchars<2, 4>(buf, len, value); 
             return;
 #endif
 #if (ANSIPP_FAST_INTEGRAL & 0x02) != 0
         // 8^2*2 = 128 bytes
         case 8: 
-            unsigned_integral_lookup_chars<8, 2>(buf, len, value); 
+            ulookupchars<8, 2>(buf, len, value); 
             return;
 #endif
 #if (ANSIPP_FAST_INTEGRAL & 0x04) != 0
         // 10^2*2 = 200 bytes
         [[likely]] case 10: 
-            unsigned_integral_lookup_chars<10, 2>(buf, len, value); 
+            ulookupchars<10, 2>(buf, len, value); 
             return;
 #endif
 #if (ANSIPP_FAST_INTEGRAL & (0x08 | 0x10)) != 0
@@ -162,12 +162,12 @@ constexpr void unsigned_integral_chars(char* buf, unsigned int len, std::uintmax
         case 16: 
             if (upper) {
 #if (ANSIPP_FAST_INTEGRAL & 0x08) != 0
-                unsigned_integral_lookup_chars<16, 2, true>(buf, len, value); 
+                ulookupchars<16, 2, true>(buf, len, value); 
                 return;
 #endif
             } else {
 #if (ANSIPP_FAST_INTEGRAL & 0x10) != 0                
-                unsigned_integral_lookup_chars<16, 2, false>(buf, len, value); 
+                ulookupchars<16, 2, false>(buf, len, value); 
                 return;
 #endif
             }
@@ -179,9 +179,9 @@ constexpr void unsigned_integral_chars(char* buf, unsigned int len, std::uintmax
     }
 }
 
-constexpr void integral_chars(char* buf, unsigned int length, std::intmax_t value, unsigned int base, bool upper) {
+constexpr void ichars(char* buf, unsigned int length, std::intmax_t value, unsigned int base, bool upper) {
     if (value < 0) { *buf++ = '-'; --length; }
-    unsigned_integral_chars(buf, length, iabs(value), base, upper); 
+    uchars(buf, length, iabs(value), base, upper); 
 }
 
 }

@@ -125,29 +125,29 @@ public:
 
     template <std::unsigned_integral T>
     charbuf& operator<<(const integral_format<T>& v) {
-        unsigned int width = v.width == 0 ? unsigned_integral_length(v.value, v.base) : v.width;
-        unsigned_integral_chars(reserve(width), width, v.value, v.base, v.upper);
+        unsigned int width = v.width == 0 ? ulen(v.value, v.base) : v.width;
+        uchars(reserve(width), width, v.value, v.base, v.upper);
         return *this;
     }
 
     template <std::unsigned_integral T>
     charbuf& operator<<(T v) { 
-        unsigned int w = unsigned_integral_length(v, 10);
-        unsigned_integral_chars(reserve(w), w, v, 10, false);
+        unsigned int w = ulen(v, 10);
+        uchars(reserve(w), w, v, 10, false);
         return *this;
     }
 
     template <std::signed_integral T>
     charbuf& operator<<(const integral_format<T>& v) {
-        unsigned int width = v.width == 0 ? integral_length(v.value, v.base) : v.width;
-        integral_chars(reserve(width), width, v.value, v.base, v.upper);
+        unsigned int width = v.width == 0 ? ilen(v.value, v.base) : v.width;
+        ichars(reserve(width), width, v.value, v.base, v.upper);
         return *this;
     }
 
     template <std::signed_integral T>
     charbuf& operator<<(T v) { 
-        unsigned int w = integral_length(v, 10);
-        integral_chars(reserve(w), w, v, 10, false);
+        unsigned int w = ilen(v, 10);
+        ichars(reserve(w), w, v, 10, false);
         return *this;
     }
     
