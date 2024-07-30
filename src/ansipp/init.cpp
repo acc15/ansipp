@@ -47,9 +47,7 @@ int signal_ctrl_handler(DWORD ctrl_code) {
 void init_signal_handler(std::error_code& ec, int sig, ts_opt<struct sigaction>& restore) {
     if (restore.is_set()) { ec = ansipp_error::already_initialized; return; }
 
-    struct sigaction sa;
-    sa.sa_flags = 0;
-    sa.sa_mask = 0;
+    struct sigaction sa = {};
     sa.sa_handler = &signal_restore;
 
     struct sigaction sa_old;
