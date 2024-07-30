@@ -39,9 +39,14 @@ constexpr T cpow(T base, unsigned int pow) {
 
 template <typename T>
 constexpr std::pair<unsigned int, T> cmaxpow(unsigned int base) {
-    std::pair<unsigned int, T> r(0, 1);
-    for (T nv = r.second * base; nv / base == r.second; ++r.first, r.second = nv, nv = r.second * base);
-    return r;
+    unsigned int pow = 0;
+    T v = 1, nv = static_cast<T>(v * base);
+    while (static_cast<T>(nv / base) == v) {
+        ++pow;
+        v = nv;
+        nv = static_cast<T>(v * base);
+    }
+    return std::make_pair(pow, v);
 }
 
 template <unsigned int base, typename T = std::uintmax_t>
