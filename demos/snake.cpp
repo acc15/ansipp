@@ -290,7 +290,6 @@ public:
             frame_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t5 - t1).count();
 
             initializing = false;
-
             if (game_over) break;
             std::this_thread::sleep_for(std::chrono::milliseconds(80));
         }

@@ -2,10 +2,8 @@
 
 using namespace ansipp;
 
-void gradient(charbuf &out, const rgb &a, const rgb &b, size_t width)
-{
-    for (size_t i = 0; i < width; i++)
-    {
+void gradient(charbuf &out, const rgb &a, const rgb &b, size_t width) {
+    for (size_t i = 0; i < width; i++) {
         out << attrs().bg(rgb::lerp(a, b, static_cast<float>(i) / (width - 1))) << " ";
     }
 }
@@ -34,19 +32,15 @@ int main()
 
     std::string seq_buf(20, '\0');
     std::string_view rd;
-    do
-    {
-        if (!stdin_read(seq_buf, rd))
-        {
-            out << charbuf::reset << "can't read stdin: " << last_error().message() << '\n'
-                << charbuf::to_stderr;
+    do {
+        if (!stdin_read(seq_buf, rd)) {
+            out << "can't read stdin: " << last_error().message() << '\n' << charbuf::to_stderr;
             return EXIT_FAILURE;
         }
         out << store_cursor
             << move(CURSOR_UP) << move(CURSOR_TO_COLUMN, 0)
             << erase(LINE, ALL) << rd.size() << " chars received:";
-        for (const char &c : rd)
-        {
+        for (const char &c : rd) {
             out << " 0x" << integral_format(c, 16, true, 2);
         }
         out << restore_cursor << charbuf::to_stdout;
