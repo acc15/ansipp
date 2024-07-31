@@ -10,7 +10,6 @@ target_sources(ansipp PRIVATE
     ${SRC}/ansipp/io.cpp
     ${SRC}/ansipp/terminal.cpp
     ${SRC}/ansipp/cursor.cpp
-    ${SRC}/ansipp/attrs.cpp
     ${SRC}/ansipp/restore.hpp
     ${SRC}/ansipp/restore.cpp
     ${SRC}/ansipp/init.cpp

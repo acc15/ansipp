@@ -33,10 +33,26 @@ enum color {
 };
 
 struct rgb {
+    
     unsigned char r;
     unsigned char g;
     unsigned char b;
-    static rgb lerp(const rgb& a, const rgb& b, float factor);
+
+    constexpr rgb(): rgb(0,0,0) {}
+    constexpr rgb(unsigned char r, unsigned char g, unsigned char b): r(r), g(g), b(b) {}
+    constexpr rgb(int r, int g, int b): 
+        r(static_cast<unsigned char>(r)), 
+        g(static_cast<unsigned char>(g)), 
+        b(static_cast<unsigned char>(b)) {}
+    constexpr rgb(int v): rgb((v & 0xff0000) >> 16, (v & 0xff00) >> 8, v & 0xff) {}
+
+    constexpr static rgb lerp(const rgb& a, const rgb& b, float factor) {
+        return rgb { 
+            static_cast<unsigned char>(std::lerp(a.r, b.r, factor)),
+            static_cast<unsigned char>(std::lerp(a.g, b.g, factor)),
+            static_cast<unsigned char>(std::lerp(a.b, b.b, factor))
+        };
+    }
 };
 
 /**
