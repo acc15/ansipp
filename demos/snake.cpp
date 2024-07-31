@@ -55,15 +55,14 @@ public:
     snake_map snake;
     apple_map apples;
 
-    bool initializing = true;
     bool game_over = false;
     direction dir = direction::RIGHT;
     
     vec tail = { 0, 0 };
     vec head = { initial_snake_length - 1, 0 };
     vec terminal_size = {};
-    bool undersize = false;
     bool paused = false;
+    bool undersize = false;
 
     unsigned int length = initial_snake_length;
     unsigned int frames_till_apple = 0;
@@ -71,10 +70,6 @@ public:
     unsigned int draw_rows = 0;
 
     using hr_clock = std::chrono::high_resolution_clock;
-    /*std::size_t input_ns;
-    std::size_t process_ns;
-    std::size_t draw_ns;
-    std::size_t print_ns;*/
     std::size_t frame_ns;
     
     charbuf out;
@@ -148,11 +143,6 @@ public:
     }
 
     void process() {
-        terminal_size = get_terminal_size();
-        undersize = terminal_size.y < min_terminal_size.y || terminal_size.x < min_terminal_size.x;
-        if (undersize) paused = true;
-        if (initializing || paused) return;
-
         if (!input_queue.empty()) {
             dir = input_queue.front();
             input_queue.pop_front();
@@ -204,11 +194,7 @@ public:
         out << attrs().bg(WHITE).fg(BLACK);
         
         std::size_t bottom_offset = out.size();
-        out /*<< " input=" << input_ns
-            << " process=" << process_ns
-            << " draw=" << draw_ns
-            << " print=" << print_ns*/
-            << " frame=" << frame_ns
+        out << " frame=" << frame_ns
             << " head=" << head
             << " tail=" << tail
             << " game_over=" << static_cast<unsigned int>(game_over)
@@ -252,10 +238,13 @@ public:
     }
 
     void draw() {
-        out << move(CURSOR_TO_COLUMN, 0) << move(CURSOR_UP, draw_rows) << erase(SCREEN, TO_END);
-        if (undersize) {
+        terminal_size = get_terminal_size();
+
+        out << move(CURSOR_UP_START, draw_rows) << erase(SCREEN, TO_END);
+        if (terminal_size.y < min_terminal_size.y || terminal_size.x < min_terminal_size.x) {
             out << "not enough room to render game, current size " 
                 << terminal_size << " required " << min_terminal_size << '\n';
+            undersize = paused = true;
             draw_rows = 1;
         } else {
             draw_border();
@@ -273,25 +262,18 @@ public:
     }
 
     void loop() {
+        hr_clock::time_point t1 = hr_clock::now();
         while (true) {
-            hr_clock::time_point t1 = hr_clock::now();
-            if (!input()) break;
-            // hr_clock::time_point t2 = hr_clock::now();
-            process();
-            // hr_clock::time_point t3 = hr_clock::now();
             draw();
-            // hr_clock::time_point t4 = hr_clock::now();
-            hr_clock::time_point t5 = hr_clock::now();
-
-            // input_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
-            // process_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t3 - t2).count();
-            // draw_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t4 - t3).count();
-            // print_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t5 - t4).count();
-            frame_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t5 - t1).count();
-
-            initializing = false;
             if (game_over) break;
+
+            frame_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(hr_clock::now() - t1).count();
+
             std::this_thread::sleep_for(std::chrono::milliseconds(80));
+
+            t1 = hr_clock::now();
+            if (!input()) break;
+            if (!paused) process();
         }
     }
 

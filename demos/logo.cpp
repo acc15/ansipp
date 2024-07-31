@@ -89,7 +89,6 @@ public:
 };
 
 void c_logo::process(ctrl& c) {
-    // std::erase_if(sequences, [this](escape_sequence& seq) { return process_seq(seq); });
     if (++frame >= dim.x * 4) frame = 0;
     if (frame - gradient_width == dim.x) {
         rgb color(

@@ -6,10 +6,11 @@
 #include <chrono>
 #include <format>
 #include <cstdlib>
-#include <curses.h>
 #include <iostream>
 #include <locale>
+#include <limits>
 #include <unordered_map>
+#include <curses.h>
 
 enum color_pair: short {
     BORDER = 1,
@@ -54,7 +55,7 @@ vec dir_to_vec(direction d) {
 template <>
 struct std::hash<vec> {
     std::size_t operator()(const vec& v) const {
-        return std::hash<int>{}(v.x) ^ std::rotl(std::hash<int>{}(v.y), CHAR_BIT*sizeof(std::size_t)/2);
+        return std::hash<int>{}(v.x) ^ std::rotl(std::hash<int>{}(v.y), std::numeric_limits<std::size_t>::digits/2);
     }
 };
 
@@ -95,7 +96,6 @@ public:
     using hr_clock = std::chrono::high_resolution_clock;
     std::size_t frame_ns;
     
-//     char input_buffer[512];
     std::deque<direction> input_queue;
 
     snake_game() {
@@ -279,19 +279,11 @@ public:
         while (true) {
             hr_clock::time_point t1 = hr_clock::now();
             if (!input()) break;
-            // hr_clock::time_point t2 = hr_clock::now();
             process();
-            // hr_clock::time_point t3 = hr_clock::now();
             draw();
-            // hr_clock::time_point t4 = hr_clock::now();
+            hr_clock::time_point t2 = hr_clock::now();
 
-            hr_clock::time_point t5 = hr_clock::now();
-
-            // input_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
-            // process_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t3 - t2).count();
-            // draw_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t4 - t3).count();
-            // print_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t5 - t4).count();
-            frame_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t5 - t1).count();
+            frame_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
 
             initializing = false;
 

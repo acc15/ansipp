@@ -1,9 +1,6 @@
-# ansipp
+# ![ansipp](images/ansipp_logo.gif)
 
 Simple, small, fast and portable library to use colors/drawing directly in terminal.
-
-Not `ncurses` killer, but if you don't need all power of `ncurses` this might be better as its simpler, smaller and faster.
-It doesn't store terminal screen in memory.
 
 ## Cross platform
 
@@ -22,7 +19,7 @@ It builds and works on
 * Mouse support
 * Fast terminal I/O routines (direct sys calls, no stdio) with non-blocking reading support
 * `charbuf` for fast escape buffering and printing (it's like `std::stringstream`, but 10x faster)
-* Automatic restore of terminal modes on `exit`, `SIGINT` (Ctrl+C), `SIGTERM` (excluding Windows)
+* Automatic restore of terminal modes on `exit` and signals (`SIGINT`, `SIGTERM`, `SIGQUIT`)
 
 ## TODO
 
@@ -42,19 +39,14 @@ target_link_libraries(your_executable PRIVATE ansipp::ansipp)
 Code:
 
 ```c++
-#include <iostream>
 #include <ansipp.hpp>
 
 int main() {
     using namespace ansipp;
-    if (std::error_code ec; init(ec), ec) {
-        std::cerr << "can't init: " << ec.message() << std::endl;
-        return EXIT_FAILURE;
-    }
+    init_or_exit();
 
     charbuf out(4096);
-    out << "hello " << attrs().on(BOLD).fg(RED) << "RED BOLD" << attrs() << " text\n";
-    terminal_write(out.flush());
+    out << "hello " << attrs().on(BOLD).fg(RED) << "RED BOLD" << attrs() << " text\n" << charbuf::to_stdout;
     return EXIT_SUCCESS;
 }
 ```
