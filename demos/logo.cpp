@@ -70,7 +70,7 @@ public:
     c_terminal terminal;
     std::vector<c_escape> escapes;
 
-    void add_escape(c_escape&& esc) { escapes.push_back(std::move(esc)); }
+    void add_escape(c_escape&& v) { escapes.push_back(std::move(v)); }
     void process() {
         terminal.process(*this);
         std::erase_if(escapes, [this](c_escape& e) { return !e.process(*this); });
@@ -97,8 +97,8 @@ void c_logo::process(ctrl& c) {
             0x80 + std::rand() % 0x80, 
             0x80 + std::rand() % 0x80
         );
-        std::string str = esc_str(attrs().fg(color)).erase(0, 1);
-        c.add_escape(c_escape { .str = std::move(str), .pos = vec(dim.x, std::rand() % dim.y), .color = color });
+        std::string esc_suffix = esc_str(attrs().fg(color)).erase(0, 1);
+        c.add_escape(c_escape { .str = std::move(esc_suffix), .pos = vec(dim.x, std::rand() % dim.y), .color = color });
     }
 }
 
