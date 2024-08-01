@@ -1,8 +1,10 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/benchmark/catch_benchmark_all.hpp>
 
 #include <ansipp/charbuf.hpp>
 #include <limits>
 #include <numbers>
+#include <cstring>
 
 using namespace ansipp;
 
@@ -40,4 +42,25 @@ TEST_CASE("charbuf: bool", "[charbuf]") {
     charbuf cb;
     REQUIRE( (cb.reset() << false).view() == "0" );
     REQUIRE( (cb.reset() << true).view() == "1" );
+}
+
+TEST_CASE("charbuf: fill_n vs memset", "[!benchmark][charbuf]") {
+    charbuf v(4096);
+    BENCHMARK("std::fill_n") {
+        std::fill_n(v.data(), v.capacity(), '\n');
+    };
+    BENCHMARK("std::memset") {
+        std::memset(v.data(), '\n', v.capacity());
+    };
+}
+
+TEST_CASE("charbuf: copy_n vs memcpy", "[!benchmark][charbuf]") {
+    charbuf src(4096);
+    charbuf dst(4096);
+    BENCHMARK("std::copy_n") {
+        std::copy_n(src.data(), src.capacity(), dst.data());
+    };
+    BENCHMARK("std::memcpy") {
+        std::memcpy(dst.data(), src.data(), src.capacity());
+    };
 }
