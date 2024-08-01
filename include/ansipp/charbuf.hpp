@@ -37,8 +37,8 @@ struct floating_format {
 
 struct fill {
     char ch;
-    unsigned int count;
-    fill(char ch, unsigned int count): ch(ch), count(count) {}
+    std::size_t count;
+    fill(char ch, std::size_t count): ch(ch), count(count) {}
 };
 
 /**
@@ -144,7 +144,7 @@ public:
     }
 
     template <std::signed_integral T>
-    charbuf& operator<<(const integral_format<T>& v) {
+    charbuf& operator<<(integral_format<T> v) {
         unsigned int width = v.width == 0 ? ilen(v.value, v.base) : v.width;
         ichars(reserve(width), width, v.value, v.base, v.upper);
         return *this;
@@ -158,7 +158,7 @@ public:
     }
     
     template <std::floating_point T>
-    charbuf& operator<<(const floating_format<T>& v) {
+    charbuf& operator<<(floating_format<T> v) {
         require(1);
 
         std::size_t grow_by = 32 + (v.precision > 0 ? v.precision : 0);
