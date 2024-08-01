@@ -90,7 +90,8 @@ constexpr unsigned int ulen10(std::uintmax_t value) {
     // requires ipow_lookup<10> table = sizeof(std::uintmax_t)*(std::numeric_limits<std::uintmax_t>::digits10)
     // if uintmax_t is 64 bit then 8*19 = 152 bytes
     if (value < 10) return 1;
-    unsigned int approx_log10 = (std::bit_width(value) - 1) * 1233U >> 12U;
+    constexpr int bits = std::numeric_limits<std::uintmax_t>::digits - 1;
+    unsigned int approx_log10 = (bits - std::countl_zero(value)) * 1233U >> 12U;
     return 1U + approx_log10 + static_cast<unsigned int>(value >= ipow_lookup<10>::data.pow[approx_log10]);
 }
 
