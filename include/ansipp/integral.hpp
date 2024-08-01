@@ -89,15 +89,16 @@ constexpr unsigned int ulen10(std::uintmax_t value) {
     // idea from http://www.graphics.stanford.edu/~seander/bithacks.html
     // requires ipow_lookup<10> table = sizeof(std::uintmax_t)*(std::numeric_limits<std::uintmax_t>::digits10)
     // if uintmax_t is 64 bit then 8*19 = 152 bytes
+    if (value < 10) return 1;
     unsigned int approx_log10 = (std::bit_width(value) - 1) * 1233U >> 12U;
     return 1U + approx_log10 + static_cast<unsigned int>(value >= ipow_lookup<10>::data.pow[approx_log10]);
 }
 
 constexpr unsigned int ulen(std::uintmax_t value, unsigned int base) {
-    if (value < base) return 1;
 #if (ANSIPP_FAST_INTEGRAL & 0x04) != 0 
     if (base == 10) [[ likely ]] return ulen10(value);
 #endif
+    if (value < base) return 1;
     if (base == 2) return std::bit_width(value);
     if (std::has_single_bit(base)) { 
         // power of 2 bases (4, 8, 16, 32, 64) - can be computed in constant time using bit_width (log2)

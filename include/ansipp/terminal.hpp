@@ -38,7 +38,9 @@ struct erase {
 };
 template <typename Stream>
 Stream& operator<<(Stream& s, erase esc) {
-    return s << csi << static_cast<char>(esc.mode) << static_cast<char>(esc.target);
+    s << csi;
+    if (esc.mode != TO_END) s << static_cast<char>(esc.mode);
+    return s << static_cast<char>(esc.target);
 }
 
 }

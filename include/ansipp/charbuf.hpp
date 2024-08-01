@@ -138,7 +138,7 @@ public:
 
     template <std::unsigned_integral T>
     charbuf& operator<<(T v) { 
-        unsigned int w = ulen(v, 10);
+        unsigned int w = ulen10(v);
         uchars(reserve(w), w, v, 10, false);
         return *this;
     }
