@@ -90,8 +90,7 @@ constexpr unsigned int ulen10(std::uintmax_t value) {
     // requires ipow_lookup<10> table = sizeof(std::uintmax_t)*(std::numeric_limits<std::uintmax_t>::digits10)
     // if uintmax_t is 64 bit then 8*19 = 152 bytes
     if (value < 10) return 1;
-    constexpr int bits = std::numeric_limits<std::uintmax_t>::digits - 1;
-    unsigned int approx_log10 = (bits - std::countl_zero(value)) * 1233U >> 12U;
+    unsigned int approx_log10 = (std::bit_width(value) - 1) * 1233U >> 12U;
     return 1U + approx_log10 + static_cast<unsigned int>(value >= ipow_lookup<10>::data.pow[approx_log10]);
 }
 
@@ -103,7 +102,7 @@ constexpr unsigned int ulen(std::uintmax_t value, unsigned int base) {
     if (base == 2) return std::bit_width(value);
     if (std::has_single_bit(base)) { 
         // power of 2 bases (4, 8, 16, 32, 64) - can be computed in constant time using bit_width (log2)
-        unsigned int bp = std::bit_width(base - 1U);
+        unsigned int bp = std::bit_width(base) - 1U;
         return (std::bit_width(value) + bp - 1U) / bp;
     }
 
