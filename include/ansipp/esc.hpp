@@ -17,7 +17,7 @@ struct decset_esc {
     char suffix;
 };
 template <typename Stream>
-Stream& operator<<(Stream& s, const decset_esc& e) { return s << decset << e.code << e.suffix; }
+Stream& operator<<(Stream& s, decset_esc e) { return s << decset << e.code << e.suffix; }
 
 class decset_mode {
     unsigned int code;

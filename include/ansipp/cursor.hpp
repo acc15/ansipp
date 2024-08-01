@@ -64,7 +64,7 @@ struct move {
     move(move_mode mode, unsigned int value = 1): mode(mode), value(value) {}
 };
 template <typename Stream>
-Stream& operator<<(Stream& s, const move& op) {
+Stream& operator<<(Stream& s, move op) {
     if (op.mode == CURSOR_TO_COLUMN && op.value < 2) return s << '\r';
     if (op.value > 0) s << csi << op.value << static_cast<char>(op.mode);
     return s;
@@ -76,7 +76,7 @@ struct move_rel {
     move_rel(const vec& v): x(v.x), y(v.y) {}
 };
 template <typename Stream>
-Stream& operator<<(Stream& s, const move_rel& op) {
+Stream& operator<<(Stream& s, move_rel op) {
     s << (op.x < 0 
         ? move(CURSOR_LEFT, static_cast<unsigned int>(-op.x)) 
         : move(CURSOR_RIGHT, static_cast<unsigned int>(op.x)));
@@ -92,7 +92,7 @@ struct move_abs {
     move_abs(const vec& v): x(v.x), y(v.y) {}
 };
 template <typename Stream>
-Stream& operator<<(Stream& s, const move_abs& op) { return s << csi << op.y << ';' << op.x << 'H'; }
+Stream& operator<<(Stream& s, move_abs op) { return s << csi << op.y << ';' << op.x << 'H'; }
 
 
 const std::string store_cursor = esc + "7";

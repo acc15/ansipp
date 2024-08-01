@@ -16,9 +16,9 @@ vec get_terminal_size();
 const std::string hard_reset = esc + 'c'; 
 const std::string soft_reset = csi + "!p";
 
-const decset_mode line_wrap = 7;
-const decset_mode alternate_buffer = 1049;
-const decset_mode focus_reporting = 1004;
+constexpr decset_mode line_wrap = 7;
+constexpr decset_mode alternate_buffer = 1049;
+constexpr decset_mode focus_reporting = 1004;
 
 enum erase_target: char {
     SCREEN = 'J',
@@ -37,7 +37,7 @@ struct erase {
     erase(erase_target target, erase_mode mode): target(target), mode(mode) {}
 };
 template <typename Stream>
-Stream& operator<<(Stream& s, const erase& esc) {
+Stream& operator<<(Stream& s, erase esc) {
     return s << csi << static_cast<char>(esc.mode) << static_cast<char>(esc.target);
 }
 

@@ -178,31 +178,28 @@ public:
     }
 
     void draw_border() {
-        out << attrs().bg(WHITE).fg(BLACK);
+        out << fill('\n', border_size.y) // reserve space
+            << move(CURSOR_UP_START, border_size.y)
+            << attrs().bg(WHITE).fg(BLACK);
 
         std::size_t top_offset = out.size();
-        out << " press q to exit, <arrows> to move, <space> to pause/unpause";
-        out.put(' ', border_size.x - (out.size() - top_offset));
-
-        out << attrs() << '\n';
-
+        out << " press q to exit, <arrows> to move, <space> to pause/unpause" 
+            << fill(' ', border_size.x - (out.size() - top_offset));
         for (int y = 0; y < grid_size.y; y++) {
-            out << attrs().bg(WHITE) << ' ' << attrs() << move(CURSOR_TO_COLUMN, border_size.x);
-            out << attrs().bg(WHITE) << ' ' << attrs() << '\n';
+            out << move(CURSOR_DOWN_START) << ' ' << move(CURSOR_TO_COLUMN, border_size.x) << ' ';
         }
 
-        out << attrs().bg(WHITE).fg(BLACK);
-        
+        out << move(CURSOR_DOWN_START);        
         std::size_t bottom_offset = out.size();
         out << " frame=" << frame_ns
             << " head=" << head
             << " tail=" << tail
-            << " game_over=" << static_cast<unsigned int>(game_over)
+            << " game_over=" << game_over
             << " apples=" << apples.size()
-            << " length=" << length;
-        out.put(' ', border_size.x - (out.size() - bottom_offset));
-        
-        out << attrs() << '\n' << move(CURSOR_UP, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 2);
+            << " length=" << length
+            << fill(' ', border_size.x - (out.size() - bottom_offset))
+            << attrs() << '\n' 
+            << move(CURSOR_UP, grid_size.y + 1) << move(CURSOR_TO_COLUMN, 2);
     }
 
     void draw_snake() {
@@ -238,13 +235,14 @@ public:
     }
 
     void draw() {
-        terminal_size = get_terminal_size();
-
         out << move(CURSOR_UP_START, draw_rows) << erase(SCREEN, TO_END);
-        if (terminal_size.y < min_terminal_size.y || terminal_size.x < min_terminal_size.x) {
+
+        terminal_size = get_terminal_size();
+        undersize = terminal_size.y < min_terminal_size.y || terminal_size.x < min_terminal_size.x;
+        if (undersize) {
             out << "not enough room to render game, current size " 
                 << terminal_size << " required " << min_terminal_size << '\n';
-            undersize = paused = true;
+            paused = true;
             draw_rows = 1;
         } else {
             draw_border();
@@ -265,10 +263,9 @@ public:
         hr_clock::time_point t1 = hr_clock::now();
         while (true) {
             draw();
-            if (game_over) break;
-
             frame_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(hr_clock::now() - t1).count();
-
+            
+            if (game_over) break;
             std::this_thread::sleep_for(std::chrono::milliseconds(80));
 
             t1 = hr_clock::now();

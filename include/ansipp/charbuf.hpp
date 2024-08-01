@@ -35,6 +35,12 @@ struct floating_format {
         value(value), format(format), precision(precision) {}
 };
 
+struct fill {
+    char ch;
+    unsigned int count;
+    fill(char ch, unsigned int count): ch(ch), count(count) {}
+};
+
 /**
  * Simple and fast mix of `std::string` and `std::stringstream`.
  * 
@@ -171,9 +177,9 @@ public:
     }
 
     template <std::floating_point T>
-    charbuf& operator<<(T v) {
-        return *this << floating_format(v);
-    }
+    charbuf& operator<<(T v) { return *this << floating_format(v); }
+
+    charbuf& operator<<(fill f) { return put(f.ch, f.count); }
 
     charbuf& operator<<(void(*fn)(charbuf&)) { fn(*this); return *this; }
 
