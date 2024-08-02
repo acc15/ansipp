@@ -11,16 +11,11 @@
 
 using namespace ansipp;
 
-enum class direction: unsigned char { UP, DOWN, LEFT, RIGHT };
+enum class direction { UP, DOWN, LEFT, RIGHT };
 vec dir_to_vec(direction d) {
-    using enum direction;
-    switch (d) {
-        default:
-        case UP:    return {  0, -1 };
-        case DOWN:  return {  0,  1 };
-        case LEFT:  return { -1,  0 };
-        case RIGHT: return {  1,  0 };
-    }
+    int id = static_cast<int>(d); 
+    if (id & 2) return { (id & 1) * 2 - 1, 0 };
+    return { 0, (id * 2 - 1) };
 }
 
 template <>
