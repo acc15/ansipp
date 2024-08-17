@@ -1,6 +1,10 @@
 #include <iostream>
 #include <iomanip>
-#include <thread>
+#include <locale>
+#ifdef _WIN32
+#   include <thread>
+#endif
+#include <wchar.h>
 #include <ansipp.hpp>
 
 using namespace ansipp;
@@ -46,7 +50,7 @@ void mode_line(charbuf& out) {
     out << erase(LINE, TO_END) << attrs() << restore_cursor;
 }
 
-void parse_input(charbuf& out, std::string_view str) {
+void process_switch(charbuf& out, std::string_view str) {
     bool next_esc = false;
     while (!str.empty()) {
         char ch = str[0];
@@ -64,8 +68,32 @@ void parse_input(charbuf& out, std::string_view str) {
     }
 }
 
-int main() {
+void dump_chars(charbuf& out, std::string_view rd) {
+    if (rd.empty()) {
+        out << attrs().fg(color::YELLOW) << "<EMPTY>" << attrs();
+        return;
+    }
 
+    out << attrs().fg(GREEN) << "HEX:" << attrs();
+    for (char ch: rd) {
+        out << ' ' << integral_format<unsigned char>(ch, 16, true, 2);
+    }
+    out << attrs().fg(BLUE) << " CHARS: " << attrs();
+            
+    std::string_view ch;
+    for (std::size_t i = 0; i < rd.size(); i += ch.size()) {
+        ch = rd.substr(i, mblen(rd.data() + i, rd.size() - i));
+        if (ch.size() > 1 || (ch[0] >= 0x20 && ch[0] < 0x7f)) {
+            out << ch;
+        } else {
+            out << attrs().fg(CYAN) << "0x" << integral_format<unsigned char>(ch[0], 16, false, 2) << attrs();
+        }
+    }
+}
+
+int main() {
+    std::locale::global(std::locale(""));
+    
     charbuf restore_esc;
     for (const mode_switch& m: modes) {
         restore_esc << (m.initial_value ? m.decset.on() : m.decset.off());
@@ -86,23 +114,8 @@ int main() {
             return EXIT_FAILURE;
         }
 
-        parse_input(out, rd);
-        if (!rd.empty()) {
-            out << attrs().fg(GREEN) << "HEX:" << attrs();
-            for (char ch: rd) {
-                out << ' ' << integral_format<unsigned char>(ch, 16, true, 2);
-            }
-            out << attrs().fg(BLUE) << " CHARS: " << attrs();
-            for (const char ch: rd) {
-                if (ch >= 0x20 && ch < 0x7f) {
-                    out << ch;
-                } else {
-                    out << attrs().fg(CYAN) << "0x" << integral_format<unsigned char>(ch, 16, false, 2) << attrs();
-                }
-            }
-        } else {
-            out << attrs().fg(color::YELLOW) << "<EMPTY>" << attrs();
-        }
+        process_switch(out, rd);
+        dump_chars(out, rd);
         out << '\n';
 #ifdef _WIN32
         out << charbuf::to_stdout;
