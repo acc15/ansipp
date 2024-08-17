@@ -4,16 +4,17 @@
 
 namespace ansipp {
 
-std::unordered_map<std::string_view, input_sequence_type> escapes = {
-    {"\x1b[A", KEY_UP},
-    {"\x1b[B", KEY_DOWN},
-    {"\x1b[C", KEY_RIGHT},
-    {"\x1b[D", KEY_LEFT},
+std::unordered_map<std::string_view, input_type> escapes = {
+    {"\x1b[A", input_type::UP},
+    {"\x1b[B", input_type::DOWN},
+    {"\x1b[C", input_type::RIGHT},
+    {"\x1b[D", input_type::LEFT},
 };
 
-std::vector<input_sequence> parse_escapes([[maybe_unused]] std::string_view& buffer_view) {
-    std::vector<input_sequence> seq;
-    return seq;
-}
+void parse_input_escapes(
+    [[maybe_unused]] std::string_view& input, 
+    [[maybe_unused]] std::vector<input_event>& events, 
+    [[maybe_unused]] bool consume_all
+) {}
 
 }

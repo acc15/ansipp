@@ -5,20 +5,32 @@
 
 namespace ansipp {
 
-enum input_sequence_type {
+enum class input_type {
     UNKNOWN,
     CHAR,
-    KEY_UP,
-    KEY_DOWN,
-    KEY_LEFT,
-    KEY_RIGHT
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
 };
 
-struct input_sequence {
-    input_sequence_type type;
+enum class input_modifiers {
+    SHIFT,
+    ALT,
+    CTRL,
+    SUPER,
+    HYPER,
+    META,
+    CAPS_LOCK,
+    NUM_LOCK,
+};
+
+struct input_event {
+    input_modifiers modifiers;
+    input_type type;
     std::string_view view;
 };
 
-std::vector<input_sequence> parse_escapes(std::string_view& buffer_view);
+void parse_input_escapes(std::string_view& input, std::vector<input_event>& events, bool consume_all);
 
 }
