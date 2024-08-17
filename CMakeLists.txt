@@ -12,6 +12,7 @@ target_sources(ansipp PRIVATE
     ${SRC}/ansipp/cursor.cpp
     ${SRC}/ansipp/restore.hpp
     ${SRC}/ansipp/restore.cpp
+    ${SRC}/ansipp/input.cpp
     ${SRC}/ansipp/init.cpp
 )
 
@@ -30,6 +31,7 @@ target_sources(ansipp PUBLIC FILE_SET HEADERS BASE_DIRS ${INC} FILES
     ${INC}/ansipp/init.hpp
     ${INC}/ansipp/util.hpp
     ${INC}/ansipp/mouse.hpp
+    ${INC}/ansipp/input.hpp
     ${INC}/ansipp.hpp
 )
 
@@ -41,6 +43,7 @@ testing(TARGETS ansipp SOURCES
     ${TEST}/ansipp/charbuf.cpp
     ${TEST}/ansipp/pow_gen.hpp
     ${TEST}/ansipp/integral.cpp
+    ${TEST}/ansipp/input.cpp
 )
 
 configure_install(ansipp)
