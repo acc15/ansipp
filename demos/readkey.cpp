@@ -4,7 +4,7 @@
 #ifdef _WIN32
 #   include <thread>
 #endif
-#include <wchar.h>
+#include <cwchar>
 #include <ansipp.hpp>
 
 using namespace ansipp;
@@ -82,7 +82,7 @@ void dump_chars(charbuf& out, std::string_view rd) {
             
     std::string_view ch;
     for (std::size_t i = 0; i < rd.size(); i += ch.size()) {
-        ch = rd.substr(i, mblen(rd.data() + i, rd.size() - i));
+        ch = rd.substr(i, std::mblen(rd.data() + i, rd.size() - i));
         if (ch.size() > 1 || (ch[0] >= 0x20 && ch[0] < 0x7f)) {
             out << ch;
         } else {
